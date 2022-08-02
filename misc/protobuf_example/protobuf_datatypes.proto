@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package protobuf;
+
+// Values inside the structures must be lower case.  (Protobuf will convert them to lower case in the .pb.h file)
+
+
+message GM0085_aggregator_charging_forecast
+{
+	repeated double arrival_time = 1;
+	repeated double departure_time = 2;
+	repeated double e_charge_remain_kwh = 3;
+	repeated double e_step_max_kwh = 4;
+}
+
+
+message GM0085_aggregator_charging_needs
+{
+	double next_aggregator_timestep_start_time = 1;
+	repeated int32 se_id = 2;	
+	repeated double departure_time = 3;
+	repeated double e_charge_remain_kwh = 4;
+	repeated double e_step_max_kwh = 5;
+	repeated double e_step_target_kwh = 6;
+	repeated double min_remaining_charge_time_hrs = 7;
+	repeated double min_time_to_complete_entire_charge_hrs = 8;
+	repeated double remaining_park_time_hrs = 9;
+	repeated double total_park_time_hrs = 10;
+}
+
+
+message GM0085_aggregator_e_step_setpoints
+{
+	double next_aggregator_timestep_start_time = 1;
+	repeated int32 se_id = 2;
+	repeated double e_step_kwh = 3;
+	repeated double charge_progression = 4;
+}
+
+
