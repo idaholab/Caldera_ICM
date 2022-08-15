@@ -14,8 +14,8 @@
 #include <map>
 #include <tuple>
 
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
+//#include <pybind11/pybind11.h>
+//namespace py = pybind11;
 
 
 class factory_EV_charge_model;
@@ -77,10 +77,8 @@ public:
     void ES500_set_energy_setpoints(ES500_aggregator_e_step_setpoints pev_energy_setpoints);  
     
     // Not Implemented
-    serialized_protobuf_obj ES500_get_charging_needs_protobuf(double unix_time_now, double unix_time_begining_of_next_agg_step);                
-    void ES500_set_energy_setpoints_protobuf(py::bytes pev_energy_setpoints);
+    //serialized_protobuf_obj ES500_get_charging_needs_protobuf(double unix_time_now, double unix_time_begining_of_next_agg_step);                
+    //void ES500_set_energy_setpoints_protobuf(py::bytes pev_energy_setpoints);
 };
 
-
 #endif
-
