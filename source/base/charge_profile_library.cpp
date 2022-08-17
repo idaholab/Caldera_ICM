@@ -468,7 +468,7 @@ void pev_charge_profile_library_v2::find_index_and_weight(double soc, std::vecto
     
     if(index == -1)
     {
-        index = vector_size;
+        index = vector_size-1;
         weight = 1;
     }
     else if(index == 0)
