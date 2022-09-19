@@ -17,11 +17,11 @@ struct line_segment
 	double a;
 	double b;
    
-   	double y_UB() {return this->a*this->x_UB + this->b;}
-   	double y_LB() {return this->a*this->x_LB + this->b;}
-    double y(double x) {return this->a*x + this->b;}
-        
-   	bool operator < (const line_segment& rhs)
+   	double y_UB() const {return this->a*this->x_UB + this->b;}
+   	double y_LB() const {return this->a*this->x_LB + this->b;}
+    double y(double x) const {return this->a*x + this->b;}
+    
+   	bool operator < (const line_segment& rhs) const
    	{
    		return this->x_LB < rhs.x_LB;
    	}
