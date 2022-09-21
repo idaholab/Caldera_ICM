@@ -1187,6 +1187,12 @@ bool get_pev_battery_info(vehicle_enum vehicle_type, battery_chemistry& bat_chem
 //                Supply Equipment Charge Model Factory
 //#############################################################################
 
+factory_supply_equipment_model::factory_supply_equipment_model(charge_event_queuing_inputs& CE_queuing_inputs_)
+{
+    this->CE_queuing_inputs = CE_queuing_inputs_;
+}
+
+
 void factory_supply_equipment_model::get_supply_equipment_model(bool building_charge_profile_library, SE_configuration& SE_config, get_base_load_forecast* baseLD_forecaster, manage_L2_control_strategy_parameters* manage_L2_control, supply_equipment& return_val)
 {
 	double P2_limit_kW, standby_acP_kW, standby_acQ_kVAR;
@@ -1243,7 +1249,7 @@ void factory_supply_equipment_model::get_supply_equipment_model(bool building_ch
 	
 	//============================
     
-	supply_equipment_load load(P2_limit_kW, standby_acP_kW, standby_acQ_kVAR, SE_config);
+    supply_equipment_load load(P2_limit_kW, standby_acP_kW, standby_acQ_kVAR, SE_config, this->CE_queuing_inputs);
     supply_equipment_control control(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control);
     supply_equipment SE(SE_config, control, load);
     
