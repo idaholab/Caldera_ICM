@@ -182,7 +182,30 @@ PYBIND11_MODULE(Caldera_global, m)
                 return obj;
             }
         ));
-       
+    
+    //=======================================
+
+    py::enum_<queuing_mode_enum>(m, "queuing_mode_enum")
+        .value("overlapAllowed_earlierArrivalTimeHasPriority", queuing_mode_enum::overlapAllowed_earlierArrivalTimeHasPriority)
+        .value("overlapLimited_mostRecentlyQueuedHasPriority", queuing_mode_enum::overlapLimited_mostRecentlyQueuedHasPriority);
+
+    py::class_<charge_event_queuing_inputs>(m, "charge_event_queuing_inputs")
+        .def(py::init<>())
+        .def_readwrite("max_allowed_overlap_time_sec", &charge_event_queuing_inputs::max_allowed_overlap_time_sec)
+        .def_readwrite("queuing_mode", &charge_event_queuing_inputs::queuing_mode)
+        .def(py::pickle(
+            [](const charge_event_queuing_inputs& obj) {  // __getstate__
+                return py::make_tuple(obj.max_allowed_overlap_time_sec, obj.queuing_mode);
+            },
+            [](py::tuple t) {  // __setstate__
+                charge_event_queuing_inputs obj;
+                obj.max_allowed_overlap_time_sec = t[0].cast<double>();
+                obj.queuing_mode = t[1].cast<queuing_mode_enum>();
+
+                return obj;
+            }
+            ));
+
     //---------------------------------
     //       SE Configuration
     //---------------------------------
