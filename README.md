@@ -35,7 +35,7 @@ Caldera ICM typically installs three different compiled python libraries in the 
 `-DPROJECT` flag is used to specify the project specific EV-EVSE models to be used. Options are `DirectXFC`, `eMosaic` and `EVs_at_Risk`. `-DICM` flag turns ON/OFF compiling `Caldera_ICM` lib.
 
 ## Usage
-Caldera ICM is recommended to be used with `Caldera Grid`. `Caldera Grid` provides co-simulation support with `OpenDSS`(optional) and ability to load in inputs and control charging using setpoints in python.
+Caldera ICM is recommended to be used with `Caldera Grid`. `Caldera Grid` also provides co-simulation support with `OpenDSS` and ability to load in inputs and control charging using setpoints in python.
 
 ## Authors
 1. Don Scoffield, Senior Research Engineer, Idaho National Laboratory
