@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.5)
  
 project(ICM)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 if (NOT DEFINED PROJECT)
 	message(WARNING "PROJECT cmake variable not set defaulting to emosiac project")
 endif()
