@@ -3,7 +3,7 @@ set(GLOBALS_DIR ${PROJECT_SOURCE_DIR}/source/charging_models)
 option(ICM "compile caldera_ICM library" OFF)
 
 if(ICM)
-	add_library(Caldera_ICM_lib datatypes_module.cpp ac_to_dc_converter.cpp helper.cpp battery_calculate_limits.cpp
+	add_library(Caldera_ICM_lib STATIC datatypes_module.cpp ac_to_dc_converter.cpp helper.cpp battery_calculate_limits.cpp
 				battery_integrate_X_in_time.cpp battery.cpp vehicle_charge_model.cpp supply_equipment_load.cpp 
 				supply_equipment_control.cpp supply_equipment.cpp supply_equipment_group.cpp charge_profile_library.cpp 
 				SE_EV_factory_charge_profile.cpp charge_profile_downsample_fragments.cpp ICM_interface.cpp  
@@ -23,7 +23,7 @@ if(ICM)
 		DESTINATION ${INSTALL_DIR})
 endif()
 
-add_library(Caldera_ICM_Aux_lib datatypes_module.cpp ac_to_dc_converter.cpp helper.cpp battery_calculate_limits.cpp 
+add_library(Caldera_ICM_Aux_lib STATIC datatypes_module.cpp ac_to_dc_converter.cpp helper.cpp battery_calculate_limits.cpp 
   			battery_integrate_X_in_time.cpp battery.cpp vehicle_charge_model.cpp supply_equipment_load.cpp 
   			supply_equipment_control.cpp supply_equipment.cpp charge_profile_library.cpp SE_EV_factory_charge_profile.cpp 
   			charge_profile_downsample_fragments.cpp Aux_interface.cpp 
