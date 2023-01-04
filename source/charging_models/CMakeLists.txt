@@ -1,5 +1,5 @@
 
-add_library(Caldera_global_lib datatypes_global.cpp ${PROJECT}/datatypes_global_SE_EV_definitions.cpp)
+add_library(Caldera_global_lib STATIC datatypes_global.cpp ${PROJECT}/datatypes_global_SE_EV_definitions.cpp)
 target_include_directories(Caldera_global_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(Caldera_global_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT})
 
