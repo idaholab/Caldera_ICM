@@ -63,7 +63,12 @@ struct Ppu_vs_soc_point
     double P_pu;
     Ppu_vs_soc_point_type point_type;
     
-    bool operator<(const Ppu_vs_soc_point& rhs)
+    bool operator<(const Ppu_vs_soc_point& rhs) const
+    {
+        return soc < rhs.soc;
+    }
+
+    bool operator<(Ppu_vs_soc_point& rhs) const
     {
         return soc < rhs.soc;
     }
@@ -80,7 +85,12 @@ struct line_segment
    	double y_UB() {return a*x_UB + b;}
    	double y_LB() {return a*x_LB + b;}
         
-   	bool operator < (const line_segment& rhs)
+   	bool operator<(const line_segment& rhs) const
+   	{
+   		return this->x_LB < rhs.x_LB;
+   	}
+
+    bool operator<(line_segment& rhs) const
    	{
    		return this->x_LB < rhs.x_LB;
    	}
@@ -101,7 +111,12 @@ public:
     double get_current_rate_amps(double bat_capacity_Ah_1C);
     const std::vector<Ppu_vs_soc_point>& get_points();
     
-    bool operator<(const Ppu_vs_soc_curve& rhs)
+    bool operator<(const Ppu_vs_soc_curve& rhs) const
+    {
+        return C_rate < rhs.C_rate;
+    }
+
+    bool operator<(Ppu_vs_soc_curve& rhs) const
     {
         return C_rate < rhs.C_rate;
     }
