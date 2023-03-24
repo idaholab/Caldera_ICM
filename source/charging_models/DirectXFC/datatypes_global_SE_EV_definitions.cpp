@@ -93,16 +93,16 @@ std::pair<bool, supply_equipment_enum> get_supply_equipment_enum(const std::stri
 		if (!std::isspace(str_val[i]))
 			tmp_str += str_val[i];
 
-	if 		(tmp_str == "1") 	SE_enum = L1_1440;
-	else if	(tmp_str == "2") 	SE_enum = L2_3600;
-	else if (tmp_str == "3") 	SE_enum = L2_7200;
-	else if (tmp_str == "4") 	SE_enum = L2_9600;
-	else if (tmp_str == "5") 	SE_enum = L2_11520;
-	else if (tmp_str == "20") 	SE_enum = L2_17280;
+	if 		(tmp_str == "1" || tmp_str == "L1_1440") 	SE_enum = L1_1440;
+	else if	(tmp_str == "2" || tmp_str == "L2_3600") 	SE_enum = L2_3600;
+	else if (tmp_str == "3" || tmp_str == "L2_7200") 	SE_enum = L2_7200;
+	else if (tmp_str == "4" || tmp_str == "L2_9600") 	SE_enum = L2_9600;
+	else if (tmp_str == "5" || tmp_str == "L2_11520") 	SE_enum = L2_11520;
+	else if (tmp_str == "20" || tmp_str == "L2_17280") 	SE_enum = L2_17280;
 	
-	else if (tmp_str == "6") 	SE_enum = dcfc_50;
-	else if (tmp_str == "7") 	SE_enum = xfc_150;
-	else if (tmp_str == "8") 	SE_enum = xfc_350;
+	else if (tmp_str == "6" || tmp_str == "dcfc_50") 	SE_enum = dcfc_50;
+	else if (tmp_str == "7" || tmp_str == "xfc_150") 	SE_enum = xfc_150;
+	else if (tmp_str == "8" || tmp_str == "xfc_350") 	SE_enum = xfc_350;
 	else
 	{
         conversion_successfull = false;
@@ -164,22 +164,22 @@ std::pair<bool, vehicle_enum> get_vehicle_enum(const std::string str_val)
 			tmp_str += str_val[i];
 	
         // Recharge
-	if 		(tmp_str == "1") pev_enum = bev250_ld2_300kW;
-	else if (tmp_str == "2") pev_enum = bev200_ld4_150kW;
-	else if (tmp_str == "3") pev_enum = bev275_ld1_150kW;
-	else if (tmp_str == "4") pev_enum = bev250_ld1_75kW;
-	else if (tmp_str == "5") pev_enum = bev150_ld1_50kW;
-    else if (tmp_str == "6") pev_enum = phev_SUV;
-	else if (tmp_str == "7") pev_enum = phev50;
-	else if	(tmp_str == "8") pev_enum = phev20;
+	if 		(tmp_str == "1" || tmp_str == "bev250_ld2_300kW") pev_enum = bev250_ld2_300kW;
+	else if (tmp_str == "2" || tmp_str == "bev200_ld4_150kW") pev_enum = bev200_ld4_150kW;
+	else if (tmp_str == "3" || tmp_str == "bev275_ld1_150kW") pev_enum = bev275_ld1_150kW;
+	else if (tmp_str == "4" || tmp_str == "bev250_ld1_75kW") pev_enum = bev250_ld1_75kW;
+	else if (tmp_str == "5" || tmp_str == "bev150_ld1_50kW") pev_enum = bev150_ld1_50kW;
+    else if (tmp_str == "6" || tmp_str == "phev_SUV") pev_enum = phev_SUV;
+	else if (tmp_str == "7" || tmp_str == "phev50") pev_enum = phev50;
+	else if	(tmp_str == "8" || tmp_str == "phev20") pev_enum = phev20;
     
         // DirectXFC
-    else if	(tmp_str == "9") pev_enum = bev250_400kW;
-    else if	(tmp_str == "10") pev_enum = bev300_575kW;
-    else if	(tmp_str == "11") pev_enum = bev300_400kW;
-    else if	(tmp_str == "12") pev_enum = bev250_350kW;
-    else if	(tmp_str == "13") pev_enum = bev300_300kW;
-    else if	(tmp_str == "14") pev_enum = bev150_150kW;
+    else if	(tmp_str == "9" || tmp_str == "bev250_400kW") pev_enum = bev250_400kW;
+    else if	(tmp_str == "10" || tmp_str == "bev300_575kW") pev_enum = bev300_575kW;
+    else if	(tmp_str == "11" || tmp_str == "bev300_400kW") pev_enum = bev300_400kW;
+    else if	(tmp_str == "12" || tmp_str == "bev250_350kW") pev_enum = bev250_350kW;
+    else if	(tmp_str == "13" || tmp_str == "bev300_300kW") pev_enum = bev300_300kW;
+    else if	(tmp_str == "14" || tmp_str == "bev150_150kW") pev_enum = bev150_150kW;
 	else
 	{
         conversion_successfull = false;
