@@ -72,26 +72,81 @@ void charge_event_handler::add_charge_event(charge_event_data& CE)
 
 bool charge_event_handler::charge_event_is_available(double now_unix_time)
 {    
+    
+
+
+
+    // *******************************************************************
+    // NOTE: on Apr 20, 2023, we found a bug where the code crashed
+    //       in this section because it couldn't dereference the iterator
+    //       in the line that says 'this->charge_events.erase(it);'.
+    // This was *ONLY IN DEBUG, ONLY ON WINDOWS*.  It worked on Windows in Release mode
+    //       and it worked on Linux.  So it's a strange bug.
+    // We replaced this block with an equivalent (although perhaps slightly slower)
+    //       block of code below.
+    // *******************************************************************
+
     //----------------------------------------------------------------
     // Delete charge_events if there is less than 60 seconds to charge
     //----------------------------------------------------------------
     
-    std::vector<std::set<charge_event_data>::iterator> its_to_remove;
+    // std::vector<std::set<charge_event_data>::iterator> its_to_remove;
+    // 
+    // for(std::set<charge_event_data>::iterator it = this->charge_events.begin(); it != this->charge_events.end(); it++)
+    // {
+    //     if(it->departure_unix_time - now_unix_time < 60)
+    //     {
+    //         its_to_remove.push_back(it);
+    //     }
+    //     else
+    //     {
+    //         break;
+    //     }
+    // }
+    // 
+    // std::cout << "flag_ppp_04" << std::endl;
+    // std::cout << "its_to_remove.size(): " << its_to_remove.size() << std::endl;
+    // std::cout << "this->charge_events.size(): " << this->charge_events.size() << std::endl;
+    // 
+    // int count = 0;
+    // for(std::set<charge_event_data>::iterator it : its_to_remove)
+	// {
+    //     std::cout << "    in the 'its_to_remove' loop."  << count++ << std::endl;
+    //     this->charge_events.erase(it);
+	// 	std::string str = "Warning : Charge Event removed since charge time < 60 sec.  charge_event_id: " + std::to_string(it->charge_event_id);
+	// 	std::cout << str << std::endl;
+	// }
+    // 
+    // std::cout << "flag_ppp_05" << std::endl;
     
-    for(std::set<charge_event_data>::iterator it = this->charge_events.begin(); it != this->charge_events.end(); it++)
+    
+    
+    
+    //----------------------------------------------------------------
+    // Delete charge_events if there is less than 60 seconds to charge
+    //----------------------------------------------------------------
+    std::vector<charge_event_data> its_to_remove;
+    for( const charge_event_data& item : this->charge_events )
     {
-        if(it->departure_unix_time - now_unix_time < 60)
-            its_to_remove.push_back(it);
+        if(item.departure_unix_time - now_unix_time < 60)
+        {
+            its_to_remove.push_back(item);
+        }
         else
+        {
             break;
+        }
     }
-    
-    for(std::set<charge_event_data>::iterator it : its_to_remove)
+    for( const charge_event_data& item : its_to_remove)
 	{
-        this->charge_events.erase(it);
-		std::string str = "Warning : Charge Event removed since charge time < 60 sec.  charge_event_id: " + std::to_string(it->charge_event_id);
+        this->charge_events.erase(item);
+		std::string str = "Warning : Charge Event removed since charge time < 60 sec.  charge_event_id: " + std::to_string(item.charge_event_id);
 		std::cout << str << std::endl;
 	}
+    
+    
+    
+    
     
     //------------------------------
     
