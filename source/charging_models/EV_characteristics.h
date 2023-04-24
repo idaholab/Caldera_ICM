@@ -25,17 +25,19 @@ private:
     const double range_miles;
     const double efficiency_Wh_per_mile;
     const double AC_charge_rate_kW;
+    const bool DCFC_capable;
 
 public:
-    EV_characteristics(const EV_type& type, const battery_chemistry& chemistry, const double& max_c_rate, 
-        const double& battery_size_kWh, const double& range_miles, const double& efficiency_Wh_per_mile, 
-        const double& AC_charge_rate_kW)
-        : type(type), chemistry(chemistry), max_c_rate(max_c_rate), battery_size_kWh(battery_size_kWh), 
-        range_miles(range_miles), efficiency_Wh_per_mile(efficiency_Wh_per_mile), 
+    EV_characteristics(const EV_type& type, const battery_chemistry& chemistry, const bool& DCFC_capable, 
+        const double& max_c_rate, const double& battery_size_kWh, const double& range_miles, 
+        const double& efficiency_Wh_per_mile, const double& AC_charge_rate_kW)
+        : type(type), chemistry(chemistry), DCFC_capable(DCFC_capable), max_c_rate(max_c_rate), 
+        battery_size_kWh(battery_size_kWh), range_miles(range_miles), efficiency_Wh_per_mile(efficiency_Wh_per_mile), 
         AC_charge_rate_kW(AC_charge_rate_kW) {}
 
     EV_type             get_type()                      const { return this->type; }
     battery_chemistry   get_chemistry()                 const { return this->chemistry; }
+    bool                get_DCFC_capable()              const { return this->DCFC_capable; }
     double              get_max_c_rate()                const { return this->max_c_rate; }
     double              get_battery_size_kWh()          const { return this->battery_size_kWh; }
     double              get_range_miles()               const { return this->range_miles; }

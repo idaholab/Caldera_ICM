@@ -3,21 +3,26 @@
 
 #include <unordered_map>
 #include "EV_characteristics.h"
-#include "SE_characteristics.h"
+#include "EVSE_characteristics.h"
+
+typedef std::unordered_map<EV_type, EV_characteristics> EV_inventory;
+typedef std::unordered_map<EVSE_type, EVSE_characteristics> EVSE_inventory;
 
 class EV_EVSE_inventory {
 private:
-    const std::unordered_map<EV_type, EV_characteristics> EV_inventory;
-    const std::unordered_map<SE_type, SE_characteristics> EVSE_inventory;
+    const EV_inventory EV_inv;
+    const EVSE_inventory EVSE_inv;
 
 public:
-    EV_EVSE_inventory(const std::unordered_map<EV_type, EV_characteristics>& EV_inv,
-                      const std::unordered_map<SE_type, SE_characteristics>& EVSE_inv);
+    EV_EVSE_inventory(const EV_inventory& EV_inv,
+                      const EVSE_inventory& EVSE_inv);
 
-    const std::unordered_map<EV_type, EV_characteristics>& get_EV_inventory() const;
-    const std::unordered_map<SE_type, SE_characteristics>& get_EVSE_inventory() const;
+    const EV_inventory& get_EV_inventory() const;
+    const EVSE_inventory& get_EVSE_inventory() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const EV_EVSE_inventory& inventory);
+std::ostream& operator<<(std::ostream& os, const EV_inventory& inventory);
+std::ostream& operator<<(std::ostream& os, const EVSE_inventory& inventory);
 
 #endif //EV_EVSE_INVENTORY_H
