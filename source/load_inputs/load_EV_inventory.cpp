@@ -1,11 +1,19 @@
-#include "load_EV_models.h"
+#include "load_EV_inventory.h"
 #include "load_helper.h"
 
 #include <fstream>
 #include <filesystem>
 
+load_EV_inventory::load_EV_inventory(std::string inputs_dir) :
+	EV_inv(this->load(inputs_dir))
+{}
 
-battery_chemistry load_EV_models::string_to_battery_chemistry(const std::string& str)
+const EV_inventory& load_EV_inventory::get_EV_inventory() const
+{
+	return this->EV_inv;
+}
+
+battery_chemistry load_EV_inventory::string_to_battery_chemistry(const std::string& str)
 {
 	const std::unordered_map<std::string, battery_chemistry> map = {
 		{"LTO", LTO},
@@ -22,7 +30,7 @@ battery_chemistry load_EV_models::string_to_battery_chemistry(const std::string&
 	}
 }
 
-bool load_EV_models::string_to_DCFC_capable(const std::string& str) {
+bool load_EV_inventory::string_to_DCFC_capable(const std::string& str) {
 	if (str == "true" || str == "t") {
 		return true;
 	}
@@ -34,7 +42,7 @@ bool load_EV_models::string_to_DCFC_capable(const std::string& str) {
 	}
 }
 
-EV_inventory load_EV_models::load(std::string inputs_dir)
+EV_inventory load_EV_inventory::load(std::string inputs_dir)
 {
 	EV_inventory EV_inv;
 

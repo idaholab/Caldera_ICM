@@ -1,12 +1,11 @@
-#ifndef LOAD_EV_MODELS_H
-#define LOAD_EV_MODELS_H
+#ifndef LOAD_EV_INVENTORY_H
+#define LOAD_EV_INVENTORY_H
 
 #include "EV_EVSE_inventory.h"
 #include "EV_characteristics.h"
-
 #include <string>
 
-class load_EV_models
+class load_EV_inventory
 {
 private:
 	const EV_inventory EV_inv;
@@ -17,11 +16,8 @@ private:
 	EV_inventory load(std::string inputs_dir);
 
 public:
-
-	load_EV_models(std::string inputs_dir) :
-		EV_inv(this->load(inputs_dir)) {}
-
-	const EV_inventory& get_EV_inventory() const { return this->EV_inv; }
+	load_EV_inventory(std::string inputs_dir);
+	const EV_inventory& get_EV_inventory() const;
 };
 
-#endif // LOAD_EV_MODELS_H
+#endif // LOAD_EV_INVENTORY_H

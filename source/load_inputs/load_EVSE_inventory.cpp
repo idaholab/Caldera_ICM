@@ -1,10 +1,19 @@
-#include "load_EVSE_models.h"
+#include "load_EVSE_inventory.h"
 #include "load_helper.h"
 
 #include <fstream>
 #include <filesystem>
 
-EVSE_level load_EVSE_models::string_to_EVSE_level(const std::string& str)
+load_EVSE_inventory::load_EVSE_inventory(std::string inputs_dir) :
+	EVSE_inv(this->load(inputs_dir))
+{}
+
+const EVSE_inventory& load_EVSE_inventory::get_EVSE_inventory() const
+{
+	return this->EVSE_inv;
+}
+
+EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& str)
 {
 	const std::unordered_map<std::string, EVSE_level> map = {
 		{"L1", L1},
@@ -21,7 +30,7 @@ EVSE_level load_EVSE_models::string_to_EVSE_level(const std::string& str)
 	}
 }
 
-EVSE_phase load_EVSE_models::string_to_EVSE_phase(const std::string& str)
+EVSE_phase load_EVSE_inventory::string_to_EVSE_phase(const std::string& str)
 {
 	const std::unordered_map<std::string, EVSE_phase> map = {
 		{"1", singlephase},
@@ -39,7 +48,7 @@ EVSE_phase load_EVSE_models::string_to_EVSE_phase(const std::string& str)
 	}
 }
 
-EVSE_inventory load_EVSE_models::load(std::string inputs_dir)
+EVSE_inventory load_EVSE_inventory::load(std::string inputs_dir)
 {
 	EVSE_inventory EVSE_inv;
 
