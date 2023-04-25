@@ -161,7 +161,7 @@ EV_inventory load_EV_models::load(std::string inputs_dir)
 
 		const double range_miles = [&]() {
 
-			// check if range_miles is int and also non negative
+			// check if range_miles is double and also non negative
 			std::string str = elements_in_line[5];
 			double val;
 			bool is_conversion_successful;
@@ -173,7 +173,7 @@ EV_inventory load_EV_models::load(std::string inputs_dir)
 				is_conversion_successful = false;
 			}
 			ASSERT(is_conversion_successful, EV_inputs_file << " " << column_names[5] << " " <<
-				str << " is not a int in line number " << line_number);
+				str << " is not a double in line number " << line_number);
 
 			ASSERT(val > 0, EV_inputs_file << " " << column_names[5] << " " << str <<
 				" is less than or equal to 0 in line number " << line_number);
@@ -189,14 +189,14 @@ EV_inventory load_EV_models::load(std::string inputs_dir)
 			double val;
 			bool is_conversion_successful;
 			try {
-				val = std::stoi(str);
+				val = std::stod(str);
 				is_conversion_successful = true;
 			}
 			catch (...) {
 				is_conversion_successful = false;
 			}
 			ASSERT(is_conversion_successful, EV_inputs_file << " " << column_names[6] << " " << str <<
-				" is not a int in line number " << line_number);
+				" is not a double in line number " << line_number);
 
 			ASSERT(val > 0, EV_inputs_file << " " << column_names[6] << " " << str << 
 				" is less than or equal to 0 in line number " << line_number);
@@ -219,7 +219,7 @@ EV_inventory load_EV_models::load(std::string inputs_dir)
 				is_conversion_successful = false;
 			}
 			ASSERT(is_conversion_successful, EV_inputs_file << " " << column_names[7] << " " <<
-				str << " is not a int in line number " << line_number);
+				str << " is not a double in line number " << line_number);
 
 			ASSERT(val > 0, EV_inputs_file << " " << column_names[7] << " " << str
 				<< " is less than or equal to 0 in line number " << line_number);
