@@ -38,29 +38,21 @@ std::ostream& operator<<(std::ostream& out, energy_target_reached_status& x)
 //        Parent Class
 //##############################
 
-
 double algorithm_P2_vs_soc::get_soc_to_energy() const {return this->soc_to_energy;}
 double algorithm_P2_vs_soc::get_soc_UB() const {return this->P2_vs_soc->at(seg_index).x_UB;}
 double algorithm_P2_vs_soc::get_soc_LB() const {return this->P2_vs_soc->at(seg_index).x_LB;}
 
-
-algorithm_P2_vs_soc::algorithm_P2_vs_soc(double battery_size_kWh, double recalc_exponent_threashold_, double zero_slope_threashold_P2_vs_soc_)
-{
-    this->soc_to_energy = battery_size_kWh/100;
-
-	this->recalc_exponent_threashold = recalc_exponent_threashold_;
-	this->zero_slope_threashold_P2_vs_soc = zero_slope_threashold_P2_vs_soc_;
-    this->ref_seg_index = -1;
-    this->seg_index = 0;
-    this->prev_exp_val = -1;
-    this->exp_term = std::exp(this->prev_exp_val);
-}
+algorithm_P2_vs_soc::algorithm_P2_vs_soc(const algorithm_P2_vs_soc_inputs& inputs)
+    : P2_vs_soc(std::make_shared<std::vector<line_segment> >()), seg_index(0), ref_seg_index(-1), soc_to_energy(inputs.battery_size_kWh / 100.0),
+    prev_exp_val(-1), exp_term(std::exp(this->prev_exp_val)), recalc_exponent_threashold(inputs.recalc_exponent_threashold),
+    zero_slope_threashold_P2_vs_soc(inputs.zero_slope_threashold_SOC_vs_P2),
+    segment_is_flat_P2_vs_soc(false), P2_vs_soc_segments_changed(false) {}
 
 
-void algorithm_P2_vs_soc::set_P2_vs_soc(std::vector<line_segment> *P2_vs_soc_)
+void algorithm_P2_vs_soc::set_P2_vs_soc(std::shared_ptr<std::vector<line_segment> > P2_vs_soc)
 {
 	this->P2_vs_soc_segments_changed = true;
-	this->P2_vs_soc = P2_vs_soc_;
+	this->P2_vs_soc = P2_vs_soc;
 }
 
 
@@ -100,24 +92,8 @@ void algorithm_P2_vs_soc::get_next_line_segment(bool is_charging_not_discharging
 //##############################
 
 
-algorithm_P2_vs_soc_no_losses::algorithm_P2_vs_soc_no_losses(double battery_size_kWh, double recalc_exponent_threashold_, double zero_slope_threashold_P2_vs_soc_)
-                                             				    :algorithm_P2_vs_soc(battery_size_kWh, recalc_exponent_threashold_, zero_slope_threashold_P2_vs_soc_)
-{}
-
-
-algorithm_P2_vs_soc_no_losses::algorithm_P2_vs_soc_no_losses(const algorithm_P2_vs_soc_no_losses& obj) : algorithm_P2_vs_soc(obj)
-{
-	this->a = obj.a;
-	this->b = obj.b;
-	this->A = obj.A;
-}
-
-
-algorithm_P2_vs_soc_no_losses* algorithm_P2_vs_soc_no_losses::clone() const
-{
-	return new algorithm_P2_vs_soc_no_losses(*this);
-}
-
+algorithm_P2_vs_soc_no_losses::algorithm_P2_vs_soc_no_losses(const algorithm_P2_vs_soc_inputs& inputs)
+                                             				    :algorithm_P2_vs_soc(inputs), a(0.0), b(0.0), A(0.0) {}
 
 double algorithm_P2_vs_soc_no_losses::get_soc_t1(double t1_minus_t0_hrs, double soc_t0)
 {
@@ -164,7 +140,6 @@ double algorithm_P2_vs_soc_no_losses::get_soc_t1(double t1_minus_t0_hrs, double 
     return soc_t1;
 }
 
-
 double algorithm_P2_vs_soc_no_losses::get_time_to_soc_t1_hrs(double soc_t0, double soc_t1)
 {
 	bool update_vals = (this->ref_seg_index != this->seg_index) || (this->P2_vs_soc_segments_changed);
@@ -199,34 +174,9 @@ double algorithm_P2_vs_soc_no_losses::get_time_to_soc_t1_hrs(double soc_t0, doub
 //   Child Class  (Losses)
 //##############################
 
-algorithm_P2_vs_soc_losses::algorithm_P2_vs_soc_losses(double battery_size_kWh, double recalc_exponent_threashold_,  double zero_slope_threashold_P2_vs_soc_, const line_segment& bat_eff_vs_P2_)
-                                                           :algorithm_P2_vs_soc(battery_size_kWh, recalc_exponent_threashold_, zero_slope_threashold_P2_vs_soc_)
-{
-    this->bat_eff_vs_P2 = bat_eff_vs_P2_;
-}
-
-
-algorithm_P2_vs_soc_losses::algorithm_P2_vs_soc_losses(const algorithm_P2_vs_soc_losses& obj) : algorithm_P2_vs_soc(obj)
-{
-	this->bat_eff_vs_P2 = obj.bat_eff_vs_P2;
-	
-	this->a = obj.a;
-	this->b = obj.b;
-	this->c = obj.c;
-	this->d = obj.d;
-	this->A = obj.A;
-	this->B = obj.B;
-	this->C = obj.C;
-	this->D = obj.D;
-	this->z = obj.z;
-}
-
-
-algorithm_P2_vs_soc_losses* algorithm_P2_vs_soc_losses::clone() const
-{
-	return new algorithm_P2_vs_soc_losses(*this);
-}
-
+algorithm_P2_vs_soc_losses::algorithm_P2_vs_soc_losses(const algorithm_P2_vs_soc_inputs& inputs)
+    :algorithm_P2_vs_soc(inputs), bat_eff_vs_P2(inputs.P2_vs_battery_eff), a(0.0), b(0.0), c(0.0), 
+    d(0.0), A(0.0), B(0.0), C(0.0), D(0.0), z(0.0) {}
 
 double algorithm_P2_vs_soc_losses::get_soc_t1(double t1_minus_t0_hrs, double soc_t0)
 {
@@ -334,7 +284,6 @@ double algorithm_P2_vs_soc_losses::get_time_to_soc_t1_hrs(double soc_t0, double 
         
         tmp_hrs = std::log((eff_e_t1*P2_e_t0)/(eff_e_t0*P2_e_t1))/this->z;
     }
-    
     return tmp_hrs;
 }
 
@@ -343,44 +292,30 @@ double algorithm_P2_vs_soc_losses::get_time_to_soc_t1_hrs(double soc_t0, double 
 //                         Calculate Energy Limits
 //#############################################################################
 
-calc_E1_energy_limit::calc_E1_energy_limit(algorithm_P2_vs_soc *P2_vs_soc_algorithm_)
+calc_E1_energy_limit::calc_E1_energy_limit(const bool& are_battery_losses, const algorithm_P2_vs_soc_inputs& inputs)
 {
-    this->P2_vs_soc_algorithm = P2_vs_soc_algorithm_;
+    if (are_battery_losses)
+    {
+        this->P2_vs_soc_algorithm = std::make_shared<algorithm_P2_vs_soc_losses>(inputs);
+    }
+    else
+    {
+        this->P2_vs_soc_algorithm = std::make_shared<algorithm_P2_vs_soc_no_losses>(inputs);
+    }
 }
-
-calc_E1_energy_limit::~calc_E1_energy_limit()
-{
-	if(this->P2_vs_soc_algorithm != NULL)
-	{
-		delete this->P2_vs_soc_algorithm;
-		this->P2_vs_soc_algorithm = NULL;
-	}
-}
-
 
 //##############################
 //           Charging
 //##############################
 
-calc_E1_energy_limit_charging::calc_E1_energy_limit_charging(algorithm_P2_vs_soc *P2_vs_soc_algorithm_)
-														:calc_E1_energy_limit(P2_vs_soc_algorithm_){}
+calc_E1_energy_limit_charging::calc_E1_energy_limit_charging(const bool& are_battery_losses, const algorithm_P2_vs_soc_inputs& inputs)
+    : calc_E1_energy_limit(are_battery_losses, inputs){}
 
-calc_E1_energy_limit_charging::~calc_E1_energy_limit_charging() {}
-
-
-calc_E1_energy_limit_charging::calc_E1_energy_limit_charging(const calc_E1_energy_limit_charging& obj) : calc_E1_energy_limit(obj.P2_vs_soc_algorithm->clone()) {}
-
-
-calc_E1_energy_limit_charging* calc_E1_energy_limit_charging::clone() const
-{
-	return new calc_E1_energy_limit_charging(*this);
-}
-
-
-void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::vector<line_segment> *P2_vs_soc_segments, E1_energy_limit& E1_limit)
+void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, 
+    std::shared_ptr<std::vector<line_segment> > P2_vs_soc, E1_energy_limit& E1_limit)
 {
 	if(P2_vs_soc_segments_changed)
-    	this->P2_vs_soc_algorithm->set_P2_vs_soc(P2_vs_soc_segments);
+    	this->P2_vs_soc_algorithm->set_P2_vs_soc(P2_vs_soc);
     
     bool line_segment_not_found;
     this->P2_vs_soc_algorithm->find_line_segment_index(init_soc, line_segment_not_found);
@@ -475,25 +410,14 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec, double in
 //        Discharging
 //##############################
 
-calc_E1_energy_limit_discharging::calc_E1_energy_limit_discharging(algorithm_P2_vs_soc *P2_vs_soc_algorithm_)
-															      :calc_E1_energy_limit(P2_vs_soc_algorithm_) {}
+calc_E1_energy_limit_discharging::calc_E1_energy_limit_discharging(const bool& are_battery_losses, const algorithm_P2_vs_soc_inputs& inputs)
+    :calc_E1_energy_limit(are_battery_losses, inputs) {}
 
-calc_E1_energy_limit_discharging::~calc_E1_energy_limit_discharging() {}
-
-
-calc_E1_energy_limit_discharging::calc_E1_energy_limit_discharging(const calc_E1_energy_limit_discharging& obj) : calc_E1_energy_limit(obj.P2_vs_soc_algorithm->clone()) {}
-
-
-calc_E1_energy_limit_discharging* calc_E1_energy_limit_discharging::clone() const
-{
-	return new calc_E1_energy_limit_discharging(*this);
-}
-
-
-void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::vector<line_segment> *P2_vs_soc_segments, E1_energy_limit& E1_limit)
+void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, 
+    std::shared_ptr<std::vector<line_segment> > P2_vs_soc, E1_energy_limit& E1_limit)
 {
 	if(P2_vs_soc_segments_changed)
-    	this->P2_vs_soc_algorithm->set_P2_vs_soc(P2_vs_soc_segments);
+    	this->P2_vs_soc_algorithm->set_P2_vs_soc(P2_vs_soc);
 	
 	bool line_segment_not_found;
     this->P2_vs_soc_algorithm->find_line_segment_index(init_soc, line_segment_not_found);
@@ -588,49 +512,33 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec, double
 //             Calculate Energy Limit Upper and Lower Bound
 //#############################################################################
 
-
-calculate_E1_energy_limit::~calculate_E1_energy_limit()
+calculate_E1_energy_limit::calculate_E1_energy_limit(const calculate_E1_energy_limit_inputs& inputs)
+    : mode(inputs.mode), P2_vs_puVrms(inputs.P2_vs_puVrms), 
+    max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments(inputs.max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments),
+    orig_P2_vs_soc_segments(inputs.P2_vs_soc_segments)
 {
-//std::cout << "calculate_E1_energy_limit::~calculate_E1_energy_limit()" << std::endl;
+    if (this->mode == charging)
+    {
+        this->calc_E1_limit = std::make_shared<calc_E1_energy_limit_charging>(inputs.are_battery_losses, inputs.inputs);
+    }
+    else
+    {
+        this->calc_E1_limit = std::make_shared<calc_E1_energy_limit_discharging>(inputs.are_battery_losses, inputs.inputs);
+    }
 
-	if(this->calc_E1_limit != NULL)
-	{
-		delete this->calc_E1_limit;
-		this->calc_E1_limit = NULL;
-	}
-}
-
-
-calculate_E1_energy_limit::calculate_E1_energy_limit(bool is_charging_not_discharging_, double max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments_,
-	                                                 calc_E1_energy_limit *calc_E1_limit_, poly_function_of_x& P2_vs_puVrms_, std::vector<line_segment>& P2_vs_soc_segments_)
-{
-//std::cout << "calculate_E1_energy_limit::calculate_E1_energy_limit(...)" << std::endl;
-	
 	double min_soc = 1000;
 	double max_soc = -1000;
 
-	for(line_segment x : P2_vs_soc_segments_)
+	for(line_segment& x : this->orig_P2_vs_soc_segments)
 	{
 		if(x.x_LB < min_soc) min_soc = x.x_LB;
 		if(x.x_UB > max_soc) max_soc = x.x_UB;
 	}
 
-	if(0 <= min_soc || max_soc <= 100)
-	{
-		std::string error_msg = "PROBLEM: The following rule (for the P2_vs_soc_segments datatype) has been broken: min_soc < 0 and 100 < max_soc.  Thrown from calculate_E1_energy_limit.";
-		std::cout << error_msg << std::endl;
-		throw(std::invalid_argument(error_msg));
-	}
+    ASSERT(min_soc < 0 || max_soc > 100, "PROBLEM: The following rule (for the P2_vs_soc_segments datatype) has been broken: min_soc < 0 and 100 < max_soc.");
 
 	//---------------------------------------------
 	
-	this->max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments = max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments_;
-	
-	this->calc_E1_limit = calc_E1_limit_;
-	this->P2_vs_puVrms = P2_vs_puVrms_;
-	this->is_charging_not_discharging = is_charging_not_discharging_;
-	
-	this->orig_P2_vs_soc_segments = P2_vs_soc_segments_;
 	std::sort(this->orig_P2_vs_soc_segments.begin(), this->orig_P2_vs_soc_segments.end());
 	
 	this->cur_P2_vs_soc_segments = this->orig_P2_vs_soc_segments;
@@ -639,7 +547,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(bool is_charging_not_discha
 	
 	this->prev_P2_limit_binding = true;
 	
-	if(this->is_charging_not_discharging)
+	if(this->mode == charging)
 		this->prev_P2_limit = -1000000000;
 	else
 		this->prev_P2_limit = 1000000000;
@@ -650,12 +558,12 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(bool is_charging_not_discha
 	
 	double val_0, val_1, val_tmp;
 	
-	for(line_segment seg: this->cur_P2_vs_soc_segments)
+	for(line_segment& seg: this->cur_P2_vs_soc_segments)
 	{
 		val_0 = seg.a*seg.x_LB + seg.b;
 		val_1 = seg.a*seg.x_UB + seg.b;
 		
-		if(this->is_charging_not_discharging)
+		if(this->mode == charging)
 		{	// max(val_0, val_1, this->max_abs_P2_in_P2_vs_soc_segments)
 			val_tmp = val_0 < val_1 ? val_1 : val_0;
 			this->max_abs_P2_in_P2_vs_soc_segments = val_tmp < this->max_abs_P2_in_P2_vs_soc_segments ? this->max_abs_P2_in_P2_vs_soc_segments : val_tmp;
@@ -668,91 +576,76 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(bool is_charging_not_discha
 	}
 }
 
-
-calculate_E1_energy_limit& calculate_E1_energy_limit::operator=(const calculate_E1_energy_limit& obj)
-{
-//std::cout << "calculate_E1_energy_limit::operator="  << std::endl;
-
-	this->calc_E1_limit = obj.calc_E1_limit->clone();  // Calling 'obj.calc_E1_limit->clone()' is why overloading the assignment operator is necessary.
-	this->P2_vs_puVrms = obj.P2_vs_puVrms;
-	this->orig_P2_vs_soc_segments = obj.orig_P2_vs_soc_segments;
-	this->cur_P2_vs_soc_segments = obj.cur_P2_vs_soc_segments;
-	this->prev_P2_limit = obj.prev_P2_limit;
-	this->max_abs_P2_in_P2_vs_soc_segments = obj.max_abs_P2_in_P2_vs_soc_segments;
-	this->max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments = obj.max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments;
-	this->is_charging_not_discharging = obj.is_charging_not_discharging;
-	this->prev_P2_limit_binding = obj.prev_P2_limit_binding;
-	
-	return *this;
-}
-
-
 void calculate_E1_energy_limit::apply_P2_limit_to_P2_vs_soc_segments(double P2_limit)
 {
-	double soc_0, soc_1, soc_tmp, P_0, P_1;
-    double m, b;
-    
+	double soc_0, soc_1, soc_tmp, P_0, P_1, a, b;
+    double x_LB, x_UB, m, c;
+
+    std::vector<line_segment> new_P2_vs_soc_segments;
 	for(int i=0; i<this->cur_P2_vs_soc_segments.size(); i++)
     {
-        soc_0 = this->cur_P2_vs_soc_segments[i].x_LB;
-        soc_1 = this->cur_P2_vs_soc_segments[i].x_UB;
-        m = this->cur_P2_vs_soc_segments[i].a;
-        b = this->cur_P2_vs_soc_segments[i].b;
-    
-        P_0 = m*soc_0 + b;
-        P_1 = m*soc_1 + b;
+        x_LB = this->cur_P2_vs_soc_segments.at(i).x_LB;     // SOC 0
+        x_UB = this->cur_P2_vs_soc_segments.at(i).x_UB;     // SOC 1
+        a = this->cur_P2_vs_soc_segments.at(i).a;
+        b = this->cur_P2_vs_soc_segments.at(i).b;
+
+        soc_0 = x_LB;
+        soc_1 = x_UB;
+        m = a;
+        c = b;
+
+        P_0 = m * soc_0 + c;        // y = mx + c;
+        P_1 = m * soc_1 + c;
         
-        if(this->is_charging_not_discharging)
+        if(this->mode == charging)
         {
 		    if(P2_limit <= P_0 && P2_limit <= P_1)
 		    {
-		        this->cur_P2_vs_soc_segments[i].a = 0;
-		        this->cur_P2_vs_soc_segments[i].b = P2_limit;        
+		        a = 0;
+		        b = P2_limit;
 		    }
 		    else if(P_0 < P2_limit && P2_limit < P_1)
 		    {
-		        soc_tmp = (P2_limit - b)/m;
-		        this->cur_P2_vs_soc_segments[i].x_UB = soc_tmp;
+		        soc_tmp = (P2_limit - c)/m;
+		        x_UB = soc_tmp;
 		        
-		        line_segment tmp_seg = {soc_tmp, soc_1, 0, P2_limit};
-		        this->cur_P2_vs_soc_segments.push_back(tmp_seg);
+                new_P2_vs_soc_segments.emplace_back(soc_tmp, soc_1, 0, P2_limit);
 		    }
 		    else if(P2_limit < P_0 && P_1 < P2_limit)
 		    {
-		        soc_tmp = (P2_limit - b)/m;
-		        this->cur_P2_vs_soc_segments[i].x_LB = soc_tmp;
+		        soc_tmp = (P2_limit - c)/m;
+		        x_LB = soc_tmp;
 		        
-		        line_segment tmp_seg = {soc_0, soc_tmp, 0, P2_limit};
-		        this->cur_P2_vs_soc_segments.push_back(tmp_seg);
+                new_P2_vs_soc_segments.emplace_back(soc_0, soc_tmp, 0, P2_limit);
 		    }
 		}
 		else
 		{
 			if(P_0 <= P2_limit && P_1 <= P2_limit)
 		    {
-		        this->cur_P2_vs_soc_segments[i].a = 0;
-		        this->cur_P2_vs_soc_segments[i].b = P2_limit;        
+		        a = 0;
+		        b = P2_limit;        
 		    }
 		    else if(P2_limit < P_0 && P_1 < P2_limit)
 		    {
-		        soc_tmp = (P2_limit - b)/m;
-		        this->cur_P2_vs_soc_segments[i].x_UB = soc_tmp;
+		        soc_tmp = (P2_limit - c)/m;
+		        x_UB = soc_tmp;
 		        
-		        line_segment tmp_seg = {soc_tmp, soc_1, 0, P2_limit};
-		        this->cur_P2_vs_soc_segments.push_back(tmp_seg);
+                new_P2_vs_soc_segments.emplace_back(soc_tmp, soc_1, 0, P2_limit);
 		    }
 		    else if(P_0 < P2_limit && P2_limit < P_1)
 		    {
-		        soc_tmp = (P2_limit - b)/m;
-		        this->cur_P2_vs_soc_segments[i].x_LB = soc_tmp;
-		        
-		        line_segment tmp_seg = {soc_0, soc_tmp, 0, P2_limit};
-		        this->cur_P2_vs_soc_segments.push_back(tmp_seg);
+		        soc_tmp = (P2_limit - c)/m;
+		        x_LB = soc_tmp;
+
+                new_P2_vs_soc_segments.emplace_back(soc_0, soc_tmp, 0, P2_limit);
 		    }
-		}		
+		}
+        new_P2_vs_soc_segments.emplace_back(x_LB, x_UB, a, b);
     }
     
-    std::sort(this->cur_P2_vs_soc_segments.begin(), this->cur_P2_vs_soc_segments.end());    
+    std::sort(new_P2_vs_soc_segments.begin(), new_P2_vs_soc_segments.end());
+    this->cur_P2_vs_soc_segments = new_P2_vs_soc_segments;
 }
 
 
@@ -763,7 +656,7 @@ void calculate_E1_energy_limit::get_E1_limit(double time_step_sec, double init_s
 	
 	P2_limit = this->P2_vs_puVrms.get_val(pu_Vrms);
 	
-	if(this->is_charging_not_discharging)
+	if(this->mode == charging)
 	{
 		P2_limit_binding = (P2_limit < this->max_abs_P2_in_P2_vs_soc_segments);
 	}
@@ -798,7 +691,8 @@ void calculate_E1_energy_limit::get_E1_limit(double time_step_sec, double init_s
 		this->prev_P2_limit_binding = P2_limit_binding;
 	}
 	
-	this->calc_E1_limit->get_E1_limit(time_step_sec, init_soc, target_soc, P2_vs_soc_segments_changed, &this->cur_P2_vs_soc_segments, E1_limit);
+    std::shared_ptr<std::vector<line_segment>> P2_vs_soc_ptr = std::make_shared<std::vector<line_segment> >(this->cur_P2_vs_soc_segments);
+	this->calc_E1_limit->get_E1_limit(time_step_sec, init_soc, target_soc, P2_vs_soc_segments_changed, P2_vs_soc_ptr, E1_limit);
 }
 
 

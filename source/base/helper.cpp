@@ -6,6 +6,145 @@
 #include <algorithm>	// sort()
 #include <sstream> 	  	// used to parse lines
 #include <ctime>		// time
+#include <vector>
+#include <string>
+
+std::string trim(const std::string& s)
+{
+    size_t first = s.find_first_not_of(" \t\n\r\f\v");
+    if (first == std::string::npos) {
+        return "";
+    }
+    size_t last = s.find_last_not_of(" \t\n\r\f\v");
+    return s.substr(first, last - first + 1);
+}
+
+std::vector<std::string> tokenize(std::string s, std::string delim)
+{
+    std::vector<std::string> tokenized_vec;
+
+    size_t start, end = -1 * delim.size();
+    do {
+        start = end + delim.size();
+        end = s.find(delim, start);
+        tokenized_vec.push_back(trim(s.substr(start, end - start)));
+    } while (end != -1);
+
+    return tokenized_vec;
+}
+
+//#############################################################################
+//                          linear_regression
+//#############################################################################
+
+
+lin_reg_slope_yinter  linear_regression::non_weighted(const std::vector<xy_point>& points)
+{
+    double sum_x, sum_xx, sum_y, sum_xy, x, y;
+
+    sum_x = 0;
+    sum_xx = 0;
+    sum_y = 0;
+    sum_xy = 0;
+
+    for (int i = 0; i < points.size(); i++)
+    {
+        x = points[i].x;
+        y = points[i].y;
+
+        sum_x += x;
+        sum_xx += x * x;
+        sum_y += y;
+        sum_xy += x * y;
+    }
+
+    //-------------------------------------------------------------------------------------------------
+    //            \  n     sum_x  \                          \ sum_xx  -sum_x \           \ sum_y  \
+    //  K = AtA = \               \    inv(K) = (1/det(K)) * \                \     Atb = \        \
+    //            \sum_x   sum_xx \                          \ -sum_x     n   \           \ sum_xy \
+    //-------------------------------------------------------------------------------------------------
+    //  u = inv(AtA)Atb = inv(K)Atb
+    //  K = AtA
+    //  t -> Transpose
+
+    double det, invK_11, invK_12, invK_21, invK_22, n;
+
+    n = points.size();
+    det = n * sum_xx - sum_x * sum_x;
+
+    invK_11 = sum_xx / det;
+    invK_12 = -sum_x / det;
+    invK_21 = invK_12;
+    invK_22 = n / det;
+
+    //------------------------------
+
+    double m, y_intercept;
+
+    y_intercept = invK_11 * sum_y + invK_12 * sum_xy;
+    m = invK_21 * sum_y + invK_22 * sum_xy;
+
+    //------------------------------
+
+    lin_reg_slope_yinter return_val = { m, y_intercept };
+    return return_val;
+}
+
+
+lin_reg_slope_yinter  linear_regression::weighted(const std::vector<xy_point>& points)
+{
+    double sum_w, sum_wx, sum_wxx, sum_wy, sum_wxy, x, y, w;
+
+    sum_w = 0;
+    sum_wx = 0;
+    sum_wxx = 0;
+    sum_wy = 0;
+    sum_wxy = 0;
+
+    for (int i = 0; i < points.size(); i++)
+    {
+        x = points[i].x;
+        y = points[i].y;
+        w = points[i].w;
+
+        sum_w += w;
+        sum_wx += w * x;
+        sum_wxx += w * x * x;
+        sum_wy += w * y;
+        sum_wxy += w * x * y;
+    }
+
+    //--------------------------------------------------------------------------------------------------------
+    //             \ sum_w    sum_wx \                          \ sum_wxx  -sum_wx \            \ sum_wy  \
+    //  K = AtCA = \                 \    inv(K) = (1/det(K)) * \                  \     AtCb = \         \
+    //             \sum_wx   sum_wxx \                          \ -sum_wx   sum_w  \            \ sum_wxy \
+    //--------------------------------------------------------------------------------------------------------    
+    //  u = inv(AtCA)AtCb
+    //  K = AtCA
+    //  t -> Transpose
+
+    double det, invK_11, invK_12, invK_21, invK_22;
+
+    det = sum_w * sum_wxx - sum_wx * sum_wx;
+
+    invK_11 = sum_wxx / det;
+    invK_12 = -sum_wx / det;
+    invK_21 = invK_12;
+    invK_22 = sum_w / det;
+
+    //------------------------------
+
+    double m, y_intercept;
+
+    y_intercept = invK_11 * sum_wy + invK_12 * sum_wxy;
+    m = invK_21 * sum_wy + invK_22 * sum_wxy;
+
+    //------------------------------
+
+    lin_reg_slope_yinter return_val = { m, y_intercept };
+    return return_val;
+}
+
 
 
 std::ostream& operator<<(std::ostream& out, line_segment& z)
@@ -84,7 +223,7 @@ double poly_function_of_x::get_val(double x)
             }
         	else
             {
-        		index = segments.size() - 1;
+        		index = (int)segments.size() - 1;
                 x = segments[index].x_UB;
             }
         }
@@ -196,7 +335,7 @@ LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
     for(int i=0; i<max_window_size; i++)
         this->raw_data.push_back(initial_raw_data_value);
     
-    LPF_parameters LPF_params;
+    LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
     LPF_params.window_type = Rectangular;
     update_LPF(LPF_params);

@@ -75,10 +75,7 @@ public:
     
     ES500_aggregator_charging_needs ES500_get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step);                
     void ES500_set_energy_setpoints(ES500_aggregator_e_step_setpoints pev_energy_setpoints);  
-    
-    // Not Implemented
-    //serialized_protobuf_obj ES500_get_charging_needs_protobuf(double unix_time_now, double unix_time_begining_of_next_agg_step);                
-    //void ES500_set_energy_setpoints_protobuf(py::bytes pev_energy_setpoints);
+
 };
 
 #endif

@@ -18,26 +18,16 @@ std::ostream& operator<<(std::ostream& out, battery_state& x)
 
 //========================================================
 
-battery::battery(double battery_size_kWh_, double init_soc, bool will_never_discharge_, double zero_slope_threashold_bat_eff_vs_P2_,
-			     line_segment& bat_eff_vs_P2_charging_, line_segment& bat_eff_vs_P2_discharging_, calculate_E1_energy_limit& get_E1_limits_charging_,
-	             calculate_E1_energy_limit& get_E1_limits_discharging_, integrate_X_through_time& get_next_P2_)
-{
-	this->battery_size_kWh = battery_size_kWh_;
-	this->soc_to_energy = battery_size_kWh/100;
-	this->soc = init_soc;
-	this->will_never_discharge = will_never_discharge_;
-	this->zero_slope_threashold_bat_eff_vs_P2 = zero_slope_threashold_bat_eff_vs_P2_;
-	
-	this->bat_eff_vs_P2_charging = bat_eff_vs_P2_charging_;
-	this->bat_eff_vs_P2_discharging = bat_eff_vs_P2_discharging_;
-	this->get_E1_limits_charging = get_E1_limits_charging_;
-	this->get_E1_limits_discharging = get_E1_limits_discharging_;
-	this->get_next_P2 = get_next_P2_;
-	
-	this->target_P2_kW = 0;
-    
-    this->print_debug_info = false;
-}
+battery::battery(const battery_inputs& inputs)
+	: get_E1_limits_charging(calculate_E1_energy_limit(inputs.E1_limits_charging_inputs)), 
+	get_E1_limits_discharging(calculate_E1_energy_limit(inputs.E1_limits_discharging_inputs)), 
+	get_next_P2(inputs.get_next_P2), battery_size_kWh(inputs.battery_size_kWh), 
+	soc(inputs.soc), soc_to_energy(this->battery_size_kWh / 100.0), target_P2_kW(0.0),
+	zero_slope_threashold_bat_eff_vs_P2(inputs.zero_slope_threashold_bat_eff_vs_P2), 
+	will_never_discharge(inputs.will_never_discharge), soc_of_full_battery(100), 
+	soc_of_empty_battery(0.0), bat_eff_vs_P2_charging(inputs.bat_eff_vs_P2_charging),
+	bat_eff_vs_P2_discharging(inputs.bat_eff_vs_P2_discharging) , max_E1_limit(0.0), min_E1_limit(0.0), 
+	print_debug_info(false) {}
 
 void battery::set_soc_of_full_and_empty_battery(double soc_of_full_battery_, double soc_of_empty_battery_)
 {

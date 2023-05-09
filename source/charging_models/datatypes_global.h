@@ -2,7 +2,10 @@
 #ifndef inl_datatypes_global_H
 #define inl_datatypes_global_H
 
-#include "datatypes_global_SE_EV_definitions.h"     // supply_equipment_enum, vehicle_enum
+//#include "datatypes_global_SE_EV_definitions.h"     // supply_equipment_enum, vehicle_enum
+
+#include "EV_characteristics.h"
+#include "EVSE_characteristics.h"
 
 #include <vector>
 #include <string>
@@ -319,7 +322,7 @@ struct charge_event_data
     int SE_group_id;
     SE_id_type  SE_id;
    	vehicle_id_type vehicle_id;
-    vehicle_enum vehicle_type;
+    EV_type EV;
     double arrival_unix_time;
     double departure_unix_time;
     double arrival_SOC;
@@ -329,7 +332,7 @@ struct charge_event_data
     control_strategy_enums control_enums;
 
     charge_event_data() {};
-    charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, vehicle_enum vehicle_type_,
+    charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, EV_type EV,
                       double arrival_unix_time_, double departure_unix_time_, double arrival_SOC_, double departure_SOC_, 
                       stop_charging_criteria stop_charge_, control_strategy_enums control_enums_);
     static std::string get_file_header();
@@ -382,14 +385,14 @@ struct SE_configuration
 {	
     int SE_group_id;
     SE_id_type  SE_id;
-	supply_equipment_enum  supply_equipment_type;
+	EVSE_type  supply_equipment_type;
     double lattitude;
     double longitude;
     grid_node_id_type grid_node_id;
     std::string location_type;
 
     SE_configuration() {};
-    SE_configuration(int SE_group_id_, SE_id_type SE_id_, supply_equipment_enum supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_);
+    SE_configuration(int SE_group_id_, SE_id_type SE_id_, EVSE_type supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_);
 };
 
 
@@ -462,7 +465,7 @@ struct active_CE
     double now_acPkW;  
     double now_acQkVAR;
     vehicle_id_type vehicle_id;
-    vehicle_enum vehicle_type;
+    EV_type vehicle_type;
 
     active_CE() {};
 };
@@ -513,7 +516,7 @@ enum ac_to_dc_converter_enum
 
 struct pev_batterySize_info
 {
-    vehicle_enum vehicle_type;
+    EV_type vehicle_type;
     double battery_size_kWh;
     double battery_size_with_stochastic_degredation_kWh;
 };
@@ -645,8 +648,8 @@ struct pev_charge_ramping
 struct pev_charge_ramping_workaround
 {
     pev_charge_ramping pev_charge_ramping_obj;
-    vehicle_enum pev_type;
-    supply_equipment_enum SE_type;    
+    EV_type pev_type;
+    EVSE_type SE_type;    
 };
 
 

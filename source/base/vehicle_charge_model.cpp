@@ -4,48 +4,20 @@
 #include <cmath>
 
 
-vehicle_charge_model::vehicle_charge_model(const charge_event_data& event, const battery& bat_, double soc_of_full_battery_)
+vehicle_charge_model::vehicle_charge_model(const charge_event_data& event, const battery_inputs& bat_inputs, double soc_of_full_battery)
+	: charge_event(event), charge_event_id(event.charge_event_id), EV(event.EV), arrival_unix_time(event.arrival_unix_time),
+	depart_unix_time(event.departure_unix_time), arrival_soc(event.arrival_SOC), requested_depart_soc(event.departure_SOC),
+	decision_metric(event.stop_charge.decision_metric), soc_mode(event.stop_charge.soc_mode), 
+	depart_time_mode(event.stop_charge.depart_time_mode), 
+	soc_block_charging_max_undershoot_percent(event.stop_charge.soc_block_charging_max_undershoot_percent), 
+	depart_time_block_charging_max_undershoot_percent(event.stop_charge.depart_time_block_charging_max_undershoot_percent),
+	bat(battery {bat_inputs}), soc_of_full_battery(soc_of_full_battery), charge_has_completed_(false), charge_needs_met_(false),
+	prev_soc_t1(this->arrival_soc), target_P2_kW(0.0)
 {
-	this->charge_event = event;
-    this->charge_event_id = event.charge_event_id;
-    this->vehicle_type = event.vehicle_type; 
-    this->arrival_unix_time = event.arrival_unix_time;
-    this->depart_unix_time = event.departure_unix_time;
-	this->arrival_soc = event.arrival_SOC;
-	this->requested_depart_soc = event.departure_SOC;
-    
-    this->decision_metric = event.stop_charge.decision_metric;
-	this->soc_mode = event.stop_charge.soc_mode;
-	this->depart_time_mode = event.stop_charge.depart_time_mode;
-	this->soc_block_charging_max_undershoot_percent = event.stop_charge.soc_block_charging_max_undershoot_percent;
-	this->depart_time_block_charging_max_undershoot_percent = event.stop_charge.depart_time_block_charging_max_undershoot_percent;
-
-/*
-if(this->charge_event_id < 1000)
-{
-std::cout << std::endl;
-std::cout << "this->decision_metric: " << this->decision_metric << std::endl;
-std::cout << "this->soc_mode: " << this->soc_mode << std::endl;
-std::cout << "this->depart_time_mode: " << this->depart_time_mode << std::endl;
-std::cout << "this->soc_block_charging_max_undershoot_percent: " << this->soc_block_charging_max_undershoot_percent << std::endl;
-std::cout << "this->depart_time_block_charging_max_undershoot_percent: " << this->depart_time_block_charging_max_undershoot_percent << std::endl;
-std::cout << std::endl;
-}
-//*/
-	//-------------------------
-
-	this->bat = bat_;
-	this->soc_of_full_battery = soc_of_full_battery_;
+	
     double soc_of_empty_battery = 100 - this->soc_of_full_battery;
     this->bat.set_soc_of_full_and_empty_battery(this->soc_of_full_battery,  soc_of_empty_battery);
-    	
-	this->charge_has_completed_ = false;
-	this->charge_needs_met_ = false;
-	
-	this->prev_soc_t1 = this->arrival_soc;
-	
-	this->target_P2_kW = 0;
-	this->bat.set_target_P2_kW(this->target_P2_kW);
+   	this->bat.set_target_P2_kW(this->target_P2_kW);
 
 	//-------------------------
 	
@@ -53,34 +25,6 @@ std::cout << std::endl;
 	this->depart_soc = (this->requested_depart_soc < this->soc_of_full_battery) ? this->requested_depart_soc : this->soc_of_full_battery;
 }
 
-/*
-vehicle_charge_model::vehicle_charge_model(const vehicle_charge_model& obj)
-{
-	this->charge_event = obj.charge_event;
-	this->vehicle_type = obj.vehicle_type;
-	this->arrival_unix_time = obj.arrival_unix_time;
-	this->depart_unix_time = obj.depart_unix_time;
-	this->arrival_soc = obj.arrival_soc;
-	this->requested_depart_soc = obj.requested_depart_soc;
-	this->charge_event_id = obj.charge_event_id;
-	this->decision_metric = obj.decision_metric;
-	this->soc_mode = obj.soc_mode;
-	this->depart_time_mode = obj.depart_time_mode;
-	this->soc_block_charging_max_undershoot_percent = obj.soc_block_charging_max_undershoot_percent;
-	this->depart_time_block_charging_max_undershoot_percent = obj.depart_time_block_charging_max_undershoot_percent;
-	
-	this->stop_charging_at_target_soc = obj.stop_charging_at_target_soc;
-	this->depart_soc = obj.depart_soc;
-	
-	this->bat = obj.bat;
-	
-	this->target_P2_kW = obj.target_P2_kW;
-	this->soc_of_full_battery = obj.soc_of_full_battery;
-	this->prev_soc_t1 = obj.prev_soc_t1;
-	this->charge_has_completed_ = obj.charge_has_completed_;
-	this->charge_needs_met_ = obj.charge_needs_met_;
-}
-*/
 
 void vehicle_charge_model::set_target_P2_kW(double target_P2_kW_) {this->target_P2_kW = target_P2_kW_;}
 

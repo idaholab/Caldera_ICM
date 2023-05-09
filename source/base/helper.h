@@ -1,4 +1,3 @@
-
 #ifndef inl_helper_H
 #define inl_helper_H
 
@@ -10,16 +9,71 @@
 #include <cmath>        // floor, abs
 #include <random>
 
+#include <vector>
+#include <string>
+
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator() (const std::pair<T1, T2>& pair) const {
+        return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+    }
+};
+
+#ifndef NDEBUG
+#   define ASSERT(condition, message) \
+    do { \
+        if (! (condition)) { \
+            std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
+                      << " line " << __LINE__ << ": " << message << std::endl; \
+            std::terminate(); \
+        } \
+    } while (false)
+#else
+#   define ASSERT(condition, message) do { } while (false)
+#endif
+
+std::vector<std::string> tokenize(std::string s, std::string delim = ",");
+
+
+//#############################################################################
+//                          linear_regression
+//#############################################################################
+
+struct xy_point
+{
+    const double x;
+    const double y;
+    const double w;
+
+    xy_point(const double& x, const double& y, const double& w) : x(x), y(y), w(w) {}
+};
+
+struct lin_reg_slope_yinter
+{
+    const double m;
+    const double b;
+
+    lin_reg_slope_yinter(const double& m, const double& b) : m(m), b(b) {}
+};
+
+class linear_regression
+{
+public:
+    static lin_reg_slope_yinter  non_weighted(const std::vector<xy_point>& points);
+    static lin_reg_slope_yinter  weighted(const std::vector<xy_point>& points);
+};
+
 struct line_segment
 {	  // y = a*x + b
 	double x_LB;
     double x_UB;
-	double a;
-	double b;
+    double a;
+    double b;
    
-   	double y_UB() const {return this->a*this->x_UB + this->b;}
-   	double y_LB() const {return this->a*this->x_LB + this->b;}
-    double y(double x) const {return this->a*x + this->b;}
+   	const double y_UB() const {return this->a*this->x_UB + this->b;}
+    const double y_LB() const {return this->a*this->x_LB + this->b;}
+    const double y(const double& x) const {return this->a*x + this->b;}
     
    	bool operator<(const line_segment& rhs) const
    	{
@@ -30,6 +84,9 @@ struct line_segment
    	{
    		return this->x_LB < rhs.x_LB;
    	}
+
+    line_segment(const double& x_LB, const double& x_UB, const double& a, const double& b)
+        : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
 };
 std::ostream& operator<<(std::ostream& out, line_segment& x);
 
@@ -57,6 +114,10 @@ struct poly_segment
     double c;
     double d;
     double e;
+
+    poly_segment::poly_segment(const double& x_LB, const double& x_UB, const poly_degree& degree, const double& a,
+        const double& b, const double& c, const double& d, const double& e)
+        : x_LB(x_LB), x_UB(x_UB), degree(degree), a(a), b(b), c(c), d(d), e(e) {}
     
     bool operator<(const poly_segment &rhs) const
     {

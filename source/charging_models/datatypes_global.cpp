@@ -233,7 +233,7 @@ std::string stop_charging_criteria::get_file_header()
 
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x)
 {
-	out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
+	out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.EV << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
 	return out;
 }
 
@@ -264,7 +264,7 @@ stop_charging_criteria::stop_charging_criteria(stop_charging_decision_metric dec
 }
 
 
-charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, vehicle_enum vehicle_type_,
+charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, EV_type EV,
                                      double arrival_unix_time_, double departure_unix_time_, double arrival_SOC_, double departure_SOC_, 
                                      stop_charging_criteria stop_charge_, control_strategy_enums control_enums_)
 { 
@@ -272,7 +272,7 @@ charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SE_
     this->SE_group_id = SE_group_id_;
     this->SE_id = SE_id_;
     this->vehicle_id = vehicle_id_;
-    this->vehicle_type = vehicle_type_;
+    this->EV = EV;
     this->arrival_unix_time = arrival_unix_time_;
     this->departure_unix_time = departure_unix_time_;
     this->arrival_SOC = arrival_SOC_;
@@ -293,7 +293,7 @@ SE_group_charge_event_data::SE_group_charge_event_data(int SE_group_id_, std::ve
 //                       SE_group Configuration
 //==================================================================
 
-SE_configuration::SE_configuration(int SE_group_id_, SE_id_type SE_id_, supply_equipment_enum supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_)
+SE_configuration::SE_configuration(int SE_group_id_, SE_id_type SE_id_, EVSE_type supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_)
 {
     this->SE_group_id = SE_group_id_;
     this->SE_id = SE_id_;

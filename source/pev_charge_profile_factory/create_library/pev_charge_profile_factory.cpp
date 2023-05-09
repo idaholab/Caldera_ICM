@@ -217,15 +217,15 @@ void create_dcPkW_from_soc::get_charging_dcfc_charge_profile(double bat_energy_k
     double soc_0, soc_1, soc_tmp, P_0, P_1, w, P_tmp;
     double m, b, m1, b1;
     
-    if(dc_current_limit >= curves[0].get_current_rate_amps(bat_capacity_Ah_1C))
+    if(dc_current_limit >= this->curves[0].get_current_rate_amps(bat_capacity_Ah_1C))
     {
         std::vector<Ppu_vs_soc_point> points;
-        points = curves[0].get_points();
+        points = this->curves[0].get_points();
                        
         for(int i=0; i<points.size()-1; i++)
         {
             m = (points[i].P_pu - points[i+1].P_pu) / (points[i].soc - points[i+1].soc);
-            b = points[i].P_pu - m * points[i].soc;
+            b = points[i].P_pu - m * points[i].soc;     
             
             line_segment tmp_seg = {points[i].soc, points[i+1].soc, m, b};            
             dcPkW_from_soc_input.push_back(tmp_seg);
@@ -239,24 +239,24 @@ void create_dcPkW_from_soc::get_charging_dcfc_charge_profile(double bat_energy_k
         
         Ppu_vs_soc_curve upper_curve, lower_curve;
         
-        for(int i=1; i<curves.size(); i++)
+        for(int i=1; i<this->curves.size(); i++)
         {
-            if(curves[i].get_current_rate_amps(bat_capacity_Ah_1C) < dc_current_limit)
+            if(this->curves[i].get_current_rate_amps(bat_capacity_Ah_1C) < dc_current_limit)
             {
-                upper_curve = curves[i-1];
-                lower_curve = curves[i];
+                upper_curve = this->curves[i-1];      // curves ar getting copied
+                lower_curve = this->curves[i];
                 break;
             }
         }
 
-        //--------------------------------------    
+        //--------------------------------------
         //       Interpolate Curves
         //--------------------------------------
         
         // interpolated_val = weight_factor*high_val  +  (1 - weight_factor)*low_val;
         double weight_factor = (dc_current_limit - lower_curve.get_current_rate_amps(bat_capacity_Ah_1C)) / (upper_curve.get_current_rate_amps(bat_capacity_Ah_1C) - lower_curve.get_current_rate_amps(bat_capacity_Ah_1C));
         
-        std::vector<Ppu_vs_soc_point> upper_points = upper_curve.get_points();
+        std::vector<Ppu_vs_soc_point> upper_points = upper_curve.get_points();      // get points return const reference so this copy is alright
         std::vector<Ppu_vs_soc_point> lower_points = lower_curve.get_points();
         
         //----------------- 

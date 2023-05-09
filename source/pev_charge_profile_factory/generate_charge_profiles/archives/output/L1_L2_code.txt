@@ -1,0 +1,50 @@
+else if(EV_enum == ld_50kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 97.55911529426994, 0.0, 15.8976});
+    P2_vs_soc_segments.push_back({97.55911529426994, 100.1, -5.219298245875, 525.0877193245});
+    zero_slope_threashold_P2_vs_soc = 4.6973684212875;
+    // min_non_zero_slope = 5.219298245875
+}
+else if(EV_enum == ld_100kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 99.0805541670789, 0.0, 15.8976});
+    P2_vs_soc_segments.push_back({99.0805541670789, 100.1, -10.428157891083332, 1049.1252627903334});
+    zero_slope_threashold_P2_vs_soc = 9.385342101974999;
+    // min_non_zero_slope = 10.428157891083332
+}
+else if(EV_enum == md_200kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}
+else if(EV_enum == hd_300kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}
+else if(EV_enum == hd_400kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}
+else if(EV_enum == hd_600kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}
+else if(EV_enum == hd_800kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}
+else if(EV_enum == hd_1000kWh)
+{
+    P2_vs_soc_segments.push_back({-0.1, 100.1, 0.0, 15.8976});
+    zero_slope_threashold_P2_vs_soc = 900000.0;
+    // min_non_zero_slope = 1000000
+}

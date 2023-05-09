@@ -25,6 +25,30 @@ struct battery_state
 std::ostream& operator<<(std::ostream& out, battery_state& x);
 
 
+struct battery_inputs
+{
+	const calculate_E1_energy_limit_inputs E1_limits_charging_inputs;
+	const calculate_E1_energy_limit_inputs E1_limits_discharging_inputs;
+	const integrate_X_through_time get_next_P2;
+	const double battery_size_kWh;
+	const double soc;
+	const double zero_slope_threashold_bat_eff_vs_P2; 
+	const bool will_never_discharge;
+	const line_segment bat_eff_vs_P2_charging;
+	const line_segment bat_eff_vs_P2_discharging;
+
+	battery_inputs(const calculate_E1_energy_limit_inputs& E1_limits_charging_inputs,
+		const calculate_E1_energy_limit_inputs& E1_limits_discharging_inputs,
+		const integrate_X_through_time& get_next_P2, const double& battery_size_kWh, const double& soc,
+		const double& zero_slope_threashold_bat_eff_vs_P2, const bool& will_never_discharge,
+		const line_segment& bat_eff_vs_P2_charging, const line_segment& bat_eff_vs_P2_discharging)
+		: E1_limits_charging_inputs(E1_limits_charging_inputs), E1_limits_discharging_inputs(E1_limits_discharging_inputs),
+		get_next_P2(get_next_P2), battery_size_kWh(battery_size_kWh), soc(soc),
+		zero_slope_threashold_bat_eff_vs_P2(zero_slope_threashold_bat_eff_vs_P2),
+		will_never_discharge(will_never_discharge), bat_eff_vs_P2_charging(bat_eff_vs_P2_charging),
+		bat_eff_vs_P2_discharging(bat_eff_vs_P2_discharging) {}
+};
+
 class battery
 {
 private:
@@ -45,11 +69,9 @@ public:
 	double max_E1_limit, min_E1_limit;
     bool print_debug_info;
 
-	battery() {};
-	battery(double battery_size_kWh_, double init_soc, bool will_never_discharge_, double zero_slope_threashold_bat_eff_vs_P2_,
-			line_segment& bat_eff_vs_P2_charging_, line_segment& bat_eff_vs_P2_discharging_, calculate_E1_energy_limit& get_E1_limits_charging_,
-	        calculate_E1_energy_limit& get_E1_limits_discharging_, integrate_X_through_time& get_next_P2_);
-    void set_soc_of_full_and_empty_battery(double soc_of_full_battery_, double soc_of_empty_battery_);
+	battery(const battery_inputs& inputs);
+
+	void set_soc_of_full_and_empty_battery(double soc_of_full_battery_, double soc_of_empty_battery_);
     
     // This should only be used for debugging purposes or maybe by battery_factory
     void set_P2_kW(double P2_kW);
