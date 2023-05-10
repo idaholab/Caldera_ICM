@@ -36,10 +36,11 @@ struct SOC_vs_P2
     const std::vector<line_segment> curve;
     const double zero_slope_threashold;
 
-    SOC_vs_P2(const std::vector<line_segment>& curve, const double& zero_slope_threashold)
-        : curve(curve), zero_slope_threashold(zero_slope_threashold) {}
+    SOC_vs_P2(const std::vector<line_segment>& curve,
+              const double& zero_slope_threashold);
 };
 
+typedef std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves_grouping;
 
 class create_dcPkW_from_soc
 {
@@ -47,21 +48,26 @@ private:
     
     const EV_EVSE_inventory& inventory;
 
-    const std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves;
+    // all the curves are sorted in descending order by c_rate
+    const curves_grouping curves;
     const battery_charge_mode mode;
 
     const double compute_min_non_zero_slope(const std::vector<line_segment>& charge_profile) const;
     const double compute_zero_slope_threashold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const;
 
-    const SOC_vs_P2 get_charging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const;
-    const SOC_vs_P2 get_discharging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const;
+    const SOC_vs_P2 get_charging_dcfc_charge_profile(const EV_type& EV, 
+                                                     const EVSE_type& EVSE) const;
+    const SOC_vs_P2 get_discharging_dcfc_charge_profile(const EV_type& EV, 
+                                                        const EVSE_type& EVSE) const;
 
 public:
     create_dcPkW_from_soc(const EV_EVSE_inventory& inventory, 
-        const std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> >& curves, 
-        const battery_charge_mode& mode);
+                          const curves_grouping& curves,
+                          const battery_charge_mode& mode);
 
-    const SOC_vs_P2 get_dcfc_charge_profile(const battery_charge_mode& mode, const EV_type& EV, const EVSE_type& EVSE) const;
+    const SOC_vs_P2 get_dcfc_charge_profile(const battery_charge_mode& mode, 
+                                            const EV_type& EV, 
+                                            const EVSE_type& EVSE) const;
     const SOC_vs_P2 get_L1_or_L2_charge_profile(const EV_type& EV) const;
 };
 

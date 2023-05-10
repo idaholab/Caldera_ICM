@@ -3,34 +3,56 @@
 
 #include <cmath>
 
+//###########################################
+//          vehicle_charge_model
+//###########################################
 
-vehicle_charge_model::vehicle_charge_model(const charge_event_data& event, const battery_inputs& bat_inputs, double soc_of_full_battery)
-	: charge_event(event), charge_event_id(event.charge_event_id), EV(event.EV), arrival_unix_time(event.arrival_unix_time),
-	depart_unix_time(event.departure_unix_time), arrival_soc(event.arrival_SOC), requested_depart_soc(event.departure_SOC),
-	decision_metric(event.stop_charge.decision_metric), soc_mode(event.stop_charge.soc_mode), 
-	depart_time_mode(event.stop_charge.depart_time_mode), 
-	soc_block_charging_max_undershoot_percent(event.stop_charge.soc_block_charging_max_undershoot_percent), 
-	depart_time_block_charging_max_undershoot_percent(event.stop_charge.depart_time_block_charging_max_undershoot_percent),
-	bat(battery {bat_inputs}), soc_of_full_battery(soc_of_full_battery), charge_has_completed_(false), charge_needs_met_(false),
-	prev_soc_t1(this->arrival_soc), target_P2_kW(0.0)
+vehicle_charge_model::vehicle_charge_model(const vehicle_charge_model_inputs& inputs)
+	: charge_event{ inputs.CE },
+	charge_event_id{ inputs.CE.charge_event_id },
+	EV{ inputs.EV },
+	arrival_unix_time{ inputs.CE.arrival_unix_time },
+	depart_unix_time{ inputs.CE.departure_unix_time },
+	arrival_soc{ inputs.CE.arrival_SOC },
+	requested_depart_soc{ inputs.CE.departure_SOC },
+	decision_metric{ inputs.CE.stop_charge.decision_metric },
+	soc_mode{ inputs.CE.stop_charge.soc_mode },
+	depart_time_mode{ inputs.CE.stop_charge.depart_time_mode },
+	soc_block_charging_max_undershoot_percent{ inputs.CE.stop_charge.soc_block_charging_max_undershoot_percent },
+	depart_time_block_charging_max_undershoot_percent{ inputs.CE.stop_charge.depart_time_block_charging_max_undershoot_percent },
+	bat{ battery{inputs} },
+	soc_of_full_battery{ 99.8 },
+	charge_has_completed_{ false },
+	charge_needs_met_{ false },
+	prev_soc_t1{ this->arrival_soc },
+	target_P2_kW{ 0.0 }
 {
-	
-    double soc_of_empty_battery = 100 - this->soc_of_full_battery;
-    this->bat.set_soc_of_full_and_empty_battery(this->soc_of_full_battery,  soc_of_empty_battery);
-   	this->bat.set_target_P2_kW(this->target_P2_kW);
+
+	double soc_of_empty_battery = 100 - this->soc_of_full_battery;
+	this->bat.set_soc_of_full_and_empty_battery(this->soc_of_full_battery, soc_of_empty_battery);
+	this->bat.set_target_P2_kW(this->target_P2_kW);
 
 	//-------------------------
-	
+
 	this->stop_charging_at_target_soc = (this->soc_mode == target_charging && this->decision_metric != stop_charging_using_depart_time);
 	this->depart_soc = (this->requested_depart_soc < this->soc_of_full_battery) ? this->requested_depart_soc : this->soc_of_full_battery;
 }
 
 
-void vehicle_charge_model::set_target_P2_kW(double target_P2_kW_) {this->target_P2_kW = target_P2_kW_;}
+void vehicle_charge_model::set_target_P2_kW(double target_P2_kW_) 
+{ 
+	this->target_P2_kW = target_P2_kW_; 
+}
 
-double vehicle_charge_model::get_target_P2_kW() {return this->target_P2_kW;}
+double vehicle_charge_model::get_target_P2_kW() 
+{
+	return this->target_P2_kW;
+}
 
-bool vehicle_charge_model::charge_has_completed() {return this->charge_has_completed_;}
+bool vehicle_charge_model::charge_has_completed() 
+{
+	return this->charge_has_completed_;
+}
 
 
 bool vehicle_charge_model::pev_has_arrived_at_SE(double now_unix_time)
@@ -57,9 +79,13 @@ void vehicle_charge_model::get_next(double prev_unix_time, double now_unix_time,
 	if(this->arrival_unix_time <= now_unix_time)
 	{
 		if(this->charge_needs_met_ || this->soc_of_full_battery <= this->prev_soc_t1)
+		{
 			this->bat.set_target_P2_kW(0);
+		}
 		else
+		{
 			this->bat.set_target_P2_kW(this->target_P2_kW);
+		}
 	}
 	else
     {
@@ -150,5 +176,4 @@ if(this->charge_event_id == 1214)
   }
 }
 */
-
 }

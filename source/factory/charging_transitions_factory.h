@@ -25,8 +25,8 @@ struct charging_transitions
 	const EV_EVSE_charging_transitions charging_transitions_by_custom_EV_EVSE;
 
 	charging_transitions(const EVSE_level_charging_transitions& charging_transitions_by_EVSE_level,
-		const EV_charging_transitions& charging_transitions_by_custom_EV,
-		const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE);
+						 const EV_charging_transitions& charging_transitions_by_custom_EV,
+						 const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE);
 };
 
 
@@ -45,9 +45,12 @@ private:
 
 
 public:
-	charging_transitions_factory(const EV_EVSE_inventory& inventory, const EV_ramping_map& custom_EV_ramping, const EV_EVSE_ramping_map& custom_EV_EVSE_ramping);
+	charging_transitions_factory(const EV_EVSE_inventory& inventory, 
+								 const EV_ramping_map& custom_EV_ramping, 
+								 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping);
 
-	const integrate_X_through_time& get_charging_transitions(const EV_type& EV, const EVSE_type& EVSE) const;
+	const integrate_X_through_time& get_charging_transitions(const EV_type& EV, 
+															 const EVSE_type& EVSE) const;
 };
 
 #endif

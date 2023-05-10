@@ -4,7 +4,11 @@
 //              puVrms_vs_P2_factory
 //###########################################
 
-puVrms_vs_P2_factory::puVrms_vs_P2_factory(const EV_EVSE_inventory& inventory) : inventory(inventory), puVrms_vs_P2_curves(this->load_puVrms_vs_P2_curves()) {}
+puVrms_vs_P2_factory::puVrms_vs_P2_factory(const EV_EVSE_inventory& inventory) 
+    : inventory{ inventory }, 
+    puVrms_vs_P2_curves{ this->load_puVrms_vs_P2_curves() }
+{
+}
 
 
 const std::unordered_map<EVSE_level, std::map<puVrms, P2> > puVrms_vs_P2_factory::load_puVrms_vs_P2_curves()
@@ -53,10 +57,11 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > puVrms_vs_P2_factory
         }
         return curve;
     }());
-    return std::move(data);
+    return data;
 }
 
-const poly_function_of_x puVrms_vs_P2_factory::get_puVrms_vs_P2(const EVSE_type& EVSE, const double& SE_P2_limit_atNominalV_kW) const
+const poly_function_of_x puVrms_vs_P2_factory::get_puVrms_vs_P2(const EVSE_type& EVSE, 
+                                                                const double& SE_P2_limit_atNominalV_kW) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 
@@ -100,7 +105,7 @@ const poly_function_of_x puVrms_vs_P2_factory::get_puVrms_vs_P2(const EVSE_type&
         double x_tolerance = 0.0001;
         bool take_abs_of_x = false;
         bool if_x_is_out_of_bounds_print_warning_message = true;
-        return poly_function_of_x(x_tolerance, take_abs_of_x, if_x_is_out_of_bounds_print_warning_message, segments, "P2_vs_puVrms");
+        return poly_function_of_x{ x_tolerance, take_abs_of_x, if_x_is_out_of_bounds_print_warning_message, segments, "P2_vs_puVrms" };
     }();
 
     return puVrms_vs_P2;

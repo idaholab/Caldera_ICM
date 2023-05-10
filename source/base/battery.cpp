@@ -3,6 +3,9 @@
 
 #include <cmath>
 
+//###########################################
+//          battery_state
+//###########################################
 
 std::string battery_state::get_file_header()
 {
@@ -16,33 +19,67 @@ std::ostream& operator<<(std::ostream& out, battery_state& x)
 	return out;
 }
 
-//========================================================
+//###########################################
+//          battery
+//###########################################
 
-battery::battery(const battery_inputs& inputs)
-	: get_E1_limits_charging(calculate_E1_energy_limit(inputs.E1_limits_charging_inputs)), 
-	get_E1_limits_discharging(calculate_E1_energy_limit(inputs.E1_limits_discharging_inputs)), 
-	get_next_P2(inputs.get_next_P2), battery_size_kWh(inputs.battery_size_kWh), 
-	soc(inputs.soc), soc_to_energy(this->battery_size_kWh / 100.0), target_P2_kW(0.0),
-	zero_slope_threashold_bat_eff_vs_P2(inputs.zero_slope_threashold_bat_eff_vs_P2), 
-	will_never_discharge(inputs.will_never_discharge), soc_of_full_battery(100), 
-	soc_of_empty_battery(0.0), bat_eff_vs_P2_charging(inputs.bat_eff_vs_P2_charging),
-	bat_eff_vs_P2_discharging(inputs.bat_eff_vs_P2_discharging) , max_E1_limit(0.0), min_E1_limit(0.0), 
-	print_debug_info(false) {}
+battery::battery(const vehicle_charge_model_inputs& inputs)
+	: get_E1_limits_charging{ calculate_E1_energy_limit{ charging, inputs } },
+	get_E1_limits_discharging{ calculate_E1_energy_limit{ discharging, inputs } },
+	get_next_P2{ inputs.CT_factory.get_charging_transitions(inputs.EV, inputs.EVSE) },
+	battery_size_kWh{ inputs.battery_size_kWh },
+	soc{ inputs.CE.arrival_SOC },
+	soc_to_energy{ this->battery_size_kWh / 100.0 },
+	target_P2_kW{ 0.0 },
+	zero_slope_threashold_bat_eff_vs_P2{ this->get_zero_slope_threashold_bat_eff_vs_P2(inputs) },
+	will_never_discharge{ true },
+	soc_of_full_battery{ 100 },
+	soc_of_empty_battery{ 0.0 },
+	bat_eff_vs_P2_charging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).curve },
+	bat_eff_vs_P2_discharging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).curve },
+	max_E1_limit{ 0.0 },
+	min_E1_limit{ 0.0 },
+	print_debug_info{ false }
+{
+}
 
-void battery::set_soc_of_full_and_empty_battery(double soc_of_full_battery_, double soc_of_empty_battery_)
+double battery::get_zero_slope_threashold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs)
+{
+	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).zero_slope_threashold;
+	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).zero_slope_threashold;
+
+	return (charging_zst < discharging_zst) ? charging_zst : discharging_zst;
+}
+
+void battery::set_soc_of_full_and_empty_battery(double soc_of_full_battery_, 
+												double soc_of_empty_battery_)
 {
     this->soc_of_full_battery = soc_of_full_battery_;
     this->soc_of_empty_battery = soc_of_empty_battery_;
 }
 
-void battery::set_P2_kW(double P2_kW) {this->get_next_P2.set_init_state(P2_kW);}
+void battery::set_P2_kW(double P2_kW) 
+{
+	this->get_next_P2.set_init_state(P2_kW);
+}
 
-void battery::set_target_P2_kW(double target_P2_kW_) {this->target_P2_kW = target_P2_kW_;}
+void battery::set_target_P2_kW(double target_P2_kW_) 
+{
+	this->target_P2_kW = target_P2_kW_;
+}
 
-double battery::get_target_P2_kW() {return this->target_P2_kW;}
+double battery::get_target_P2_kW() 
+{
+	return this->target_P2_kW;
+}
 
 
-void battery::get_next(double prev_unix_time, double now_unix_time, double target_soc, double pu_Vrms, bool stop_charging_at_target_soc, battery_state& return_val)
+void battery::get_next(double prev_unix_time, 
+					   double now_unix_time, 
+					   double target_soc, 
+					   double pu_Vrms, 
+					   bool stop_charging_at_target_soc, 
+					   battery_state& return_val)
 {
 	double time_step_sec, time_step_hrs;
 	
@@ -223,7 +260,3 @@ if(this->print_debug_info)
 	return_val.E1_energy_to_target_soc_kWh = (this->target_P2_kW == 0) ? 0 :(this->target_P2_kW >= 0) ? E1_limit_UB.E1_energy_to_target_soc_kWh : E1_limit_LB.E1_energy_to_target_soc_kWh;
 	return_val.min_time_to_target_soc_hrs = (this->target_P2_kW == 0) ? -1 :(this->target_P2_kW >= 0) ? E1_limit_UB.min_time_to_target_soc_hrs : E1_limit_LB.min_time_to_target_soc_hrs;
 }
-
-
-
-

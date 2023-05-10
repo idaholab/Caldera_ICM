@@ -1,6 +1,17 @@
 #include "SOC_vs_P2_factory.h"
 #include <fstream>
 
+//##########################################################
+//                      SOC_vs_P2
+//##########################################################
+
+SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
+                     const double& zero_slope_threashold)
+    : curve{ curve }, 
+    zero_slope_threashold{ zero_slope_threashold }
+{
+}
+
 
 //##########################################################
 //                      create_dcPkW_from_soc
@@ -8,9 +19,13 @@
 
 
 create_dcPkW_from_soc::create_dcPkW_from_soc(const EV_EVSE_inventory& inventory, 
-    const std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> >& curves,
-    const battery_charge_mode& mode) 
-    : inventory(inventory), curves(curves), mode(mode) {}
+                                             const curves_grouping& curves,
+                                             const battery_charge_mode& mode) 
+    : inventory{ inventory }, 
+    curves{ curves }, 
+    mode{ mode }
+{
+}
 
 const double create_dcPkW_from_soc::compute_min_non_zero_slope(const std::vector<line_segment>& charge_profile) const
 {
@@ -102,11 +117,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 
     const double zero_slope_threashold_P2_vs_soc = this->compute_zero_slope_threashold_P2_vs_soc(charge_profile);
     
-    return SOC_vs_P2(charge_profile, zero_slope_threashold_P2_vs_soc);
+    return SOC_vs_P2{ charge_profile, zero_slope_threashold_P2_vs_soc };
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_charge_mode& mode, const EV_type& EV, const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_charge_mode& mode, 
+                                                               const EV_type& EV, 
+                                                               const EVSE_type& EVSE) const
 {
     if (mode == charging)
     {
@@ -123,7 +140,8 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_cha
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV_type& EV, 
+                                                                        const EVSE_type& EVSE) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
@@ -272,6 +290,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
                 P_1 = weight_factor * P_tmp + (1 - weight_factor) * next_lower_power;
                 lower_ptr++;
                 update_lower();
+            }
+            else
+            {
+                ASSERT(false, "ERROR: Not expecting this block to be active");
             }
 
             //-------------------------------
@@ -426,7 +448,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
 
     //constraints = constraints_;
 
-    return SOC_vs_P2(dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc);
+    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc };
 }
 
 const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const
@@ -577,6 +599,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
                 P_1 = weight_factor * P_tmp + (1 - weight_factor) * next_lower_power;
                 lower_ptr++;
                 update_lower();
+            }
+            else
+            {
+                ASSERT(false, "ERROR: Not expecting this block to be active");
             }
 
             //-------------------------------
@@ -729,7 +755,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
     constraints_.push_back(constraint_B);
 
     //constraints = constraints_;
-    return SOC_vs_P2(dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc);
+    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc };
 }
 
 
@@ -738,12 +764,19 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 //##########################################################
 
 
-SOC_vs_P2_factory::SOC_vs_P2_factory(const EV_EVSE_inventory& inventory) : inventory(inventory), 
-    LMO_charge(this->load_LMO_charge()), NMC_charge(this->load_NMC_charge()), LTO_charge(this->load_LTO_charge()), 
-    L1_L2_curves(this->load_L1_L2_curves()), DCFC_curves(this->load_DCFC_curves()) {}
+SOC_vs_P2_factory::SOC_vs_P2_factory(const EV_EVSE_inventory& inventory) 
+    : inventory{ inventory },
+    LMO_charge{ this->load_LMO_charge() },
+    NMC_charge{ this->load_NMC_charge() },
+    LTO_charge{ this->load_LTO_charge() },
+    L1_L2_curves{ this->load_L1_L2_curves() },
+    DCFC_curves{ this->load_DCFC_curves() }
+{
+}
 
 
-const SOC_vs_P2& SOC_vs_P2_factory::get_SOC_vs_P2_curves(const EV_type& EV, const EVSE_type& EVSE) const
+const SOC_vs_P2& SOC_vs_P2_factory::get_SOC_vs_P2_curves(const EV_type& EV, 
+                                                         const EVSE_type& EVSE) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 
@@ -781,7 +814,7 @@ const SOC_vs_P2& SOC_vs_P2_factory::get_SOC_vs_P2_curves(const EV_type& EV, cons
 const create_dcPkW_from_soc SOC_vs_P2_factory::load_LMO_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
-    std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves;
+    curves_grouping curves;
 
     double C_rate;
 
@@ -841,14 +874,14 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_LMO_charge()
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LMO_charge(this->inventory, curves, charging);
+    const create_dcPkW_from_soc LMO_charge{ this->inventory, curves, charging };
     return LMO_charge;
 }
 
 const create_dcPkW_from_soc SOC_vs_P2_factory::load_NMC_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
-    std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves;
+    curves_grouping curves;
 
     double C_rate;
 
@@ -910,14 +943,14 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_NMC_charge()
 
     //------------------------------------
 
-    const create_dcPkW_from_soc NMC_charge(this->inventory, curves, charging);
+    const create_dcPkW_from_soc NMC_charge{ this->inventory, curves, charging };
     return NMC_charge;
 }
 
 const create_dcPkW_from_soc SOC_vs_P2_factory::load_LTO_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
-    std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves;
+    curves_grouping curves;
 
     double C_rate;
 
@@ -1013,7 +1046,7 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_LTO_charge()
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LTO_charge(this->inventory, curves, charging);
+    const create_dcPkW_from_soc LTO_charge{ this->inventory, curves, charging };
     return LTO_charge;
 }
 
@@ -1120,9 +1153,6 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
 
 void SOC_vs_P2_factory::write_charge_profile(const std::string& output_path) const
 {
-
-//    const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
-//    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
 
     std::string filename, header, data;
     std::ofstream file_handle;

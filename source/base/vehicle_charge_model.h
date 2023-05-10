@@ -4,9 +4,16 @@
 
 #include <iostream>
 
+#include "inputs.h"                                 // vehicle_charge_model_inputs
 #include "battery.h"				                // battery
 #include "datatypes_global.h"                       // charge_event_data, stop_charging_mode, stop_charging_decision_metric
-#include "EVSE_characteristics.h"                   // EV_type
+
+#include "EVSE_characteristics.h"                   // EV_type, EVSE_type
+
+#include "charging_transitions_factory.h"           // charging_transitions_factory
+#include "puVrms_vs_P2_factory.h"                   // puVrms_vs_P2_factory
+#include "SOC_vs_P2_factory.h"                      // SOC_vs_P2_factory
+#include "P2_vs_battery_efficiency_factory.h"       // P2_vs_battery_efficiency_factory
 
 //---------------------------------
 
@@ -36,7 +43,8 @@ private:
     vehicle_charge_model(const vehicle_charge_model& obj) = default;
 
 public:
-    vehicle_charge_model(const charge_event_data& event, const battery_inputs& inputs, double soc_of_full_battery);
+
+    vehicle_charge_model(const vehicle_charge_model_inputs& inputs);
     
     void set_target_P2_kW(double target_P2_kW_);
     double get_target_P2_kW();
@@ -44,9 +52,14 @@ public:
     bool pev_is_connected_to_SE(double now_unix_time);
     bool charge_has_completed();
     
-    void get_E1_battery_limits(double& max_E1_limit, double& min_E1_limit);
+    void get_E1_battery_limits(double& max_E1_limit, 
+                               double& min_E1_limit);
     
-   	void get_next(double prev_unix_time, double now_unix_time, double pu_Vrms,  bool& charge_has_completed, battery_state& bat_state);
+   	void get_next(double prev_unix_time, 
+                  double now_unix_time, 
+                  double pu_Vrms,  
+                  bool& charge_has_completed, 
+                  battery_state& bat_state);
 };
 
 
