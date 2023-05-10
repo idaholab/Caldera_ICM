@@ -1,33 +1,33 @@
-#ifndef EV_CHARGE_MODEL_FACTORY_H
-#define EV_CHARGE_MODEL_FACTORY_H
+#ifndef FACTORY_EV_CHARGE_MODEL_H
+#define FACTORY_EV_CHARGE_MODEL_H
 
 #include <unordered_map>
 #include <map>
 
 #include "EV_EVSE_inventory.h"
 
-#include "charging_transitions_factory.h"
-#include "puVrms_vs_P2_factory.h"
-#include "SOC_vs_P2_factory.h"
-#include "P2_vs_battery_efficiency_factory.h"
+#include "factory_charging_transitions.h"
+#include "factory_puVrms_vs_P2.h"
+#include "factory_SOC_vs_P2.h"
+#include "factory_P2_vs_battery_efficiency.h"
 
 #include "vehicle_charge_model.h"
 
-class EV_charge_model_factory
+class factory_EV_charge_model
 {
 private:
 
     const EV_EVSE_inventory& inventory;
 
-    const charging_transitions_factory charging_transitions_obj;
-    const puVrms_vs_P2_factory puVrms_vs_P2_obj;
-    const SOC_vs_P2_factory SOC_vs_P2_obj;
-    const P2_vs_battery_efficiency_factory P2_vs_battery_eff_obj;
+    const factory_charging_transitions charging_transitions_obj;
+    const factory_puVrms_vs_P2 puVrms_vs_P2_obj;
+    const factory_SOC_vs_P2 SOC_vs_P2_obj;
+    const factory_P2_vs_battery_efficiency P2_vs_battery_eff_obj;
 
     const bool model_stochastic_battery_degregation;
 
 public:
-	EV_charge_model_factory(const EV_EVSE_inventory& inventory,
+	factory_EV_charge_model(const EV_EVSE_inventory& inventory,
                             const EV_ramping_map& EV_ramping,
                             const EV_EVSE_ramping_map& EV_EVSE_ramping,
                             const bool& model_stochastic_battery_degregation);

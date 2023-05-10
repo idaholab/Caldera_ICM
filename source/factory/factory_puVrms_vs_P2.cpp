@@ -1,17 +1,17 @@
-#include "puVrms_vs_P2_factory.h"
+#include "factory_puVrms_vs_P2.h"
 
 //###########################################
-//              puVrms_vs_P2_factory
+//              factory_puVrms_vs_P2
 //###########################################
 
-puVrms_vs_P2_factory::puVrms_vs_P2_factory(const EV_EVSE_inventory& inventory) 
+factory_puVrms_vs_P2::factory_puVrms_vs_P2(const EV_EVSE_inventory& inventory) 
     : inventory{ inventory }, 
     puVrms_vs_P2_curves{ this->load_puVrms_vs_P2_curves() }
 {
 }
 
 
-const std::unordered_map<EVSE_level, std::map<puVrms, P2> > puVrms_vs_P2_factory::load_puVrms_vs_P2_curves()
+const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2::load_puVrms_vs_P2_curves()
 {
     // The points on the P2_vs_pu_Vrms plot are all multiplied by SE_P2_limit_atNominalV_kW
     // The P2_vs_pu_Vrms plot must pass through the point (1, 1)
@@ -60,7 +60,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > puVrms_vs_P2_factory
     return data;
 }
 
-const poly_function_of_x puVrms_vs_P2_factory::get_puVrms_vs_P2(const EVSE_type& EVSE, 
+const poly_function_of_x factory_puVrms_vs_P2::get_puVrms_vs_P2(const EVSE_type& EVSE, 
                                                                 const double& SE_P2_limit_atNominalV_kW) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();

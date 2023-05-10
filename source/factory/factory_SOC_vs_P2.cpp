@@ -1,4 +1,4 @@
-#include "SOC_vs_P2_factory.h"
+#include "factory_SOC_vs_P2.h"
 #include <fstream>
 
 //##########################################################
@@ -760,11 +760,11 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 
 
 //##########################################################
-//                      SOC_vs_P2_factory
+//                      factory_SOC_vs_P2
 //##########################################################
 
 
-SOC_vs_P2_factory::SOC_vs_P2_factory(const EV_EVSE_inventory& inventory) 
+factory_SOC_vs_P2::factory_SOC_vs_P2(const EV_EVSE_inventory& inventory) 
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
     NMC_charge{ this->load_NMC_charge() },
@@ -775,7 +775,7 @@ SOC_vs_P2_factory::SOC_vs_P2_factory(const EV_EVSE_inventory& inventory)
 }
 
 
-const SOC_vs_P2& SOC_vs_P2_factory::get_SOC_vs_P2_curves(const EV_type& EV, 
+const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV, 
                                                          const EVSE_type& EVSE) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
@@ -811,7 +811,7 @@ const SOC_vs_P2& SOC_vs_P2_factory::get_SOC_vs_P2_curves(const EV_type& EV,
 }
 
 
-const create_dcPkW_from_soc SOC_vs_P2_factory::load_LMO_charge()
+const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
     curves_grouping curves;
@@ -878,7 +878,7 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_LMO_charge()
     return LMO_charge;
 }
 
-const create_dcPkW_from_soc SOC_vs_P2_factory::load_NMC_charge()
+const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
     curves_grouping curves;
@@ -947,7 +947,7 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_NMC_charge()
     return NMC_charge;
 }
 
-const create_dcPkW_from_soc SOC_vs_P2_factory::load_LTO_charge()
+const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 {
     std::map<SOC, std::pair<power, point_type> > points;
     curves_grouping curves;
@@ -1051,7 +1051,7 @@ const create_dcPkW_from_soc SOC_vs_P2_factory::load_LTO_charge()
 }
 
 
-const std::unordered_map<EV_type, SOC_vs_P2 > SOC_vs_P2_factory::load_L1_L2_curves()
+const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curves()
 {
     std::unordered_map<EV_type, SOC_vs_P2 > return_val;
 
@@ -1085,7 +1085,7 @@ const std::unordered_map<EV_type, SOC_vs_P2 > SOC_vs_P2_factory::load_L1_L2_curv
 }
 
 
-const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > SOC_vs_P2_factory::load_DCFC_curves()
+const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves()
 {
     std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > return_val;
 
@@ -1151,7 +1151,7 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
     return return_val;
 }
 
-void SOC_vs_P2_factory::write_charge_profile(const std::string& output_path) const
+void factory_SOC_vs_P2::write_charge_profile(const std::string& output_path) const
 {
 
     std::string filename, header, data;

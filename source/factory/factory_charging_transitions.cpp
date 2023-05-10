@@ -1,4 +1,4 @@
-#include "charging_transitions_factory.h"
+#include "factory_charging_transitions.h"
 
 #include "battery_integrate_X_in_time.h"		// integrate_X_through_time, transition_goto_next_segment_criteria, transition_of_X_through_time
 
@@ -17,10 +17,10 @@ charging_transitions::charging_transitions(const EVSE_level_charging_transitions
 
 
 //###########################################
-//          charging_transitions_factory
+//          factory_charging_transitions
 //###########################################
 
-charging_transitions_factory::charging_transitions_factory(const EV_EVSE_inventory& inventory,
+factory_charging_transitions::factory_charging_transitions(const EV_EVSE_inventory& inventory,
 														   const EV_ramping_map& custom_EV_ramping,
 														   const EV_EVSE_ramping_map& custom_EV_EVSE_ramping)
     : inventory{ inventory },
@@ -31,7 +31,7 @@ charging_transitions_factory::charging_transitions_factory(const EV_EVSE_invento
 }
 
 
-const charging_transitions charging_transitions_factory::load_charging_transitions()
+const charging_transitions factory_charging_transitions::load_charging_transitions()
 {
     EVSE_level_charging_transitions transitions_by_EVSE_level;
 
@@ -354,7 +354,7 @@ const charging_transitions charging_transitions_factory::load_charging_transitio
     return charging_transitions{ transitions_by_EVSE_level, charging_transitions_by_custom_EV, charging_transitions_by_custom_EV_EVSE };
 }
 
-const integrate_X_through_time& charging_transitions_factory::get_charging_transitions(const EV_type& EV, 
+const integrate_X_through_time& factory_charging_transitions::get_charging_transitions(const EV_type& EV, 
                                                                                        const EVSE_type& EVSE) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();

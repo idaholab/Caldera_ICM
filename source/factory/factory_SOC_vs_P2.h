@@ -1,5 +1,5 @@
-#ifndef SOC_VS_P2_FACTORY_H
-#define SOC_VS_P2_FACTORY_H
+#ifndef FACTORY_SOC_VS_P2_H
+#define FACTORY_SOC_VS_P2_H
 
 #include <map>
 #include <unordered_map>
@@ -71,7 +71,7 @@ public:
     const SOC_vs_P2 get_L1_or_L2_charge_profile(const EV_type& EV) const;
 };
 
-class SOC_vs_P2_factory
+class factory_SOC_vs_P2
 {
 private:
 
@@ -94,11 +94,11 @@ private:
 	const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves();
 
 public:
-    SOC_vs_P2_factory(const EV_EVSE_inventory& inventory);
+    factory_SOC_vs_P2(const EV_EVSE_inventory& inventory);
 
 	const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, const EVSE_type& EVSE) const;
 
     void write_charge_profile(const std::string& output_path) const;
 };
 
-#endif
+#endif  // FACTORY_SOC_VS_P2_H

@@ -1,4 +1,4 @@
-#include "P2_vs_battery_efficiency_factory.h"
+#include "factory_P2_vs_battery_efficiency.h"
 #include "helper.h"
 
 //##################################################
@@ -14,16 +14,16 @@ P2_vs_battery_efficiency::P2_vs_battery_efficiency(const line_segment& curve,
 
 
 //##################################################
-//              P2_vs_battery_efficiency_factory
+//              factory_P2_vs_battery_efficiency
 //##################################################
 
-P2_vs_battery_efficiency_factory::P2_vs_battery_efficiency_factory(const EV_EVSE_inventory& inventory) 
+factory_P2_vs_battery_efficiency::factory_P2_vs_battery_efficiency(const EV_EVSE_inventory& inventory) 
     : inventory{ inventory }, 
     P2_vs_battery_eff{ this->load_P2_vs_battery_eff() }
 {
 }
 
-const P2_vs_battery_efficiency_map P2_vs_battery_efficiency_factory::load_P2_vs_battery_eff()
+const P2_vs_battery_efficiency_map factory_P2_vs_battery_efficiency::load_P2_vs_battery_eff()
 {    
     P2_vs_battery_efficiency_map outer_map;   
 
@@ -94,7 +94,7 @@ const P2_vs_battery_efficiency_map P2_vs_battery_efficiency_factory::load_P2_vs_
     return outer_map;
 }
 
-const P2_vs_battery_efficiency& P2_vs_battery_efficiency_factory::get_P2_vs_battery_eff(const EV_type& EV, 
+const P2_vs_battery_efficiency& factory_P2_vs_battery_efficiency::get_P2_vs_battery_eff(const EV_type& EV, 
                                                                                         const battery_charge_mode& mode) const
 {
     return this->P2_vs_battery_eff.at(EV).at(mode);

@@ -1,5 +1,5 @@
-#ifndef P2_VS_BATTERY_EFFICIENCY_H
-#define P2_VS_BATTERY_EFFICIENCY_H
+#ifndef FACTORY_P2_VS_BATTERY_EFFICIENCY_H
+#define FACTORY_P2_VS_BATTERY_EFFICIENCY_H
 
 #include <vector>
 #include <unordered_map>
@@ -20,7 +20,7 @@ struct P2_vs_battery_efficiency
 
 typedef std::unordered_map<EV_type, std::unordered_map< battery_charge_mode, P2_vs_battery_efficiency> > P2_vs_battery_efficiency_map;
 
-class P2_vs_battery_efficiency_factory
+class factory_P2_vs_battery_efficiency
 {
 private:
 	const EV_EVSE_inventory& inventory;
@@ -30,7 +30,7 @@ private:
 	const P2_vs_battery_efficiency_map load_P2_vs_battery_eff();
 
 public:
-	P2_vs_battery_efficiency_factory(const EV_EVSE_inventory& inventory);
+	factory_P2_vs_battery_efficiency(const EV_EVSE_inventory& inventory);
 
 	const P2_vs_battery_efficiency& get_P2_vs_battery_eff(const EV_type& EV, 
 														  const battery_charge_mode& mode) const;

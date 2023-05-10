@@ -1,5 +1,5 @@
-#ifndef CHARGING_TRANSITIONS_FACTORY_H
-#define CHARGING_TRANSITIONS_FACTORY_H
+#ifndef FACTORY_CHARGING_TRANSITIONS_H
+#define FACTORY_CHARGING_TRANSITIONS_H
 
 #include <unordered_map>
 
@@ -30,7 +30,7 @@ struct charging_transitions
 };
 
 
-class charging_transitions_factory
+class factory_charging_transitions
 {
 private:
 	
@@ -45,7 +45,7 @@ private:
 
 
 public:
-	charging_transitions_factory(const EV_EVSE_inventory& inventory, 
+	factory_charging_transitions(const EV_EVSE_inventory& inventory, 
 								 const EV_ramping_map& custom_EV_ramping, 
 								 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping);
 
