@@ -3,7 +3,7 @@
 #define inl_ICM_interface_H
 
 #include "datatypes_global.h"                       // grid_node_id_type, SE_id_type, station_configuration, station_charge_event_data, station_status
-#include "datatypes_global_SE_EV_definitions.h"     // get_supply_equipment_enum, get_vehicle_enum, supply_equipment_is_L1, supply_equipment_is_L2, pev_is_compatible_with_supply_equipment
+//#include "datatypes_global_SE_EV_definitions.h"     // get_supply_equipment_enum, get_vehicle_enum, supply_equipment_is_L1, supply_equipment_is_L2, pev_is_compatible_with_supply_equipment
 #include "supply_equipment_group.h"               // supply_equipment_group
 #include "supply_equipment.h"                       // supply_equipment
 #include "supply_equipment_control.h"               // manage_L2_control_strategy_parameters
@@ -14,12 +14,68 @@
 #include <map>
 #include <tuple>
 
+#include "factory_EV_charge_model.h"
+#include "factory_charging_transitions.h"
+#include "factory_ac_to_dc_converter.h"
+#include "factory_supply_equipment_model.h"
+
 //#include <pybind11/pybind11.h>
 //namespace py = pybind11;
 
 
-class factory_EV_charge_model;
-class factory_ac_to_dc_converter;
+struct interface_to_SE_groups_inputs
+{
+    const EV_EVSE_inventory& inventory;
+
+    // factory_inputs
+    bool create_charge_profile_library;
+    EV_ramping_map ramping_by_pevType_only;
+    std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType;
+
+    // infrastructure_inputs
+    charge_event_queuing_inputs CE_queuing_inputs; 
+    std::vector<SE_group_configuration> infrastructure_topology;
+
+    // baseLD_forecaster_inputs
+    double data_start_unix_time; 
+    int data_timestep_sec;
+    std::vector<double>& actual_load_akW;
+    std::vector<double>& forecast_load_akW; 
+    double adjustment_interval_hrs;
+
+    // control_strategy_inputs
+    L2_control_strategy_parameters L2_parameters;
+    bool ensure_pev_charge_needs_met;
+
+    interface_to_SE_groups_inputs(const EV_EVSE_inventory& inventory,
+                                  bool create_charge_profile_library,
+                                  EV_ramping_map ramping_by_pevType_only,
+                                  std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType,
+                                  charge_event_queuing_inputs CE_queuing_inputs,
+                                  std::vector<SE_group_configuration> infrastructure_topology,
+                                  double data_start_unix_time,
+                                  int data_timestep_sec,
+                                  std::vector<double>& actual_load_akW,
+                                  std::vector<double>& forecast_load_akW,
+                                  double adjustment_interval_hrs,
+                                  L2_control_strategy_parameters L2_parameters,
+                                  bool ensure_pev_charge_needs_met) 
+        : inventory{ inventory },
+        create_charge_profile_library{ create_charge_profile_library },
+        ramping_by_pevType_only{ ramping_by_pevType_only },
+        ramping_by_pevType_seType{ ramping_by_pevType_seType },
+        CE_queuing_inputs{ CE_queuing_inputs },
+        infrastructure_topology{ infrastructure_topology },
+        data_start_unix_time{ data_start_unix_time },
+        data_timestep_sec{ data_timestep_sec },
+        actual_load_akW{ actual_load_akW },
+        forecast_load_akW{ forecast_load_akW },
+        adjustment_interval_hrs{ adjustment_interval_hrs },
+        L2_parameters{ L2_parameters },
+        ensure_pev_charge_needs_met{ ensure_pev_charge_needs_met }
+    {
+    }
+};
 
 
 class interface_to_SE_groups
@@ -27,6 +83,8 @@ class interface_to_SE_groups
 private:
     // unordered_maps may not be used here if they are iterated through.  To maintain repeatable
     // stochastic behavior.
+
+    const EV_EVSE_inventory& inventory;
 
     std::vector<supply_equipment_group> SE_group_objs;
     std::map<int, supply_equipment_group*> SE_group_Id_to_ptr;
@@ -42,12 +100,16 @@ private:
     manage_L2_control_strategy_parameters manage_L2_control;
     
 public:
-    interface_to_SE_groups() {};    
+    interface_to_SE_groups(const interface_to_SE_groups_inputs& inputs);
+
     ~interface_to_SE_groups();
-    void initialize(bool create_charge_profile_library, std::map<vehicle_enum, pev_charge_ramping> ramping_by_pevType_only, std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType);
-    void initialize_infrastructure(charge_event_queuing_inputs CE_queuing_inputs, std::vector<SE_group_configuration> infrastructure_topology);
-    void initialize_baseLD_forecaster(double data_start_unix_time, int data_timestep_sec, std::vector<double>& actual_load_akW, std::vector<double>& forecast_load_akW, double adjustment_interval_hrs);
-    void initialize_L2_control_strategy_parameters(L2_control_strategy_parameters L2_parameters);
+
+    pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
+
+    //void initialize(bool create_charge_profile_library, std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only, std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType);
+    //void initialize_infrastructure(charge_event_queuing_inputs CE_queuing_inputs, std::vector<SE_group_configuration> infrastructure_topology);
+    //void initialize_baseLD_forecaster(double data_start_unix_time, int data_timestep_sec, std::vector<double>& actual_load_akW, std::vector<double>& forecast_load_akW, double adjustment_interval_hrs);
+    //void initialize_L2_control_strategy_parameters(L2_control_strategy_parameters L2_parameters);
     void set_ensure_pev_charge_needs_met_for_ext_control_strategy(bool ensure_pev_charge_needs_met);
     
     void stop_active_charge_events(std::vector<SE_id_type> SE_ids);

@@ -1,10 +1,12 @@
 
 #include "supply_equipment_load.h"
-#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
+//#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
 
 #include <cmath>
 #include <algorithm>                // sort
 
+#include "factory_EV_charge_model.h"
+#include "factory_ac_to_dc_converter.h"
 
 //#############################################################################
 //                            Charge  Event  Handler
@@ -132,7 +134,7 @@ supply_equipment_load::supply_equipment_load()
 }
 
 
-supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
+supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
 {
 	this->P2_limit_kW = P2_limit_kW_;
 	this->standby_acP_kW = standby_acP_kW_;
@@ -566,7 +568,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         if(this->event_handler.charge_event_is_available(now_unix_time))
         {
         	charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
-        	supply_equipment_enum SE_type = this->SE_config.supply_equipment_type;
+        	EVSE_type SE_type = this->SE_config.supply_equipment_type;
 
         	this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
 
@@ -594,8 +596,8 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //--------------------------------
                 //  Update Charge Profile
                 //--------------------------------
-                supply_equipment_enum SE_type = this->SE_config.supply_equipment_type;
-                vehicle_enum pev_type = charge_event.vehicle_type;
+                SE_type = this->SE_config.supply_equipment_type;
+                EV_type pev_type = charge_event.vehicle_type;
                 
                 if(this->charge_profile_library != NULL)
                     this->cur_charge_profile = this->charge_profile_library->get_charge_profile(pev_type, SE_type);

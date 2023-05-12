@@ -28,7 +28,7 @@ vehicle_charge_model* factory_EV_charge_model::alloc_get_EV_charge_model(const c
 																		 const EVSE_type& EVSE,
 																		 const double& SE_P2_limit_kW) const
 {
-	const EV_type& EV = event.EV;
+	const EV_type& EV = event.vehicle_type;
 
 	double final_bat_size_kWh;
 	if (this->model_stochastic_battery_degregation)

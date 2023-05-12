@@ -6,7 +6,7 @@
 #include "supply_equipment_control.h"
 
 #include "datatypes_global.h"                       // SE_configuration, SE_charging_status, charge_event_data
-#include "datatypes_global_SE_EV_definitions.h"     
+//#include "datatypes_global_SE_EV_definitions.h"     
 #include "datatypes_module.h"                       // ac_power_metrics, SE_status, CE_Status
 #include "charge_profile_library.h"                 // pev_charge_profile_library
 
@@ -25,7 +25,7 @@ private:
     
 public:
     supply_equipment() {};
-    supply_equipment(SE_configuration& SE_config_, supply_equipment_control& SE_control_, supply_equipment_load& SE_Load_);    
+    supply_equipment(const SE_configuration& SE_config_, supply_equipment_control& SE_control_, supply_equipment_load& SE_Load_);    
     void set_pointers_in_SE_Load(factory_EV_charge_model* PEV_charge_factory, factory_ac_to_dc_converter* ac_to_dc_converter_factory, pev_charge_profile_library* charge_profile_library);
     
     bool is_SE_with_id(SE_id_type SE_id);

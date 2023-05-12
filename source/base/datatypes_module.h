@@ -35,7 +35,7 @@ struct CE_status
 {
     int charge_event_id;
     vehicle_id_type vehicle_id;
-    vehicle_enum vehicle_type;
+    EV_type vehicle_type;
     stop_charging_criteria stop_charge;
     double arrival_unix_time; 
     double departure_unix_time;

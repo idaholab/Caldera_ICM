@@ -3,7 +3,6 @@
 #define inl_supply_equipment_load_H
 
 #include "datatypes_global.h"                       // SE_configuration, SE_charging_status, charge_event_data
-#include "datatypes_global_SE_EV_definitions.h"
 #include "ac_to_dc_converter.h"		                // ac_to_dc_converter
 #include "vehicle_charge_model.h"	                // vehicle_charge_model
 #include "datatypes_module.h"                       // ac_power_metrics, SE_status, CE_Status
@@ -59,7 +58,7 @@ private:
 
 public:
 	supply_equipment_load();
-	supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs);
+	supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs);
 	~supply_equipment_load();
 	//supply_equipment_load& operator=(const supply_equipment_load& obj);
     //supply_equipment_load(const supply_equipment_load& obj);

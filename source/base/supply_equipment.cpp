@@ -1,9 +1,10 @@
 
 #include "supply_equipment.h"
-#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
+#include "factory_EV_charge_model.h"            // factory_EV_charge_model
+#include "factory_supply_equipment_model.h"     // factory_supply_equipment_model
 
 
-supply_equipment::supply_equipment(SE_configuration& SE_config_, supply_equipment_control& SE_control_, supply_equipment_load& SE_Load_)
+supply_equipment::supply_equipment(const SE_configuration& SE_config_, supply_equipment_control& SE_control_, supply_equipment_load& SE_Load_)
 {
     this->SE_config = SE_config_;
     this->SE_control = SE_control_;

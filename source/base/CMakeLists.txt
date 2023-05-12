@@ -1,3 +1,51 @@
+set(BASE_FILES		"datatypes_module.cpp"
+					"ac_to_dc_converter.cpp"
+					"helper.cpp"
+					"battery_calculate_limits.cpp"
+					"battery_integrate_X_in_time.cpp"
+					"battery.cpp"
+					"vehicle_charge_model.cpp"
+					"supply_equipment_load.cpp"
+					"supply_equipment_control.cpp"
+					"supply_equipment.cpp"
+					"supply_equipment_group.cpp"
+					"charge_profile_library.cpp"
+					"SE_EV_factory_charge_profile.cpp"
+					"charge_profile_downsample_fragments.cpp"
+					"ICM_interface.cpp")
+
+add_library(Base STATIC ${BASE_FILES})
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
+
+
+
+set(BASE_AUX_FILES		"datatypes_module.cpp"
+						"ac_to_dc_converter.cpp"
+						"helper.cpp"
+						"battery_calculate_limits.cpp"
+						"battery_integrate_X_in_time.cpp"
+						"battery.cpp"
+						"vehicle_charge_model.cpp"
+						"supply_equipment_load.cpp"
+						"supply_equipment_control.cpp"
+						"supply_equipment.cpp"
+						"charge_profile_library.cpp"
+						"SE_EV_factory_charge_profile.cpp"
+						"charge_profile_downsample_fragments.cpp"
+						"Aux_interface.cpp")
+
+add_library(Base_aux STATIC ${BASE_AUX_FILES})
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
+target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
+target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
+target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
+
+
+#[===[
+
 set(GLOBALS_DIR ${PROJECT_SOURCE_DIR}/source/charging_models)
 
 option(ICM "compile caldera_ICM library" OFF)
@@ -41,3 +89,6 @@ message(Caldera_ICM_Aux " current source dir = ${CMAKE_CURRENT_SOURCE_DIR}")
 
 install(TARGETS Caldera_ICM_Aux
 		DESTINATION ${INSTALL_DIR})
+
+
+]===]

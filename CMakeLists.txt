@@ -23,5 +23,4 @@ message(STATUS "Install dir is ${INSTALL_DIR}")
 
 find_package(pybind11 CONFIG)
 
-add_subdirectory(source/charging_models)
-add_subdirectory(source/base)
+add_subdirectory(source)

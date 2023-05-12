@@ -13,6 +13,7 @@ int main()
 	bool model_stochastic_battery_degregation = false;
 
 	EV_charge_model_factory charge_model_factory{ inventory, custom_EV_ramping, custom_EV_EVSE_ramping, model_stochastic_battery_degregation };
+
 	charge_model_factory.write_charge_profile("./");
 
 	return 0;

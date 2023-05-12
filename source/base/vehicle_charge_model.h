@@ -10,11 +10,6 @@
 
 #include "EVSE_characteristics.h"                   // EV_type, EVSE_type
 
-#include "charging_transitions_factory.h"           // charging_transitions_factory
-#include "puVrms_vs_P2_factory.h"                   // puVrms_vs_P2_factory
-#include "SOC_vs_P2_factory.h"                      // SOC_vs_P2_factory
-#include "P2_vs_battery_efficiency_factory.h"       // P2_vs_battery_efficiency_factory
-
 //---------------------------------
 
 class vehicle_charge_model

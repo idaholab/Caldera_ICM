@@ -1,10 +1,10 @@
 #ifndef INPUTS_H
 #define INPUTS_H
 
-#include "charging_transitions_factory.h"
-#include "puVrms_vs_P2_factory.h"
-#include "SOC_vs_P2_factory.h"
-#include "P2_vs_battery_efficiency_factory.h"
+#include "factory_charging_transitions.h"
+#include "factory_puVrms_vs_P2.h"
+#include "factory_SOC_vs_P2.h"
+#include "factory_P2_vs_battery_efficiency.h"
 
 struct vehicle_charge_model_inputs
 {
@@ -13,20 +13,20 @@ struct vehicle_charge_model_inputs
     const EVSE_type& EVSE;
     const double SE_P2_limit_kW;
     const double battery_size_kWh;
-    const charging_transitions_factory& CT_factory;
-    const puVrms_vs_P2_factory& VP_factory;
-    const SOC_vs_P2_factory& SOCP_factory;
-    const P2_vs_battery_efficiency_factory& PE_factory;
+    const factory_charging_transitions& CT_factory;
+    const factory_puVrms_vs_P2& VP_factory;
+    const factory_SOC_vs_P2& SOCP_factory;
+    const factory_P2_vs_battery_efficiency& PE_factory;
 
     vehicle_charge_model_inputs(const charge_event_data& CE, 
                                 const EV_type& EV, 
                                 const EVSE_type& EVSE,
                                 const double& SE_P2_limit_kW, 
                                 const double& battery_size_kWh, 
-                                const charging_transitions_factory& CT_factory,
-                                const puVrms_vs_P2_factory& VP_factory, 
-                                const SOC_vs_P2_factory& SOCP_factory, 
-                                const P2_vs_battery_efficiency_factory& PE_factory)
+                                const factory_charging_transitions& CT_factory,
+                                const factory_puVrms_vs_P2& VP_factory,
+                                const factory_SOC_vs_P2& SOCP_factory,
+                                const factory_P2_vs_battery_efficiency& PE_factory)
         : CE{ CE }, 
         EV{ EV }, 
         EVSE{ EVSE }, 

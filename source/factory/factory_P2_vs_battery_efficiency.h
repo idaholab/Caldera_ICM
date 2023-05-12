@@ -4,7 +4,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "SOC_vs_P2_factory.h"
+#include "factory_SOC_vs_P2.h"
 #include "EV_characteristics.h"
 #include "EV_EVSE_inventory.h"
 

@@ -322,7 +322,7 @@ struct charge_event_data
     int SE_group_id;
     SE_id_type  SE_id;
    	vehicle_id_type vehicle_id;
-    EV_type EV;
+    EV_type vehicle_type;
     double arrival_unix_time;
     double departure_unix_time;
     double arrival_SOC;
@@ -332,7 +332,7 @@ struct charge_event_data
     control_strategy_enums control_enums;
 
     charge_event_data() {};
-    charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, EV_type EV,
+    charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, EV_type vehicle_type,
                       double arrival_unix_time_, double departure_unix_time_, double arrival_SOC_, double departure_SOC_, 
                       stop_charging_criteria stop_charge_, control_strategy_enums control_enums_);
     static std::string get_file_header();

@@ -3,7 +3,7 @@
 #define inl_supply_equipment_control_H
 
 #include "datatypes_global.h"                       // ES500_aggregator_charging_needs
-#include "datatypes_global_SE_EV_definitions.h"
+//#include "datatypes_global_SE_EV_definitions.h"
 #include "supply_equipment_load.h"                  // supply_equipment_load
 #include "helper.h"                                 // get_base_load_forecast, get_value_from_normal_distribution, get_real_value_from_uniform_distribution, get_int_value_from_uniform_distribution
 #include "charge_profile_library.h"                 // pev_charge_profile
@@ -54,7 +54,7 @@ private:
 
 public:
     manage_L2_control_strategy_parameters() {};
-    manage_L2_control_strategy_parameters(L2_control_strategy_parameters& parameters_);
+    manage_L2_control_strategy_parameters(const L2_control_strategy_parameters& parameters_);
     
     const ES100_L2_parameters& get_ES100_A();
     const ES100_L2_parameters& get_ES100_B();
@@ -295,7 +295,7 @@ private:
     
 public:
     supply_equipment_control() {};
-    supply_equipment_control(bool building_charge_profile_library_, SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_);
+    supply_equipment_control(bool building_charge_profile_library_, const SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_);
     
     control_strategy_enums get_control_strategy_enums();
     std::string get_external_control_strategy();

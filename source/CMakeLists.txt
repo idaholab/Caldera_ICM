@@ -1,3 +1,10 @@
+add_subdirectory(base)
+add_subdirectory(charging_models)
+add_subdirectory(factory)
+add_subdirectory(load_inputs)
+
+
+#[===[
 cmake_minimum_required(VERSION 3.5)
  
 project(CalderaICM)
@@ -44,3 +51,6 @@ target_include_directories(models_test PUBLIC ${PROJECT_SOURCE_DIR}/base)
 
 install(TARGETS models_test
 	DESTINATION ${INSTALL_DIR})
+
+
+]===]
