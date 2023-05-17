@@ -69,7 +69,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
     ASSERT(curve_1c_ptr != this->curves.end(), "Error: 1c curve doesnot exist in charging profiles" << std::endl);
     ASSERT(curve_1c_ptr->second.size() >= 2, "Error: 1c curve should have atleast 2 points. currently there are " << curve_1c_ptr->second.size() << " points" << std::endl);
 
-    auto elem_ptr = curve_1c_ptr->second.begin();
+    auto elem_ptr = curve_1c_ptr->second.rbegin();      // iterated from back
 
     double soc_A = elem_ptr->first;
     double P_A = elem_ptr->second.first * battery_size_kWh;
@@ -1270,9 +1270,9 @@ void factory_SOC_vs_P2::write_charge_profile(const std::string& output_path) con
                 if (soc > 100)
                     break;
             }
-            all_dcfc_profiles.push_back(P2_vals);
+            all_L1_L2_profiles.push_back(P2_vals);
         }
-        return all_dcfc_profiles;
+        return all_L1_L2_profiles;
     }();
 
     header += "\n";
@@ -1283,9 +1283,9 @@ void factory_SOC_vs_P2::write_charge_profile(const std::string& output_path) con
     {
         file_handle << std::to_string(soc_vals[i]) + ", ";
 
-        for (int j = 0; j < all_dcfc_profiles.size(); j++)
+        for (int j = 0; j < all_L1_L2_profiles.size(); j++)
         {
-            file_handle << std::to_string(all_dcfc_profiles[j][i]) + ", ";
+            file_handle << std::to_string(all_L1_L2_profiles[j][i]) + ", ";
         }
         file_handle << "\n ";
     }

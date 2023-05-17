@@ -599,7 +599,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(const battery_charge_mode& 
         if (x.x_UB > max_soc) max_soc = x.x_UB;
     }
 
-    ASSERT(min_soc < 0 || max_soc > 100, "PROBLEM: The following rule (for the P2_vs_soc_segments datatype) has been broken: min_soc < 0 and 100 < max_soc.");
+    ASSERT(min_soc >= 0 || max_soc <= 100, "PROBLEM: The following rule (for the P2_vs_soc_segments datatype) has been broken: min_soc < 0 and 100 < max_soc.");
 
     //---------------------------------------------
 

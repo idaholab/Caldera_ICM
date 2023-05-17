@@ -26,6 +26,10 @@ interface_to_SE_groups::interface_to_SE_groups(const interface_to_SE_groups_inpu
    
     this->ac_to_dc_converter_factory = new factory_ac_to_dc_converter(this->inventory);
 
+    this->baseLD_forecaster = get_base_load_forecast{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs };
+
+    this->manage_L2_control = manage_L2_control_strategy_parameters{ inputs.L2_parameters };
+
     //==========================================
     //          Initialize infrastructure
     //==========================================
@@ -73,23 +77,9 @@ interface_to_SE_groups::interface_to_SE_groups(const interface_to_SE_groups_inpu
         }
     }
 
-    //==========================================
-    //          Initialize baseLD_forecaster
-    //==========================================
-
-    get_base_load_forecast X{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs };
-    this->baseLD_forecaster = X;
-
-    //==========================================
-    //          Initialize L2 parameters
-    //==========================================
-
-    manage_L2_control_strategy_parameters Z{ inputs.L2_parameters };
-    this->manage_L2_control = Z;
-
-    //==========================================
+    //=========================================================================
     //         set_ensure_pev_charge_needs_met_for_ext_control_strategy
-    //==========================================
+    //=========================================================================
 
     for (supply_equipment* SE_ptr : this->SE_ptr_vector)
         SE_ptr->set_ensure_pev_charge_needs_met_for_ext_control_strategy(inputs.ensure_pev_charge_needs_met);
