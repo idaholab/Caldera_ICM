@@ -99,6 +99,9 @@ const poly_function_of_x factory_puVrms_vs_P2::get_puVrms_vs_P2(const EVSE_type&
             a = (prev_P2 - cur_P2) / (prev_puVrms - cur_puVrms);
             b = cur_P2 - a * cur_puVrms;
             segments.emplace_back(prev_puVrms, cur_puVrms, first, a, b, 0, 0, 0 );      // x_LB, x_UB, degree, a, b, c, d, e
+
+            prev_puVrms = cur_puVrms;
+            prev_P2 = cur_P2;
         }
         //--------
 

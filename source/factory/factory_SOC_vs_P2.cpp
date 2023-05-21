@@ -145,8 +145,17 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
+    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
+
+    const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
     const double power_limit_kW = 10000;//this->inventory.get_EVSE_inventory().at(EVSE).get_power_limit_kW();
+    
+    //=====================================================
+    //    Apply current limits
+    //=====================================================
+
+    const double current_limit_A = std::min(EV_current_limit, EVSE_current_limit_A);
 
     //=====================================================
     //    Interpolate pu curves using dc_current_limit
@@ -323,7 +332,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
        //       Use Upper Curve Directly
        //--------------------------------------
 
-        for (upper_ptr = std::next(upper_points.begin()); upper_ptr != upper_points.end(); upper_ptr++)
+        for (upper_ptr = std::next(upper_ptr); upper_ptr != upper_points.end(); upper_ptr++)
         {
             soc_1 = upper_ptr->first;
             P_1 = upper_ptr->second.first;
@@ -455,8 +464,17 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
-    const double power_limit_kW = this->inventory.get_EVSE_inventory().at(EVSE).get_power_limit_kW();
+    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
+
+    const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
+    const double power_limit_kW = 10000;//this->inventory.get_EVSE_inventory().at(EVSE).get_power_limit_kW();
+
+    //=====================================================
+    //    Apply current limits
+    //=====================================================
+
+    const double current_limit_A = std::min(EV_current_limit, EVSE_current_limit_A);
 
     //=====================================================
     //    Interpolate pu curves using dc_current_limit
@@ -631,7 +649,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
        //--------------------------------------    
        //       Use Upper Curve Directly
        //--------------------------------------
-        for (upper_ptr = std::next(upper_points.rbegin()); upper_ptr != upper_points.rend(); upper_ptr++)
+        for (upper_ptr = std::next(upper_ptr); upper_ptr != upper_points.rend(); upper_ptr++)
         {
             soc_1 = upper_ptr->first;
             P_1 = upper_ptr->second.first;
