@@ -456,7 +456,16 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
     constraints_.push_back(constraint_B);
 
     //constraints = constraints_;
+    
+    //----------------------------------
+    // adjust start and end soc
+    //----------------------------------
 
+    for (int i = 0; i < (int)dcPkW_from_soc_input.size(); i++)
+    {
+        if (dcPkW_from_soc_input[i].x_LB == 0) dcPkW_from_soc_input[i].x_LB = -0.1;
+        if(dcPkW_from_soc_input[i].x_UB == 100) dcPkW_from_soc_input[i].x_UB = 100.1;
+    }
     return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc };
 }
 

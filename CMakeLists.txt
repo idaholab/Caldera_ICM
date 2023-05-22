@@ -24,3 +24,4 @@ message(STATUS "Install dir is ${INSTALL_DIR}")
 find_package(pybind11 CONFIG)
 
 add_subdirectory(source)
+add_subdirectory(unittests)
