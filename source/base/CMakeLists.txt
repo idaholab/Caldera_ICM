@@ -1,6 +1,5 @@
 set(BASE_FILES		"datatypes_module.cpp"
 					"ac_to_dc_converter.cpp"
-					"helper.cpp"
 					"battery_calculate_limits.cpp"
 					"battery_integrate_X_in_time.cpp"
 					"battery.cpp"
@@ -18,6 +17,7 @@ add_library(Base STATIC ${BASE_FILES})
 target_link_libraries(Base PRIVATE Charging_models)
 target_link_libraries(Base PRIVATE factory)
 target_link_libraries(Base PRIVATE Load_inputs)
+target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/globals)
 target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
 target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
 target_include_directories(Base PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
@@ -30,7 +30,6 @@ install(TARGETS Caldera_ICM
 
 set(BASE_AUX_FILES		"datatypes_module.cpp"
 						"ac_to_dc_converter.cpp"
-						"helper.cpp"
 						"battery_calculate_limits.cpp"
 						"battery_integrate_X_in_time.cpp"
 						"battery.cpp"
@@ -47,6 +46,7 @@ add_library(Base_aux STATIC ${BASE_AUX_FILES})
 target_link_libraries(Base_aux PRIVATE Charging_models)
 target_link_libraries(Base_aux PRIVATE factory)
 target_link_libraries(Base_aux PRIVATE Load_inputs)
+target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/globals)
 target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
 target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
 target_include_directories(Base_aux PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)

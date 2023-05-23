@@ -2,6 +2,7 @@ add_subdirectory(base)
 add_subdirectory(charging_models)
 add_subdirectory(factory)
 add_subdirectory(load_inputs)
+add_subdirectory(globals)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_executable(tests main.cpp )

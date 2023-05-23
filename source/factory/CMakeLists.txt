@@ -8,6 +8,7 @@ set(FACTORY_FILES	"factory_charging_transitions.cpp"
 
 add_library(factory STATIC ${FACTORY_FILES})
 target_compile_features(factory PUBLIC cxx_std_17)
+target_include_directories(factory PUBLIC ${PROJECT_SOURCE_DIR}/source/globals)
 target_include_directories(factory PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
 target_include_directories(factory PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
 target_include_directories(factory PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
