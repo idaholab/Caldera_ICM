@@ -451,13 +451,12 @@ double LPF_kernel::get_filtered_value()
 //#############################################################################
 
 get_base_load_forecast::get_base_load_forecast(double data_start_unix_time_, int data_timestep_sec_, std::vector<double>& actual_load_akW_, std::vector<double>& forecast_load_akW_, double adjustment_interval_hrs_)
-{
-    this->adjustment_interval_hrs = adjustment_interval_hrs_;
-    this->data_start_unix_time = data_start_unix_time_;
-    this->data_timestep_sec = data_timestep_sec_;
-    this->actual_load_akW = actual_load_akW_;
-    this->forecast_load_akW = forecast_load_akW_;
-    
+    : data_start_unix_time{data_start_unix_time_},
+    data_timestep_sec{ data_timestep_sec_ },
+    actual_load_akW{ actual_load_akW_ },
+    forecast_load_akW{ forecast_load_akW_ },
+    adjustment_interval_hrs{ adjustment_interval_hrs_ }
+{   
     double sum_val = 0;
     for(double x : this->forecast_load_akW)
         sum_val += x;

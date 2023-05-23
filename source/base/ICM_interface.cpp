@@ -5,13 +5,16 @@
 
 #include "SE_EV_factory_charge_profile.h"
 
+#include "load_EV_EVSE_inventory.h"
+
 #include <iostream>
 #include <string>
 #include <unordered_set>
 
-
-interface_to_SE_groups::interface_to_SE_groups(const interface_to_SE_groups_inputs& inputs)
-    : inventory{ inputs.inventory }, 
+interface_to_SE_groups::interface_to_SE_groups(const std::string& input_path,
+    const interface_to_SE_groups_inputs& inputs)
+    : loader{ load_EV_EVSE_inventory(input_path) },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
     charge_profile_library{ load_charge_profile_library(inputs) }
 {
     EV_EVSE_ramping_map ramping_by_pevType_seType_map;
@@ -23,7 +26,7 @@ interface_to_SE_groups::interface_to_SE_groups(const interface_to_SE_groups_inpu
     //--------------------
 
     this->EV_model_factory = new factory_EV_charge_model(this->inventory, inputs.ramping_by_pevType_only, ramping_by_pevType_seType_map, false);
-   
+
     this->ac_to_dc_converter_factory = new factory_ac_to_dc_converter(this->inventory);
 
     this->baseLD_forecaster = get_base_load_forecast{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs };

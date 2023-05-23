@@ -9,3 +9,8 @@ target_include_directories(Charging_models PUBLIC ${PROJECT_SOURCE_DIR}/source/b
 target_include_directories(Charging_models PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
 target_include_directories(Charging_models PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
 target_include_directories(Charging_models PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
+
+pybind11_add_module(Caldera_models MODULE charging_models_python_bind.cpp)
+target_link_libraries(Caldera_models PRIVATE Charging_models)
+install(TARGETS Caldera_models
+		DESTINATION ${INSTALL_DIR})

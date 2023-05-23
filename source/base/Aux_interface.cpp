@@ -40,15 +40,17 @@ std::vector<pev_batterySize_info> get_pevType_batterySize_map()
 //                        Get Charge Profile Object
 //#############################################################################
 
-CP_interface::CP_interface(const EV_EVSE_inventory& inventory)
-    : inventory{ inventory },
+CP_interface::CP_interface(const std::string& input_path)
+    : loader{ load_EV_EVSE_inventory{ input_path } },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library{ load_CP_library(inventory, false) }
 {
 }
 
 
-CP_interface::CP_interface(const EV_EVSE_inventory& inventory, bool save_validation_data)
-    : inventory{ inventory },
+CP_interface::CP_interface(const std::string& input_path, bool save_validation_data)
+    : loader{ load_EV_EVSE_inventory{ input_path } },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library{ load_CP_library(inventory, save_validation_data) }
 {
 }
@@ -183,19 +185,21 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model(double
     return return_val;
 }
 
-CP_interface_v2::CP_interface_v2(const EV_EVSE_inventory& inventory)
-    : inventory(inventory), 
+CP_interface_v2::CP_interface_v2(const std::string& input_path)
+    : loader{ load_EV_EVSE_inventory{ input_path } },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library_v2{ pev_charge_profile_library_v2 {this->inventory} } 
 {};
 
 
-CP_interface_v2::CP_interface_v2(const EV_EVSE_inventory& inventory, 
+CP_interface_v2::CP_interface_v2(const std::string& input_path,
                                  double L1_timestep_sec, 
                                  double L2_timestep_sec, 
                                  double HPC_timestep_sec, 
                                  EV_ramping_map ramping_by_pevType_only, 
                                  EV_EVSE_ramping_map ramping_by_pevType_seType)
-    : inventory{ inventory },
+    : loader{ load_EV_EVSE_inventory{ input_path } },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library_v2{ factory_charge_profile_library_v2{this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType}.get_charge_profile_library(L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec)}
 {
 }

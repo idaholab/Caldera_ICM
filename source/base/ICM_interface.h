@@ -19,17 +19,19 @@
 #include "factory_ac_to_dc_converter.h"
 #include "factory_supply_equipment_model.h"
 
+#include "load_EV_EVSE_inventory.h"
 
 class interface_to_SE_groups
 {
 private:
 
+    const load_EV_EVSE_inventory loader;
     const EV_EVSE_inventory& inventory;
 
     std::vector<supply_equipment_group> SE_group_objs;
     std::map<int, supply_equipment_group*> SE_group_Id_to_ptr;
     std::map<SE_id_type, supply_equipment*> SEid_to_SE_ptr;
-    std::vector<supply_equipment*> SE_ptr_vector;    
+    std::vector<supply_equipment*> SE_ptr_vector;
     std::map<grid_node_id_type, std::vector<supply_equipment*> > gridNodeId_to_SE_ptrs;
     
     // Pointers to the following should be in every supply_equipment_load object.
@@ -40,7 +42,7 @@ private:
     manage_L2_control_strategy_parameters manage_L2_control;
     
 public:
-    interface_to_SE_groups(const interface_to_SE_groups_inputs& inputs);
+    interface_to_SE_groups(const std::string& input_path, const interface_to_SE_groups_inputs& inputs);
 
     ~interface_to_SE_groups();
 

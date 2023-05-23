@@ -1,8 +1,7 @@
 
 #include "ICM_interface.h"
 #include "datatypes_global.h"
-#include "datatypes_global_SE_EV_definitions.h"
-
+#include "inputs.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -19,8 +18,8 @@ PYBIND11_MODULE(Caldera_ICM, m)
     //======================================================= 
     
     py::class_<interface_to_SE_groups>(m, "interface_to_SE_groups")
-        .def(py::init<>())
-        .def("initialize", &interface_to_SE_groups::initialize)
+        .def(py::init<const std::string&, const interface_to_SE_groups_inputs&>())
+        //.def("initialize", &interface_to_SE_groups::initialize)
         //.def("initialize_infrastructure", &interface_to_SE_groups::initialize_infrastructure)
         //.def("initialize_baseLD_forecaster", &interface_to_SE_groups::initialize_baseLD_forecaster)
         //.def("initialize_L2_control_strategy_parameters", &interface_to_SE_groups::initialize_L2_control_strategy_parameters)

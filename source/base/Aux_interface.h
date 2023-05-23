@@ -3,10 +3,9 @@
 #define inl_Aux_interface_H
 
 #include "datatypes_global.h"                       // SE_id_type,  station_charge_event_data, station_status
-//#include "datatypes_global_SE_EV_definitions.h"     // pev_SE_pair, get_EVSE_type, get_EV_type, supply_equipment_is_L1, supply_equipment_is_L2, pev_is_compatible_with_supply_equipment
 #include "charge_profile_library.h"                 // pev_charge_profile_library
 #include "helper.h"                                 // get_base_load_forecast
-
+#include "load_EV_EVSE_inventory.h"
 
 //std::vector<pev_batterySize_info> get_pevType_batterySize_map();
 
@@ -15,14 +14,16 @@
 class CP_interface
 {
 private:
+
+    const load_EV_EVSE_inventory loader;
     const EV_EVSE_inventory& inventory;
     pev_charge_profile_library CP_library;    
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > CP_validation_data;
 
 public:
     
-    CP_interface(const EV_EVSE_inventory& inventory);
-    CP_interface(const EV_EVSE_inventory& inventory, bool save_validation_data);
+    CP_interface(const std::string& input_path);
+    CP_interface(const std::string& input_path, bool save_validation_data);
 
     pev_charge_profile_library load_CP_library(const EV_EVSE_inventory& inventory, bool save_validation_data);
     
@@ -45,13 +46,15 @@ public:
 class CP_interface_v2
 {
 private:
+
+    const load_EV_EVSE_inventory loader;
     const EV_EVSE_inventory& inventory;
     pev_charge_profile_library_v2 CP_library_v2;
     double timestep_sec;
     
 public:
-    CP_interface_v2(const EV_EVSE_inventory& inventory);
-    CP_interface_v2(const EV_EVSE_inventory& inventory, 
+    CP_interface_v2(const std::string& input_path);
+    CP_interface_v2(const std::string& input_path,
                     double L1_timestep_sec, 
                     double L2_timestep_sec, 
                     double HPC_timestep_sec, 

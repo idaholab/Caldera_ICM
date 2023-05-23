@@ -44,8 +44,6 @@ struct vehicle_charge_model_inputs
 
 struct interface_to_SE_groups_inputs
 {
-    const EV_EVSE_inventory& inventory;
-
     // factory_inputs
     bool create_charge_profile_library;
     EV_ramping_map ramping_by_pevType_only;
@@ -66,8 +64,7 @@ struct interface_to_SE_groups_inputs
     L2_control_strategy_parameters L2_parameters;
     bool ensure_pev_charge_needs_met;
 
-    interface_to_SE_groups_inputs(const EV_EVSE_inventory& inventory,
-                                  bool create_charge_profile_library,
+    interface_to_SE_groups_inputs(bool create_charge_profile_library,
                                   EV_ramping_map ramping_by_pevType_only,
                                   std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType,
                                   charge_event_queuing_inputs CE_queuing_inputs,
@@ -79,8 +76,7 @@ struct interface_to_SE_groups_inputs
                                   double adjustment_interval_hrs,
                                   L2_control_strategy_parameters L2_parameters,
                                   bool ensure_pev_charge_needs_met)
-        : inventory{ inventory },
-        create_charge_profile_library{ create_charge_profile_library },
+        : create_charge_profile_library{ create_charge_profile_library },
         ramping_by_pevType_only{ ramping_by_pevType_only },
         ramping_by_pevType_seType{ ramping_by_pevType_seType },
         CE_queuing_inputs{ CE_queuing_inputs },
