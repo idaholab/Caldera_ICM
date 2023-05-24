@@ -13,5 +13,6 @@ target_include_directories(Charging_models PUBLIC ${PROJECT_SOURCE_DIR}/source/l
 
 pybind11_add_module(Caldera_models MODULE charging_models_python_bind.cpp)
 target_link_libraries(Caldera_models PRIVATE Charging_models)
+target_link_libraries(Caldera_models PRIVATE Load_inputs)
 install(TARGETS Caldera_models
 		DESTINATION ${INSTALL_DIR})

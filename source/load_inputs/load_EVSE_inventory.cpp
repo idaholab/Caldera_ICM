@@ -4,7 +4,7 @@
 #include <fstream>
 #include <filesystem>
 
-load_EVSE_inventory::load_EVSE_inventory(std::string inputs_dir) :
+load_EVSE_inventory::load_EVSE_inventory(const std::string& inputs_dir) :
 	EVSE_inv(this->load(inputs_dir))
 {}
 
@@ -48,7 +48,7 @@ EVSE_phase load_EVSE_inventory::string_to_EVSE_phase(const std::string& str)
 	}
 }
 
-EVSE_inventory load_EVSE_inventory::load(std::string inputs_dir)
+EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
 {
 	EVSE_inventory EVSE_inv;
 

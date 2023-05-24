@@ -11,7 +11,7 @@ private:
 	const EV_EVSE_inventory inventory;
 
 public:
-	load_EV_EVSE_inventory(std::string inputs_dir);
+	load_EV_EVSE_inventory(const std::string& inputs_dir);
 
 	const EV_EVSE_inventory& get_EV_EVSE_inventory() const;
 };

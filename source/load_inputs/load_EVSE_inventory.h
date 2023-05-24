@@ -11,10 +11,10 @@ private:
 	EVSE_level string_to_EVSE_level(const std::string& str);
 	EVSE_phase string_to_EVSE_phase(const std::string& str);
 
-	EVSE_inventory load(std::string inputs_dir);
+	EVSE_inventory load(const std::string& inputs_dir);
 
 public:
-	load_EVSE_inventory(std::string inputs_dir);
+	load_EVSE_inventory(const std::string& inputs_dir);
 	const EVSE_inventory& get_EVSE_inventory() const;
 };
 

@@ -4,7 +4,7 @@
 #include <fstream>
 #include <filesystem>
 
-load_EV_inventory::load_EV_inventory(std::string inputs_dir) :
+load_EV_inventory::load_EV_inventory(const std::string& inputs_dir) :
 	EV_inv(this->load(inputs_dir))
 {}
 
@@ -42,7 +42,7 @@ bool load_EV_inventory::string_to_DCFC_capable(const std::string& str) {
 	}
 }
 
-EV_inventory load_EV_inventory::load(std::string inputs_dir)
+EV_inventory load_EV_inventory::load(const std::string& inputs_dir)
 {
 	EV_inventory EV_inv;
 

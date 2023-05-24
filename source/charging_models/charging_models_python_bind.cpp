@@ -3,6 +3,7 @@
 #include "EV_characteristics.h"
 #include "EV_EVSE_inventory.h"
 #include "inputs.h"
+#include "load_EV_EVSE_inventory.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -15,6 +16,14 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(Caldera_models, m)
 {
+	//--------------------------------------------
+	//       load_EV_EVSE_inventory
+	//--------------------------------------------
+
+	py::class_<load_EV_EVSE_inventory>(m, "load_EV_EVSE_inventory")
+		.def(py::init< std::string >())
+		.def("get_EV_EVSE_inventory", &load_EV_EVSE_inventory::get_EV_EVSE_inventory);
+
 	//--------------------------------------------
 	//          EV_characteristics
 	//--------------------------------------------
