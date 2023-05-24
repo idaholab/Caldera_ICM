@@ -15,7 +15,12 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(Caldera_globals, m)
 {
-	
+	m.def("get_LPF_window_enum", &get_LPF_window_enum);
+	m.def("L2_control_strategy_supports_Vrms_using_QkVAR", &L2_control_strategy_supports_Vrms_using_QkVAR);
+	m.def("get_L2_control_strategies_enum", &get_L2_control_strategies_enum);
+	m.def("is_L2_ES_control_strategy", &is_L2_ES_control_strategy);
+	m.def("is_L2_VS_control_strategy", &is_L2_VS_control_strategy);
+
 	//--------------------------------------------
 	//       interface_to_SE_groups_inputs
 	//--------------------------------------------
