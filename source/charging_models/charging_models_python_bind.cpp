@@ -47,8 +47,28 @@ PYBIND11_MODULE(Caldera_models, m)
 		.def("get_pack_voltage_at_peak_power_V", &EV_characteristics::get_pack_voltage_at_peak_power_V)
 		.def("get_battery_size_kWh", &EV_characteristics::get_battery_size_kWh)
 		.def("get_battery_size_Ah_1C", &EV_characteristics::get_battery_size_Ah_1C)
-		.def("get_battery_size_with_stochastic_degradation_kWh", &EV_characteristics::get_battery_size_with_stochastic_degradation_kWh);
+		.def("get_battery_size_with_stochastic_degradation_kWh", &EV_characteristics::get_battery_size_with_stochastic_degradation_kWh)
+		.def(py::pickle(
+			[](const EV_characteristics& obj)
+			{  // __getstate__
+				return py::make_tuple(obj.get_type(), obj.get_chemistry(), obj.get_usable_battery_size_kWh(), obj.get_range_miles(), obj.get_efficiency_Wh_per_mile(), obj.get_AC_charge_rate_kW(), obj.get_DCFC_capable(), obj.get_max_c_rate(), obj.get_pack_voltage_at_peak_power_V());
+			},
+			[](py::tuple t)
+			{  // __setstate__
+				EV_type type = t[0].cast<EV_type>();
+				battery_chemistry chemistry = t[1].cast<battery_chemistry>();
+				double usable_battery_size_kWh = t[2].cast<double>();
+				double range_miles = t[3].cast<double>();
+				double efficiency_Wh_per_mile = t[4].cast<double>();
+				double AC_charge_rate_kW = t[5].cast<double>();
+				bool DCFC_capable = t[6].cast<bool>();
+				double max_c_rate = t[7].cast<double>();
+				double pack_voltage_at_peak_power_V = t[8].cast<double>();
 
+				EV_characteristics obj{ type, chemistry, usable_battery_size_kWh, range_miles, efficiency_Wh_per_mile, AC_charge_rate_kW, DCFC_capable, max_c_rate, pack_voltage_at_peak_power_V};
+				return obj;
+			}
+		));
 	//--------------------------------------------
 	//          EVSE_characteristics
 	//--------------------------------------------
@@ -71,7 +91,27 @@ PYBIND11_MODULE(Caldera_models, m)
 		.def("get_volatge_limit_V", &EVSE_characteristics::get_volatge_limit_V)
 		.def("get_current_limit_A", &EVSE_characteristics::get_current_limit_A)
 		.def("get_standby_real_power_kW", &EVSE_characteristics::get_standby_real_power_kW)
-		.def("get_standby_reactive_power_kW", &EVSE_characteristics::get_standby_reactive_power_kW);
+		.def("get_standby_reactive_power_kW", &EVSE_characteristics::get_standby_reactive_power_kW)
+		.def(py::pickle(
+			[](const EVSE_characteristics& obj)
+			{  // __getstate__
+				return py::make_tuple(obj.get_type(), obj.get_level(), obj.get_phase(), obj.get_power_limit_kW(), obj.get_volatge_limit_V(), obj.get_current_limit_A(), obj.get_standby_real_power_kW(), obj.get_standby_reactive_power_kW());
+			},
+			[](py::tuple t)
+			{  // __setstate__
+				EVSE_type type = t[0].cast<EVSE_type>();
+				EVSE_level level = t[1].cast<EVSE_level>();
+				EVSE_phase phase = t[2].cast<EVSE_phase>();
+				double power_limit_kW = t[3].cast<double>();
+				double volatge_limit_V = t[4].cast<double>();
+				double current_limit_A = t[5].cast<double>();
+				double standby_real_power_kW = t[6].cast<double>();
+				double standby_reactive_power_kW = t[7].cast<double>();
+
+				EVSE_characteristics obj{ type, level, phase, power_limit_kW, volatge_limit_V, current_limit_A, standby_real_power_kW, standby_reactive_power_kW };
+				return obj;
+			}
+	));
 
 	//--------------------------------------------
 	//          EV_EVSE_inventory
@@ -91,5 +131,27 @@ PYBIND11_MODULE(Caldera_models, m)
 		.def("get_default_EV", &EV_EVSE_inventory::get_default_EV)
 		.def("get_default_EVSE", &EV_EVSE_inventory::get_default_EVSE)
 		.def("get_all_compatible_pev_SE_combinations", &EV_EVSE_inventory::get_all_compatible_pev_SE_combinations)
-		.def("pev_is_compatible_with_supply_equipment", &EV_EVSE_inventory::pev_is_compatible_with_supply_equipment);
+		.def("pev_is_compatible_with_supply_equipment", &EV_EVSE_inventory::pev_is_compatible_with_supply_equipment)
+		.def(py::pickle(
+			[](const EV_EVSE_inventory& obj)
+			{  // __getstate__
+				return py::make_tuple(obj.get_EV_inventory(), obj.get_EVSE_inventory());
+			},
+			[](py::tuple t)
+			{  // __setstate__
+
+				// EV_inventory
+				EV_inventory EV_inv;
+				for (auto x : t[0])
+					EV_inv.insert(x.cast<std::pair<EV_type, EV_characteristics>>());
+
+				// EVSE_inventory
+				EVSE_inventory EVSE_inv;
+				for (auto x : t[1])
+					EVSE_inv.insert(x.cast<std::pair<EVSE_type, EVSE_characteristics>>());
+
+				EV_EVSE_inventory obj{ EV_inv, EVSE_inv };
+				return obj;
+			}
+	));
 }
