@@ -90,6 +90,6 @@ PYBIND11_MODULE(Caldera_models, m)
 		.def("get_all_EVSEs", &EV_EVSE_inventory::get_all_EVSEs)
 		.def("get_default_EV", &EV_EVSE_inventory::get_default_EV)
 		.def("get_default_EVSE", &EV_EVSE_inventory::get_default_EVSE)
-		.def("get_all_compatible_pev_SE_combinations", &EV_EVSE_inventory::get_all_compatible_pev_SE_combinations);
-
+		.def("get_all_compatible_pev_SE_combinations", &EV_EVSE_inventory::get_all_compatible_pev_SE_combinations)
+		.def("pev_is_compatible_with_supply_equipment", &EV_EVSE_inventory::pev_is_compatible_with_supply_equipment);
 }
