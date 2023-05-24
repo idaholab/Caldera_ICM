@@ -18,6 +18,11 @@ struct pev_SE_pair
                 const EVSE_type& se_type)
         : ev_type(ev_type),
         se_type(se_type) { }
+
+    bool operator==(const pev_SE_pair& rhs) const
+    {
+        return (this->ev_type == rhs.ev_type) && (this->se_type == rhs.se_type);
+    }
 };
 
 class EV_EVSE_inventory {
@@ -53,6 +58,8 @@ public:
     const EVSE_type& get_default_EVSE() const;
 
     const std::vector<pev_SE_pair>& get_all_compatible_pev_SE_combinations() const;
+
+    const bool pev_is_compatible_with_supply_equipment(const pev_SE_pair& EV_EVSE_combination) const;
 };
 
 std::ostream& operator<<(std::ostream& os, const EV_EVSE_inventory& inventory);

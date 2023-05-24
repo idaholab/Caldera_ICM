@@ -106,6 +106,21 @@ const std::vector<pev_SE_pair>& EV_EVSE_inventory::get_all_compatible_pev_SE_com
     return this->compatible_EV_EVSE_pair;
 }
 
+const bool EV_EVSE_inventory::pev_is_compatible_with_supply_equipment(const pev_SE_pair& EV_EVSE_combination) const
+{
+    auto it = std::find(this->compatible_EV_EVSE_pair.begin(), this->compatible_EV_EVSE_pair.end(), EV_EVSE_combination);
+
+    if (it == this->compatible_EV_EVSE_pair.end())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+
 std::ostream& operator<<(std::ostream& os, const EV_EVSE_inventory& inventory) 
 {
     os << inventory.get_EV_inventory();
