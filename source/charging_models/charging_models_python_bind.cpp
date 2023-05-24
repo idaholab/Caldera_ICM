@@ -141,14 +141,12 @@ PYBIND11_MODULE(Caldera_models, m)
 			{  // __setstate__
 
 				// EV_inventory
-				EV_inventory EV_inv;
-				for (auto x : t[0])
-					EV_inv.insert(x.cast<std::pair<EV_type, EV_characteristics>>());
+				EV_inventory EV_inv = t[0].cast<EV_inventory>();
 
 				// EVSE_inventory
-				EVSE_inventory EVSE_inv;
-				for (auto x : t[1])
-					EVSE_inv.insert(x.cast<std::pair<EVSE_type, EVSE_characteristics>>());
+				EVSE_inventory EVSE_inv = t[1].cast<EVSE_inventory>();
+//				for (auto x : t[1].cast<EVSE_inventory>())
+//					EVSE_inv.insert(x);
 
 				EV_EVSE_inventory obj{ EV_inv, EVSE_inv };
 				return obj;
