@@ -26,7 +26,18 @@ PYBIND11_MODULE(Caldera_globals, m)
 	//--------------------------------------------
 
 	py::class_<interface_to_SE_groups_inputs>(m, "interface_to_SE_groups_inputs")
-		.def(py::init<bool, EV_ramping_map, std::vector<pev_charge_ramping_workaround>, charge_event_queuing_inputs, std::vector<SE_group_configuration>, double, int, std::vector<double>, std::vector<double>, double, L2_control_strategy_parameters, bool >());
+		.def(py::init< bool,
+                       EV_ramping_map,
+                       std::vector<pev_charge_ramping_workaround>,
+                       charge_event_queuing_inputs,
+                       std::vector<SE_group_configuration>,
+                       double,
+                       int,
+                       std::vector<double>&,
+                       std::vector<double>&,
+                       double,
+                       L2_control_strategy_parameters,
+                       bool >());
 
 	//---------------------------------
 	//       Charge Event Data

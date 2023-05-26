@@ -115,7 +115,7 @@ struct poly_segment
     double d;
     double e;
 
-    poly_segment::poly_segment(const double& x_LB, const double& x_UB, const poly_degree& degree, const double& a,
+    poly_segment(const double& x_LB, const double& x_UB, const poly_degree& degree, const double& a,
         const double& b, const double& c, const double& d, const double& e)
         : x_LB(x_LB), x_UB(x_UB), degree(degree), a(a), b(b), c(c), d(d), e(e) {}
     

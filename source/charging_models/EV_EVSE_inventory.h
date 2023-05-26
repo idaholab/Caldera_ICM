@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include "EV_characteristics.h"
 #include "EVSE_characteristics.h"
+#include <vector>
 
 typedef std::unordered_map<EV_type, EV_characteristics> EV_inventory;
 typedef std::unordered_map<EVSE_type, EVSE_characteristics> EVSE_inventory;
@@ -42,7 +43,7 @@ private:
     const std::vector<EVSE_type> load_all_EVSEs() const;
     const EV_type load_default_EV() const;
     const EVSE_type load_default_EVSE() const;
-    const std::vector<pev_SE_pair> EV_EVSE_inventory::load_compatible_EV_EVSE_pair() const;
+    const std::vector<pev_SE_pair> load_compatible_EV_EVSE_pair() const;
 
 public:
     EV_EVSE_inventory(const EV_inventory& EV_inv,

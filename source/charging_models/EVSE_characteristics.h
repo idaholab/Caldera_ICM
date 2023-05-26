@@ -13,6 +13,12 @@ enum EVSE_level
     DCFC = 2
 };
 
+namespace std {
+	template <> struct hash<EVSE_level> {
+		int operator() (const EVSE_level& t) const { return (int)t; }
+	};
+}
+
 std::ostream& operator<<(std::ostream& os, const EVSE_level& level);
 
 enum EVSE_phase

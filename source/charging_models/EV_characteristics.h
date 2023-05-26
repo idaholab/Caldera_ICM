@@ -15,6 +15,12 @@ enum battery_chemistry
     NMC = 2
 };
 
+namespace std {
+	template <> struct hash<battery_chemistry> {
+		int operator() (const battery_chemistry& t) const { return (int)t; }
+	};
+}
+
 std::ostream& operator<<(std::ostream& os, const battery_chemistry& chemistry);
 
 typedef double crate;
