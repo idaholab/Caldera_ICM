@@ -274,8 +274,16 @@ EV_inventory load_EV_inventory::load(const std::string& inputs_dir)
 			ASSERT(is_conversion_successful, EV_inputs_file << " " << column_names[column_num] << " " <<
 				str << " is not a double in line number " << line_number);
 
-			ASSERT(val >= 0, EV_inputs_file << " " << column_names[column_num] << " " << str
-				<< " is less than or equal to 0 in line number " << line_number);
+			if (DCFC_capable)
+			{
+				ASSERT(val >= 0, EV_inputs_file << " " << column_names[column_num] << " " << str
+					   << " is less than or equal to 0 in line number " << line_number);
+			}
+			else
+			{
+				ASSERT(val == -1 || val >= 0, EV_inputs_file << " " << column_names[column_num] << " " << str
+					   << " is not valid when DCFC_capable is True in line number " << line_number);
+			}
 
 			return val;
 		}();

@@ -108,10 +108,13 @@ double EV_characteristics::compute_battery_size_Ah_1C()
     crate smallest_crate = profile_peak_power_W_per_Wh.begin()->first;
     crate largest_crate = (--profile_peak_power_W_per_Wh.end())->first;
 
-    if (this->max_c_rate < smallest_crate || this->max_c_rate > largest_crate)
+    if ((this->max_c_rate < smallest_crate || this->max_c_rate > largest_crate) && this->max_c_rate != -1)
     {
-        ASSERT(false, "invalid crate for model " << this->type << " crate needs to be between " << smallest_crate << " and " << largest_crate);
+        ASSERT(false, "invalid crate for model " << this->type << " crate needs to be between " << smallest_crate << " and " << largest_crate << " crate is " << this->max_c_rate);
     }
+
+    if (this->max_c_rate == -1)
+        return -1;
 
     auto it_UB = profile_peak_power_W_per_Wh.upper_bound(this->max_c_rate);
     auto it_LB = std::prev(it_UB);

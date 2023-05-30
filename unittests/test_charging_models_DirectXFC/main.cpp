@@ -19,6 +19,9 @@ int main()
 
 	factory_EV_charge_model charge_model_factory{ inventory, custom_EV_ramping, custom_EV_EVSE_ramping, model_stochastic_battery_degregation };
 
+	std::vector<pev_SE_pair> EV_EVSE_pair = inventory.get_all_compatible_pev_SE_combinations();
+	
+	/*
 	std::vector<std::pair<EV_type, EVSE_type> > EV_EVSE_pair;
 
 	EV_EVSE_pair.push_back(std::make_pair("L2_7200", "bev150_ld1_50kW"));
@@ -32,6 +35,7 @@ int main()
 	EV_EVSE_pair.push_back(std::make_pair("L2_7200", "bev300_575kW"));
 	EV_EVSE_pair.push_back(std::make_pair("dcfc_50", "bev300_575kW"));
 	EV_EVSE_pair.push_back(std::make_pair("xfc_350", "bev300_575kW"));
+	*/
 
 	// Build charge event
 
@@ -63,17 +67,17 @@ int main()
 	std::string filename, header, data, seperator, new_line;
 	std::ofstream file_handle;
 
-	for (std::pair<EVSE_type, EV_type> elem : EV_EVSE_pair)
+	for (pev_SE_pair elem : EV_EVSE_pair)
 	{
-		EVSE_type supply_equipment_type = elem.first;
-		EV_type vehicle_type = elem.second;
+		EVSE_type supply_equipment_type = elem.se_type;
+		EV_type vehicle_type = elem.ev_type;
 		
 		charge_event_data event(charge_event_id, SE_group_id, SE_id, vehicle_id, vehicle_type, arrival_unix_time, departure_unix_time, arrival_SOC, departure_SOC, scc, cs);
 		
 		vehicle_charge_model* model = charge_model_factory.alloc_get_EV_charge_model(event, supply_equipment_type, 1000000);
 		model->set_target_P2_kW(10000000);
 
-		filename = supply_equipment_type + "_" + vehicle_type + ".csv";
+		filename = "outputs/" + supply_equipment_type + "_" + vehicle_type + ".csv";
 
 		file_handle = std::ofstream(filename);
 
@@ -91,7 +95,6 @@ int main()
 
 		double previous_unix_time = simulation_start_unix_time - simulation_timestep_sec;
 		double current_unix_time = simulation_start_unix_time;
-
 
 		while (current_unix_time <= simulation_end_unix_time)
 		{

@@ -13,7 +13,7 @@ const EVSE_inventory& load_EVSE_inventory::get_EVSE_inventory() const
 	return this->EVSE_inv;
 }
 
-EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& str)
+const EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& str) const
 {
 	const std::unordered_map<std::string, EVSE_level> map = {
 		{"L1", L1},
@@ -30,7 +30,7 @@ EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& str)
 	}
 }
 
-EVSE_phase load_EVSE_inventory::string_to_EVSE_phase(const std::string& str)
+const EVSE_phase load_EVSE_inventory::string_to_EVSE_phase(const std::string& str) const
 {
 	const std::unordered_map<std::string, EVSE_phase> map = {
 		{"1", singlephase},
@@ -168,8 +168,16 @@ EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
 			ASSERT(is_conversion_successful, EVSE_inputs_file << " " << column_names[4] << " " <<
 				str << " is not a double in line number " << line_number);
 
-			ASSERT(val > 0, EVSE_inputs_file << " " << column_names[4] << " " << str <<
-				" is less than or equal to 0 in line number " << line_number);
+			if(level == DCFC)
+			{
+				ASSERT(val > 0, EVSE_inputs_file << " " << column_names[4] << " " << str <<
+					   " is less than or equal to 0 in line number " << line_number);
+			}
+			else
+			{
+				ASSERT(val > 0 || val == -1, EVSE_inputs_file << " " << column_names[4] << " " << str <<
+					   " is less than or equal to 0 in line number " << line_number);
+			}
 
 			return val;
 
@@ -188,11 +196,17 @@ EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
 			catch (...) {
 				is_conversion_successful = false;
 			}
-			ASSERT(is_conversion_successful, EVSE_inputs_file << " " << column_names[5] << " " <<
-				str << " is not a double in line number " << line_number);
 
-			ASSERT(val > 0, EVSE_inputs_file << " " << column_names[5] << " " << str <<
-				" is less than or equal to 0 in line number " << line_number);
+			if (level == DCFC)
+			{
+				ASSERT(is_conversion_successful, EVSE_inputs_file << " " << column_names[5] << " " <<
+					   str << " is not a double in line number " << line_number);
+			}
+			else
+			{
+				ASSERT(val > 0 || val == -1, EVSE_inputs_file << " " << column_names[5] << " " << str <<
+					   " is less than or equal to 0 in line number " << line_number);
+			}
 
 			return val;
 

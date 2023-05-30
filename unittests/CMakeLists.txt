@@ -1,3 +1,3 @@
 enable_testing()
 
-add_subdirectory(test_charging_models)
+add_subdirectory(test_charging_models_DirectXFC)
