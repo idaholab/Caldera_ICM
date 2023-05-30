@@ -61,6 +61,15 @@ public:
     const std::vector<pev_SE_pair>& get_all_compatible_pev_SE_combinations() const;
 
     const bool pev_is_compatible_with_supply_equipment(const pev_SE_pair& EV_EVSE_combination) const;
+    
+    // Returns true if the given EV_type is a part of the inventory.
+    // Otherwise, returns false.
+    const bool is_valid_EV_type( const EV_type& ev_type ) const;
+    
+    // Returns true if the given EVSE_type is a part of the inventory.
+    // Otherwise, returns false. 
+    const bool is_valid_EVSE_type( const EVSE_type& se_type ) const;
+    
 };
 
 std::ostream& operator<<(std::ostream& os, const EV_EVSE_inventory& inventory);

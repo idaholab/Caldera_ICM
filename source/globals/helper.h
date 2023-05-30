@@ -65,7 +65,8 @@ public:
 };
 
 struct line_segment
-{	  // y = a*x + b
+{
+    // y = a*x + b
 	double x_LB;
     double x_UB;
     double a;
@@ -73,7 +74,7 @@ struct line_segment
    
    	const double y_UB() const {return this->a*this->x_UB + this->b;}
     const double y_LB() const {return this->a*this->x_LB + this->b;}
-    const double y(const double& x) const {return this->a*x + this->b;}
+    const double y(const double x) const {return this->a*x + this->b;}
     
    	bool operator<(const line_segment& rhs) const
    	{
@@ -85,7 +86,7 @@ struct line_segment
    		return this->x_LB < rhs.x_LB;
    	}
 
-    line_segment(const double& x_LB, const double& x_UB, const double& a, const double& b)
+    line_segment(const double x_LB, const double x_UB, const double a, const double b)
         : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
 };
 std::ostream& operator<<(std::ostream& out, line_segment& x);

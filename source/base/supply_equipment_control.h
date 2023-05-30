@@ -3,7 +3,6 @@
 #define inl_supply_equipment_control_H
 
 #include "datatypes_global.h"                       // ES500_aggregator_charging_needs
-//#include "datatypes_global_SE_EV_definitions.h"
 #include "supply_equipment_load.h"                  // supply_equipment_load
 #include "helper.h"                                 // get_base_load_forecast, get_value_from_normal_distribution, get_real_value_from_uniform_distribution, get_int_value_from_uniform_distribution
 #include "charge_profile_library.h"                 // pev_charge_profile

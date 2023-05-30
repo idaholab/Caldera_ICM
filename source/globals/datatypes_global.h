@@ -2,8 +2,6 @@
 #ifndef inl_datatypes_global_H
 #define inl_datatypes_global_H
 
-//#include "datatypes_global_SE_EV_definitions.h"     // supply_equipment_enum, vehicle_enum
-
 #include "EV_characteristics.h"
 #include "EVSE_characteristics.h"
 

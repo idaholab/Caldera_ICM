@@ -120,6 +120,15 @@ const bool EV_EVSE_inventory::pev_is_compatible_with_supply_equipment(const pev_
     }
 }
 
+const bool EV_EVSE_inventory::is_valid_EV_type( const EV_type& ev_type ) const
+{
+    return this->EV_inv.find(ev_type) != this->EV_inv.end();
+}
+
+const bool EV_EVSE_inventory::is_valid_EVSE_type( const EVSE_type& se_type ) const
+{
+    return this->EVSE_inv.find(se_type) != this->EVSE_inv.end();
+}
 
 std::ostream& operator<<(std::ostream& os, const EV_EVSE_inventory& inventory) 
 {

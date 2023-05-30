@@ -5,8 +5,7 @@
 #include "supply_equipment_load.h"
 #include "supply_equipment_control.h"
 
-#include "datatypes_global.h"                       // SE_configuration, SE_charging_status, charge_event_data
-//#include "datatypes_global_SE_EV_definitions.h"     
+#include "datatypes_global.h"                       // SE_configuration, SE_charging_status, charge_event_data 
 #include "datatypes_module.h"                       // ac_power_metrics, SE_status, CE_Status
 #include "charge_profile_library.h"                 // pev_charge_profile_library
 

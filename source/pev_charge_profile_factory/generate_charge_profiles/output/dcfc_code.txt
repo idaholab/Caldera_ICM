@@ -1,9 +1,0 @@
-else if(SE_enum == dcfc_50 && EV_enum == BEV250_ld2_300kW)
-{
-    P2_vs_soc_segments.push_back({-0.1, 4.0, 2.9734572160883284, 83.25680205047318});
-    P2_vs_soc_segments.push_back({4.0, 10.0, 0.7112085962145108, 92.30579652996846});
-    P2_vs_soc_segments.push_back({10.0, 88.17546964375163, 0.18042116597913127, 97.61367083232224});
-    P2_vs_soc_segments.push_back({88.17546964375163, 100.1, -9.133249999999995, 918.8509999999994});
-    zero_slope_threashold_P2_vs_soc = 0.16237904938121814;
-    // min_non_zero_slope = 0.18042116597913127
-}

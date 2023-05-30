@@ -53,6 +53,7 @@ private:
     double timestep_sec;
     
 public:
+    // "input_path" is the path to the folder that contains 'EV_inputs.csv' and 'EVSE_inputs.csv'.
     CP_interface_v2(const std::string& input_path);
     CP_interface_v2(const std::string& input_path,
                     double L1_timestep_sec, 

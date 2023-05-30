@@ -4,7 +4,6 @@
 
 
 #include "datatypes_global.h"                       // SE_group_configuration, SE_group_charge_event_data, grid_power
-//#include "datatypes_global_SE_EV_definitions.h"
 #include "supply_equipment.h"                       // supply_equipment
 #include "helper.h"                                 // LPF_kernel
 
