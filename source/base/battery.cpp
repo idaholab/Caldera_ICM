@@ -31,7 +31,7 @@ battery::battery(const vehicle_charge_model_inputs& inputs)
 	soc{ inputs.CE.arrival_SOC },
 	soc_to_energy{ this->battery_size_kWh / 100.0 },
 	target_P2_kW{ 0.0 },
-	zero_slope_threashold_bat_eff_vs_P2{ this->get_zero_slope_threashold_bat_eff_vs_P2(inputs) },
+	zero_slope_threshold_bat_eff_vs_P2{ this->get_zero_slope_threshold_bat_eff_vs_P2(inputs) },
 	will_never_discharge{ true },
 	soc_of_full_battery{ 100 },
 	soc_of_empty_battery{ 0.0 },
@@ -43,10 +43,10 @@ battery::battery(const vehicle_charge_model_inputs& inputs)
 {
 }
 
-double battery::get_zero_slope_threashold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs)
+double battery::get_zero_slope_threshold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs)
 {
-	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).zero_slope_threashold;
-	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).zero_slope_threashold;
+	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).zero_slope_threshold;
+	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).zero_slope_threshold;
 
 	return (charging_zst < discharging_zst) ? charging_zst : discharging_zst;
 }
@@ -151,7 +151,7 @@ void battery::get_next(double prev_unix_time,
 		c = this->bat_eff_vs_P2_charging.a;
 		d = this->bat_eff_vs_P2_charging.b;
 
-		if(std::abs(c) < this->zero_slope_threashold_bat_eff_vs_P2)
+		if(std::abs(c) < this->zero_slope_threshold_bat_eff_vs_P2)
 		{
 			eff_tmp = c*(E1_kWh_UB/time_step_hrs) + d;
 			E2_kWh_UB = E1_kWh_UB/eff_tmp;
@@ -175,7 +175,7 @@ void battery::get_next(double prev_unix_time,
 		c = this->bat_eff_vs_P2_discharging.a;
 		d = this->bat_eff_vs_P2_discharging.b;
 
-		if(std::abs(c) < this->zero_slope_threashold_bat_eff_vs_P2)
+		if(std::abs(c) < this->zero_slope_threshold_bat_eff_vs_P2)
 		{
 			eff_tmp = c*(E1_kWh_LB/time_step_hrs) + d;
 			E2_kWh_LB = E1_kWh_LB/eff_tmp;

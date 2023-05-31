@@ -33,14 +33,14 @@ private:
 	integrate_X_through_time   get_next_P2;
 	
 	double battery_size_kWh, soc, soc_to_energy, target_P2_kW;
-	double zero_slope_threashold_bat_eff_vs_P2;
+	double zero_slope_threshold_bat_eff_vs_P2;
 	bool will_never_discharge;
     double soc_of_full_battery, soc_of_empty_battery;
 
 	line_segment bat_eff_vs_P2_charging;
 	line_segment bat_eff_vs_P2_discharging;
 
-	double get_zero_slope_threashold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs);
+	double get_zero_slope_threshold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs);
 	
 public:
 	// Debugging

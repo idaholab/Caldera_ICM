@@ -13,9 +13,9 @@
 struct P2_vs_battery_efficiency
 {
 	const line_segment curve;
-	const double zero_slope_threashold;
+	const double zero_slope_threshold;
 	P2_vs_battery_efficiency(const line_segment& curve, 
-							 const double& zero_slope_threashold);
+							 const double& zero_slope_threshold);
 };
 
 typedef std::unordered_map<EV_type, std::unordered_map< battery_charge_mode, P2_vs_battery_efficiency> > P2_vs_battery_efficiency_map;

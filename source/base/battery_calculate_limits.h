@@ -48,7 +48,7 @@ protected:
 
     int seg_index, ref_seg_index;
     double soc_to_energy, prev_exp_val, exp_term;
-	double recalc_exponent_threashold, zero_slope_threashold_P2_vs_soc;
+	double recalc_exponent_threshold, zero_slope_threshold_P2_vs_soc;
 	bool segment_is_flat_P2_vs_soc, P2_vs_soc_segments_changed;
 
 public:

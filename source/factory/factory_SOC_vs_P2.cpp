@@ -6,9 +6,9 @@
 //##########################################################
 
 SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
-                     const double& zero_slope_threashold)
+                     const double& zero_slope_threshold)
     : curve{ curve }, 
-    zero_slope_threashold{ zero_slope_threashold }
+    zero_slope_threshold{ zero_slope_threshold }
 {
 }
 
@@ -41,21 +41,21 @@ const double create_dcPkW_from_soc::compute_min_non_zero_slope(const std::vector
     return abs_min_non_zero_slope;
 }
 
-const double create_dcPkW_from_soc::compute_zero_slope_threashold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const
+const double create_dcPkW_from_soc::compute_zero_slope_threshold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const
 {
-    const double min_zero_slope_threashold_P2_vs_soc = 0.01;   // 1 kW change in P2 over 100 soc
+    const double min_zero_slope_threshold_P2_vs_soc = 0.01;   // 1 kW change in P2 over 100 soc
     const double min_non_zero_slope = this->compute_min_non_zero_slope(charge_profile);
 
-    double zero_slope_threashold_P2_vs_soc;
-    if (min_non_zero_slope < min_zero_slope_threashold_P2_vs_soc)
+    double zero_slope_threshold_P2_vs_soc;
+    if (min_non_zero_slope < min_zero_slope_threshold_P2_vs_soc)
     {
-        zero_slope_threashold_P2_vs_soc = min_zero_slope_threashold_P2_vs_soc;
+        zero_slope_threshold_P2_vs_soc = min_zero_slope_threshold_P2_vs_soc;
     }
     else
     {
-        zero_slope_threashold_P2_vs_soc = 0.9 * min_non_zero_slope;
+        zero_slope_threshold_P2_vs_soc = 0.9 * min_non_zero_slope;
     }
-    return zero_slope_threashold_P2_vs_soc;
+    return zero_slope_threshold_P2_vs_soc;
 }
 
 const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type& EV) const
@@ -115,9 +115,9 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
     
     //------------------------------------------------
 
-    const double zero_slope_threashold_P2_vs_soc = this->compute_zero_slope_threashold_P2_vs_soc(charge_profile);
+    const double zero_slope_threshold_P2_vs_soc = this->compute_zero_slope_threshold_P2_vs_soc(charge_profile);
     
-    return SOC_vs_P2{ charge_profile, zero_slope_threashold_P2_vs_soc };
+    return SOC_vs_P2{ charge_profile, zero_slope_threshold_P2_vs_soc };
 }
 
 
@@ -394,7 +394,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
 
     //--------------------------------------
 
-    const double zero_slope_threashold_P2_vs_soc = this->compute_zero_slope_threashold_P2_vs_soc(dcPkW_from_soc_input);
+    const double zero_slope_threshold_P2_vs_soc = this->compute_zero_slope_threshold_P2_vs_soc(dcPkW_from_soc_input);
 
     //=====================================================
     //       Calculate Objective Function Constraints
@@ -466,7 +466,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
         if (dcPkW_from_soc_input[i].x_LB == 0) dcPkW_from_soc_input[i].x_LB = -0.1;
         if(dcPkW_from_soc_input[i].x_UB == 100) dcPkW_from_soc_input[i].x_UB = 100.1;
     }
-    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc };
+    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
 const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const
@@ -720,7 +720,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 
     //--------------------------------------
 
-    const double zero_slope_threashold_P2_vs_soc = this->compute_zero_slope_threashold_P2_vs_soc(dcPkW_from_soc_input);
+    const double zero_slope_threshold_P2_vs_soc = this->compute_zero_slope_threshold_P2_vs_soc(dcPkW_from_soc_input);
 
     //=====================================================
     //       Calculate Objective Function Constraints
@@ -782,7 +782,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
     constraints_.push_back(constraint_B);
 
     //constraints = constraints_;
-    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threashold_P2_vs_soc };
+    return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
 

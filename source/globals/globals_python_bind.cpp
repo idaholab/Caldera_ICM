@@ -465,19 +465,19 @@ PYBIND11_MODULE(Caldera_globals, m)
 	py::class_<pev_charge_fragment_removal_criteria>(m, "pev_charge_fragment_removal_criteria")
 		.def(py::init<>())
 		.def_readwrite("max_percent_of_fragments_that_can_be_removed", &pev_charge_fragment_removal_criteria::max_percent_of_fragments_that_can_be_removed)
-		.def_readwrite("kW_change_threashold", &pev_charge_fragment_removal_criteria::kW_change_threashold)
+		.def_readwrite("kW_change_threshold", &pev_charge_fragment_removal_criteria::kW_change_threshold)
 		.def_readwrite("threshold_to_determine_not_removable_fragments_on_flat_peak_kW", &pev_charge_fragment_removal_criteria::threshold_to_determine_not_removable_fragments_on_flat_peak_kW)
 		.def_readwrite("perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow", &pev_charge_fragment_removal_criteria::perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow)
 		.def(py::pickle(
 			[](const pev_charge_fragment_removal_criteria& obj)
 			{  // __getstate__
-				return py::make_tuple(obj.max_percent_of_fragments_that_can_be_removed, obj.kW_change_threashold, obj.threshold_to_determine_not_removable_fragments_on_flat_peak_kW, obj.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow);
+				return py::make_tuple(obj.max_percent_of_fragments_that_can_be_removed, obj.kW_change_threshold, obj.threshold_to_determine_not_removable_fragments_on_flat_peak_kW, obj.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow);
 			},
 			[](py::tuple t)
 			{  // __setstate__
 				pev_charge_fragment_removal_criteria obj;
 				obj.max_percent_of_fragments_that_can_be_removed = t[0].cast<double>();
-				obj.kW_change_threashold = t[1].cast<double>();
+				obj.kW_change_threshold = t[1].cast<double>();
 				obj.threshold_to_determine_not_removable_fragments_on_flat_peak_kW = t[2].cast<double>();
 				obj.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow = t[3].cast<double>();
 				return obj;

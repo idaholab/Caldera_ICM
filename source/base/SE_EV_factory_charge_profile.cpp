@@ -228,15 +228,15 @@ void factory_charge_profile_library::get_charge_profile_aux_parameters(double ma
         if(P3kW < 20)
             perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow = -1;
         
-        double kW_change_threashold = P3kW/100;
-        if(kW_change_threashold > 2)
-            kW_change_threashold = 2;
-        else if(kW_change_threashold < 0.1)
-            kW_change_threashold = 0.1;
+        double kW_change_threshold = P3kW/100;
+        if(kW_change_threshold > 2)
+            kW_change_threshold = 2;
+        else if(kW_change_threshold < 0.1)
+            kW_change_threshold = 0.1;
         
         pev_charge_fragment_removal_criteria X;
         X.max_percent_of_fragments_that_can_be_removed = 95;
-        X.kW_change_threashold = kW_change_threashold;
+        X.kW_change_threshold = kW_change_threshold;
         X.threshold_to_determine_not_removable_fragments_on_flat_peak_kW = 0.005;
         X.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow = perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow;
         fragment_removal_criteria.push_back(X);

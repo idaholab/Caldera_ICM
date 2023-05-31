@@ -34,10 +34,10 @@ struct bat_objfun_constraints
 struct SOC_vs_P2
 {
     const std::vector<line_segment> curve;
-    const double zero_slope_threashold;
+    const double zero_slope_threshold;
 
     SOC_vs_P2(const std::vector<line_segment>& curve,
-              const double& zero_slope_threashold);
+              const double& zero_slope_threshold);
 };
 
 typedef std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves_grouping;
@@ -53,7 +53,7 @@ private:
     const battery_charge_mode mode;
 
     const double compute_min_non_zero_slope(const std::vector<line_segment>& charge_profile) const;
-    const double compute_zero_slope_threashold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const;
+    const double compute_zero_slope_threshold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const;
 
     const SOC_vs_P2 get_charging_dcfc_charge_profile(const EV_type& EV, 
                                                      const EVSE_type& EVSE) const;

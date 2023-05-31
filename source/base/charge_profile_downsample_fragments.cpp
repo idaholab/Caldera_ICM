@@ -13,8 +13,8 @@ downsample_charge_fragment_vector::downsample_charge_fragment_vector(pev_charge_
     this->change_metric_multiplier = std::pow(10, 12);  // 10^12
 /*    
 std::cout << "    max_percent_of_fragments_that_can_be_removed: " << this->fragment_removal_criteria.max_percent_of_fragments_that_can_be_removed << std::endl;
-std::cout << "    perc_change_threashold: " << this->fragment_removal_criteria.perc_change_threashold << std::endl;
-std::cout << "    kW_change_threashold: " << this->fragment_removal_criteria.kW_change_threashold << std::endl;
+std::cout << "    perc_change_threshold: " << this->fragment_removal_criteria.perc_change_threshold << std::endl;
+std::cout << "    kW_change_threshold: " << this->fragment_removal_criteria.kW_change_threshold << std::endl;
 std::cout << "    threshold_to_determine_not_removable_fragments_on_flat_peak_kW: " << this->fragment_removal_criteria.threshold_to_determine_not_removable_fragments_on_flat_peak_kW << std::endl;
 std::cout << "    perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow: " << this->fragment_removal_criteria.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow << std::endl;
 std::cout << std::endl;    
@@ -55,7 +55,7 @@ int64_t downsample_charge_fragment_vector::calculate_variation_rank(std::list<pe
     //        change_metric_multiplier = 9 digit + 3 digits = 10^12
     //-----------------------------------------------------------------------------------
     
-    double kW_change_metric = P3kW_delta / this->fragment_removal_criteria.kW_change_threashold;
+    double kW_change_metric = P3kW_delta / this->fragment_removal_criteria.kW_change_threshold;
     int64_t tmp_variation_rank = (int64_t)((kW_change_metric)*this->change_metric_multiplier);
     int64_t variation_rank;
     while(true)

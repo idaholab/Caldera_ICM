@@ -540,7 +540,7 @@ struct pev_charge_profile_result
 struct pev_charge_fragment_removal_criteria
 {
     double max_percent_of_fragments_that_can_be_removed;
-    double kW_change_threashold;
+    double kW_change_threshold;
     double threshold_to_determine_not_removable_fragments_on_flat_peak_kW;
     double perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow;
     

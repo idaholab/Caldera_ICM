@@ -62,8 +62,8 @@ algorithm_P2_vs_soc::algorithm_P2_vs_soc(const vehicle_charge_model_inputs& inpu
     soc_to_energy{ inputs.battery_size_kWh / 100.0 },
     prev_exp_val{ -1 },
     exp_term{ std::exp(this->prev_exp_val) },
-    recalc_exponent_threashold{ 0.00000001 },
-    zero_slope_threashold_P2_vs_soc{ inputs.SOCP_factory.get_SOC_vs_P2_curves(inputs.EV, inputs.EVSE).zero_slope_threashold },
+    recalc_exponent_threshold{ 0.00000001 },
+    zero_slope_threshold_P2_vs_soc{ inputs.SOCP_factory.get_SOC_vs_P2_curves(inputs.EV, inputs.EVSE).zero_slope_threshold },
     segment_is_flat_P2_vs_soc{ false },
     P2_vs_soc_segments_changed{ false }
 {
@@ -134,7 +134,7 @@ double algorithm_P2_vs_soc_no_losses::get_soc_t1(double t1_minus_t0_hrs,
         this->a = this->P2_vs_soc->at(this->seg_index).a;
         this->b = this->P2_vs_soc->at(this->seg_index).b;
         this->A = this->a/this->soc_to_energy;
-        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threashold_P2_vs_soc;
+        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threshold_P2_vs_soc;
         
         this->prev_exp_val = this->A*t1_minus_t0_hrs;
         this->exp_term = std::exp(this->prev_exp_val);
@@ -153,7 +153,7 @@ double algorithm_P2_vs_soc_no_losses::get_soc_t1(double t1_minus_t0_hrs,
     {
     	double cur_exp_val = this->A*t1_minus_t0_hrs;
     	
-        if(this->recalc_exponent_threashold < std::abs(this->prev_exp_val - cur_exp_val))
+        if(this->recalc_exponent_threshold < std::abs(this->prev_exp_val - cur_exp_val))
         {
         	this->prev_exp_val = cur_exp_val;
             this->exp_term = std::exp(cur_exp_val);
@@ -180,7 +180,7 @@ double algorithm_P2_vs_soc_no_losses::get_time_to_soc_t1_hrs(double soc_t0,
         this->a = this->P2_vs_soc->at(this->seg_index).a;
         this->b = this->P2_vs_soc->at(this->seg_index).b;
         this->A = this->a/this->soc_to_energy;
-        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threashold_P2_vs_soc;
+        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threshold_P2_vs_soc;
     }
     
     //-------------
@@ -240,7 +240,7 @@ double algorithm_P2_vs_soc_losses::get_soc_t1(double t1_minus_t0_hrs,
         this->D = this->c*this->b + this->d;
         this->z = this->B*this->C - this->A*this->D;
                 
-        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threashold_P2_vs_soc;
+        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threshold_P2_vs_soc;
         
         this->prev_exp_val = this->z*t1_minus_t0_hrs;
         this->exp_term = std::exp(this->prev_exp_val);
@@ -262,7 +262,7 @@ double algorithm_P2_vs_soc_losses::get_soc_t1(double t1_minus_t0_hrs,
     {
     	double cur_exp_val = this->z*t1_minus_t0_hrs;
     	
-        if(this->recalc_exponent_threashold < std::abs(this->prev_exp_val - cur_exp_val))
+        if(this->recalc_exponent_threshold < std::abs(this->prev_exp_val - cur_exp_val))
         {
         	this->prev_exp_val = cur_exp_val;
             this->exp_term = std::exp(cur_exp_val);
@@ -302,7 +302,7 @@ double algorithm_P2_vs_soc_losses::get_time_to_soc_t1_hrs(double soc_t0,
         this->D = this->c*this->b + this->d;
         this->z = this->B*this->C - this->A*this->D;
                 
-        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threashold_P2_vs_soc;
+        this->segment_is_flat_P2_vs_soc = std::abs(this->a) < this->zero_slope_threshold_P2_vs_soc;
     }
     
     //-------------
