@@ -1,2 +1,0 @@
-EV_type,battery_chemistry,usable_battery_size_kWh,range_miles,efficiency_Wh/Mile,AC_charge_rate_kW,DCFC_capable,max_c_rate,pack_voltage_at_peak_power_V
-XFC250_300kW,NMC,87.5,250,350,11.5,TRUE,2.64,900

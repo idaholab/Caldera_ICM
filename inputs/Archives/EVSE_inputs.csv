@@ -1,9 +1,0 @@
-EVSE_type,EVSE_level,EVSE_phase_connection,AC/DC_power_limit_kW,AC/DC_voltage_limits_V,AC/DC_current_limit_A,standby_real_power_kW,standby_reactive_power_kVAR
-L1_1440,L1,1,1.44,120,12,0,0
-L2_3600,L2,1,3.6,240,15,0,0
-L2_7200,L2,1,7.2,240,30,0,0
-L2_9600,L2,1,9.6,240,40,0,0
-L2_11520,L2,1,11.52,240,48,0,0
-dcfc_50,DCFC,3,50,500,100,0.17,-0.445
-xfc_150,DCFC,3,150,920,163.0434783,0.17,-0.445
-xfc_350,DCFC,3,350,920,380.4347826,0.17,-0.445
