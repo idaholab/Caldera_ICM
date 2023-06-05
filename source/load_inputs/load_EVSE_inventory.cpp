@@ -5,8 +5,9 @@
 #include <filesystem>
 
 load_EVSE_inventory::load_EVSE_inventory(const std::string& inputs_dir) :
-	EVSE_inv(this->load(inputs_dir))
-{}
+	EVSE_inv{ this->load(inputs_dir) }
+{
+}
 
 const EVSE_inventory& load_EVSE_inventory::get_EVSE_inventory() const
 {

@@ -19,17 +19,30 @@ std::ostream& operator<<(std::ostream& os, const battery_chemistry& chemistry) {
     return os;
 }
 
-EV_characteristics::EV_characteristics(const EV_type& type, const battery_chemistry& chemistry,
-    const double& usable_battery_size_kWh, const double& range_miles, const double& efficiency_Wh_per_mile,
-    const double& AC_charge_rate_kW, const bool& DCFC_capable, const double& max_c_rate,
-    const double& pack_voltage_at_peak_power_V) :
-    charge_profile_peak_power_W_per_Wh(this->compute_charge_profile_peak_power_W_per_Wh()), 
-    type(type), chemistry(chemistry), usable_battery_size_kWh(usable_battery_size_kWh),
-    range_miles(range_miles), efficiency_Wh_per_mile(efficiency_Wh_per_mile),
-    AC_charge_rate_kW(AC_charge_rate_kW), DCFC_capable(DCFC_capable), max_c_rate(max_c_rate),
-    pack_voltage_at_peak_power_V(pack_voltage_at_peak_power_V), battery_size_kWh(this->compute_battery_size_kWh()),
-    battery_size_Ah_1C(this->compute_battery_size_Ah_1C()), 
-    battery_size_with_stochastic_degradation_kWh(compute_battery_size_with_stochastic_degradation_kWh()) {}
+EV_characteristics::EV_characteristics(const EV_type& type, 
+                                       const battery_chemistry& chemistry,
+                                       const double usable_battery_size_kWh, 
+                                       const double range_miles, 
+                                       const double efficiency_Wh_per_mile,
+                                       const double AC_charge_rate_kW, 
+                                       const bool DCFC_capable, 
+                                       const double max_c_rate,
+                                       const double pack_voltage_at_peak_power_V) 
+    : charge_profile_peak_power_W_per_Wh{ this->compute_charge_profile_peak_power_W_per_Wh() },
+    type{ type },
+    chemistry{ chemistry },
+    usable_battery_size_kWh{ usable_battery_size_kWh },
+    range_miles{ range_miles },
+    efficiency_Wh_per_mile{ efficiency_Wh_per_mile },
+    AC_charge_rate_kW{ AC_charge_rate_kW },
+    DCFC_capable{ DCFC_capable },
+    max_c_rate{ max_c_rate },
+    pack_voltage_at_peak_power_V{ pack_voltage_at_peak_power_V },
+    battery_size_kWh{ this->compute_battery_size_kWh() },
+    battery_size_Ah_1C{ this->compute_battery_size_Ah_1C() },
+    battery_size_with_stochastic_degradation_kWh{ compute_battery_size_with_stochastic_degradation_kWh() }
+{
+}
 
 const peak_power_per_crate& EV_characteristics::get_charge_profile_peak_power_W_per_Wh() const { return this->charge_profile_peak_power_W_per_Wh; }
 

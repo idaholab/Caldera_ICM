@@ -53,9 +53,15 @@ private:
     double compute_battery_size_with_stochastic_degradation_kWh();
 
 public:
-    EV_characteristics(const EV_type& type, const battery_chemistry& chemistry, const double& usable_battery_size_kWh,
-        const double& range_miles, const double& efficiency_Wh_per_mile, const double& AC_charge_rate_kW,
-        const bool& DCFC_capable, const double& max_c_rate, const double& pack_voltage_at_peak_power_V);
+	EV_characteristics(const EV_type& type,
+					   const battery_chemistry& chemistry,
+					   const double usable_battery_size_kWh,
+					   const double range_miles,
+					   const double efficiency_Wh_per_mile,
+					   const double AC_charge_rate_kW,
+					   const bool DCFC_capable,
+					   const double max_c_rate,
+					   const double pack_voltage_at_peak_power_V);
 
     const peak_power_per_crate& get_charge_profile_peak_power_W_per_Wh() const;
 

@@ -1,7 +1,6 @@
 set(LOAD_INPUTS_FILES	"load_EV_EVSE_inventory.cpp"
 						"load_EV_inventory.cpp"
-						"load_EVSE_inventory.cpp"
-						"load_helper.cpp")
+						"load_EVSE_inventory.cpp")
 
 add_library(Load_inputs STATIC ${LOAD_INPUTS_FILES})
 target_compile_features(Load_inputs PUBLIC cxx_std_17)

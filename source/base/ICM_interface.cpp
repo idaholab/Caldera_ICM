@@ -13,7 +13,7 @@
 
 interface_to_SE_groups::interface_to_SE_groups(const std::string& input_path,
     const interface_to_SE_groups_inputs& inputs)
-    : loader{ load_EV_EVSE_inventory(input_path) },
+    : loader{ input_path },
     inventory{ this->loader.get_EV_EVSE_inventory() },
     charge_profile_library{ load_charge_profile_library(inputs) }
 {

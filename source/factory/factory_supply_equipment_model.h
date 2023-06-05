@@ -21,8 +21,9 @@ private:
     charge_event_queuing_inputs CE_queuing_inputs;
 
 public:
-    factory_supply_equipment_model(const EV_EVSE_inventory& inventory) : inventory{ inventory } {}
-    factory_supply_equipment_model(const EV_EVSE_inventory& inventory, const charge_event_queuing_inputs& CE_queuing_inputs_);
+    factory_supply_equipment_model(const EV_EVSE_inventory& inventory);
+    factory_supply_equipment_model(const EV_EVSE_inventory& inventory, 
+                                   const charge_event_queuing_inputs& CE_queuing_inputs_);
 
     void get_supply_equipment_model(bool building_charge_profile_library, 
                                     const SE_configuration& SE_config, 

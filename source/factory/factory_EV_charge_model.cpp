@@ -13,12 +13,12 @@
 factory_EV_charge_model::factory_EV_charge_model(const EV_EVSE_inventory& inventory,
 												 const EV_ramping_map& custom_EV_ramping,
 												 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping,
-												 const bool& model_stochastic_battery_degregation)
+												 const bool model_stochastic_battery_degregation)
 	: inventory{ inventory },
-	charging_transitions_obj{ factory_charging_transitions{inventory,custom_EV_ramping, custom_EV_EVSE_ramping} },
-	puVrms_vs_P2_obj{ factory_puVrms_vs_P2{inventory} },
-	SOC_vs_P2_obj{ factory_SOC_vs_P2{inventory} },
-	P2_vs_battery_eff_obj{ factory_P2_vs_battery_efficiency{inventory} },
+	charging_transitions_obj{ inventory, custom_EV_ramping, custom_EV_EVSE_ramping },
+	puVrms_vs_P2_obj{ inventory },
+	SOC_vs_P2_obj{ inventory },
+	P2_vs_battery_eff_obj{ inventory },
 	model_stochastic_battery_degregation{ model_stochastic_battery_degregation }
 {
 }
@@ -26,7 +26,7 @@ factory_EV_charge_model::factory_EV_charge_model(const EV_EVSE_inventory& invent
 
 vehicle_charge_model* factory_EV_charge_model::alloc_get_EV_charge_model(const charge_event_data& event,
 																		 const EVSE_type& EVSE,
-																		 const double& SE_P2_limit_kW) const
+																		 const double SE_P2_limit_kW) const
 {
 	const EV_type& EV = event.vehicle_type;
 

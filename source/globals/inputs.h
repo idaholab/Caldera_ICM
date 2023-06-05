@@ -21,8 +21,8 @@ struct vehicle_charge_model_inputs
     vehicle_charge_model_inputs(const charge_event_data& CE, 
                                 const EV_type& EV, 
                                 const EVSE_type& EVSE,
-                                const double& SE_P2_limit_kW, 
-                                const double& battery_size_kWh, 
+                                const double SE_P2_limit_kW, 
+                                const double battery_size_kWh, 
                                 const factory_charging_transitions& CT_factory,
                                 const factory_puVrms_vs_P2& VP_factory,
                                 const factory_SOC_vs_P2& SOCP_factory,
@@ -56,8 +56,8 @@ struct interface_to_SE_groups_inputs
     // baseLD_forecaster_inputs
     double data_start_unix_time;
     int data_timestep_sec;
-    std::vector<double>& actual_load_akW;
-    std::vector<double>& forecast_load_akW;
+    std::vector<double> actual_load_akW;
+    std::vector<double> forecast_load_akW;
     double adjustment_interval_hrs;
 
     // control_strategy_inputs
@@ -71,8 +71,8 @@ struct interface_to_SE_groups_inputs
                                   std::vector<SE_group_configuration> infrastructure_topology,
                                   double data_start_unix_time,
                                   int data_timestep_sec,
-                                  std::vector<double>& actual_load_akW,
-                                  std::vector<double>& forecast_load_akW,
+                                  std::vector<double> actual_load_akW,
+                                  std::vector<double> forecast_load_akW,
                                   double adjustment_interval_hrs,
                                   L2_control_strategy_parameters L2_parameters,
                                   bool ensure_pev_charge_needs_met)

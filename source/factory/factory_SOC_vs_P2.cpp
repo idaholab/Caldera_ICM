@@ -469,7 +469,8 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
     return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, 
+                                                                           const EVSE_type& EVSE) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();

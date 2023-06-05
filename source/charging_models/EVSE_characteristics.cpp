@@ -33,6 +33,25 @@ std::ostream& operator<<(std::ostream& os, const EVSE_phase& phase) {
     return os;
 }
 
+EVSE_characteristics::EVSE_characteristics(const EVSE_type& type,
+										   const EVSE_level& level,
+										   const EVSE_phase& phase,
+										   const double power_limit_kW,
+										   const double volatge_limit_V,
+										   const double current_limit_A,
+										   const double standby_real_power_kW,
+										   const double standby_reactive_power_kW)
+	: type{ type },
+	level{ level },
+	phase{ phase },
+	power_limit_kW{ power_limit_kW },
+	volatge_limit_V{ volatge_limit_V },
+	current_limit_A{ current_limit_A },
+	standby_real_power_kW{ standby_real_power_kW },
+	standby_reactive_power_kW{ standby_reactive_power_kW }
+{
+}
+
 std::ostream& operator<<(std::ostream& os, const EVSE_characteristics& evse)
 {
     os << "Type: " << evse.get_type() << std::endl;

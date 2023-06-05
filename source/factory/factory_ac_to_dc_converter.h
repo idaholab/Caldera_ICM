@@ -17,7 +17,7 @@ private:
 
 public:
     factory_ac_to_dc_converter(const EV_EVSE_inventory& inventory) 
-        : inventory(inventory)
+        : inventory{ inventory }
     {
     }
     ac_to_dc_converter* alloc_get_ac_to_dc_converter(ac_to_dc_converter_enum converter_type, 

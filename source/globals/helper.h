@@ -226,8 +226,14 @@ private:
 
 public:
     get_base_load_forecast() {};
-    get_base_load_forecast(double data_start_unix_time_, int data_timestep_sec_, std::vector<double>& actual_load_akW_, std::vector<double>& forecast_load_akW_, double adjustment_interval_hrs_);
-    std::vector<double> get_forecast_akW(double unix_start_time, int forecast_timestep_mins, double forecast_duration_hrs);
+    get_base_load_forecast(const double data_start_unix_time_, 
+                           const int data_timestep_sec_, 
+                           const std::vector<double>& actual_load_akW_, 
+                           const std::vector<double>& forecast_load_akW_, 
+                           const double adjustment_interval_hrs_);
+    std::vector<double> get_forecast_akW(const double unix_start_time, 
+                                         const int forecast_timestep_mins, 
+                                         const double forecast_duration_hrs) const;
 };
 
 

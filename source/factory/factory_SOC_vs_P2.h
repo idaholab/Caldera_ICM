@@ -96,7 +96,8 @@ private:
 public:
     factory_SOC_vs_P2(const EV_EVSE_inventory& inventory);
 
-	const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, const EVSE_type& EVSE) const;
+	const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, 
+                                          const EVSE_type& EVSE) const;
 
     void write_charge_profile(const std::string& output_path) const;
 };

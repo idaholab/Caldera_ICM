@@ -4,10 +4,16 @@
 //                Supply Equipment Charge Model Factory
 //#############################################################################
 
+factory_supply_equipment_model::factory_supply_equipment_model(const EV_EVSE_inventory& inventory)
+	: inventory{ inventory },
+	CE_queuing_inputs{ }
+{
+}
+
 factory_supply_equipment_model::factory_supply_equipment_model(const EV_EVSE_inventory& inventory, 
 															   const charge_event_queuing_inputs& CE_queuing_inputs_)
-	: inventory(inventory),
-	CE_queuing_inputs(CE_queuing_inputs_)
+	: inventory{ inventory },
+	CE_queuing_inputs{ CE_queuing_inputs_ }
 {
 }
 

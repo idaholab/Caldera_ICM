@@ -17,8 +17,10 @@ struct pev_SE_pair
     pev_SE_pair() {}
     pev_SE_pair(const EV_type& ev_type,
                 const EVSE_type& se_type)
-        : ev_type(ev_type),
-        se_type(se_type) { }
+        : ev_type{ ev_type },
+        se_type{ se_type }
+    {
+    }
 
     bool operator==(const pev_SE_pair& rhs) const
     {
