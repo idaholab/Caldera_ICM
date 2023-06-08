@@ -1,5 +1,6 @@
 #include "factory_SOC_vs_P2.h"
 #include <fstream>
+#include <algorithm>
 
 //##########################################################
 //                      SOC_vs_P2

@@ -1,4 +1,5 @@
 #include "EV_EVSE_inventory.h"
+#include <algorithm>
 
 EV_EVSE_inventory::EV_EVSE_inventory(const EV_inventory& EV_inv,
                                      const EVSE_inventory& EVSE_inv)
@@ -110,14 +111,12 @@ const bool EV_EVSE_inventory::pev_is_compatible_with_supply_equipment(const pev_
 {
     auto it = std::find(this->compatible_EV_EVSE_pair.begin(), this->compatible_EV_EVSE_pair.end(), EV_EVSE_combination);
 
-    if (it == this->compatible_EV_EVSE_pair.end())
-    {
-        return false;
-    }
-    else
+    if (it != this->compatible_EV_EVSE_pair.end())
     {
         return true;
     }
+
+    return false;
 }
 
 const bool EV_EVSE_inventory::is_valid_EV_type( const EV_type& ev_type ) const

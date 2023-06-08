@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <iostream>   	// Stream to consol (may be needed for files too???)
+#include <memory>
 
 #include "inputs.h"							// vehicle_charge_model_inputs
 #include "helper.h"                         // line_segment

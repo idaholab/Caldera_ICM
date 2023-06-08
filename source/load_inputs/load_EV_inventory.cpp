@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 
 load_EV_inventory::load_EV_inventory(const std::string& inputs_dir) :
 	EV_inv{ this->load(inputs_dir) }

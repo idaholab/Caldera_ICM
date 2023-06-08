@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <algorithm>
 
 load_EVSE_inventory::load_EVSE_inventory(const std::string& inputs_dir) :
 	EVSE_inv{ this->load(inputs_dir) }
