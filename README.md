@@ -1,6 +1,6 @@
 # Caldera ICM
 
-Infrastructure Charging Module (ICM) 
+Infrastructure Charging Module (ICM)... 
 
 ## Overview
 Caldera ICM is a library of high-fidelity charging models for a wide variety of vehicles and supply equipments, validated by test data under a range of operating conditions. Caldera currently contains vehicle and supply equipment models for `DirectXFC`, `eMosaic` and `EVs_at_Risk` projects.
