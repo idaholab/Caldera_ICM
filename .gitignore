@@ -11,3 +11,7 @@ __pycache__/
 build/
 *.vs*
 CMakeSettings.json
+
+# MacOS stuff
+.DS_Store
+
