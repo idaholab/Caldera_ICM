@@ -508,7 +508,7 @@ SE_power interface_to_SE_groups::get_SE_power(SE_id_type SE_id, double prev_unix
     else
     {
         //bool pev_is_connected_to_SE;
-        SE_charging_status SE_status_val;
+        SE_charging_status SE_status_val{};
         double soc;
         //CE_status charge_status;
         ac_power_metrics ac_power;
