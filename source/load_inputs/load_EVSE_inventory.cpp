@@ -81,9 +81,7 @@ EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
         "AC/DC_voltage_limits_V",
         "AC/DC_current_limit_A",
         "standby_real_power_kW",
-        "standby_reactive_power_kVAR",
-        "EVSE_user_facing_name",
-        "EVSE_user_facing_description"
+        "standby_reactive_power_kVAR"
     };
 
     // Check number of columns
