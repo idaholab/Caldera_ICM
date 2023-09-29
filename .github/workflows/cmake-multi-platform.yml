@@ -42,7 +42,14 @@ jobs:
           cd build
           rm -rf *
           pwd
+          export CC=${{ steps.install_cc.outputs.cc }}
+          export CXX=${{ steps.install_cc.outputs.cxx }}
+          echo ${CC}
+          echo ${CXX}
+          if [[ "${{ matrix.os }}" == "ubuntu-22.04" ]]; then
+            sudo apt install libomp-dev
+          fi
           cmake -DICM=ON -DCMAKE_INSTALL_PREFIX=$HOME/my-project-installation ..
-          make 
+          make -j 4
           make install
      
