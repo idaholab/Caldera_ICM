@@ -321,10 +321,10 @@ struct charge_event_data
     SE_id_type  SE_id;
    	vehicle_id_type vehicle_id;
     EV_type vehicle_type;
-    double arrival_unix_time;
-    double departure_unix_time;
-    double arrival_SOC;
-    double departure_SOC;
+    double arrival_unix_time;    // in seconds
+    double departure_unix_time;  // in seconds
+    double arrival_SOC;          // in percent (for 50%, this will be 50.0)
+    double departure_SOC;        // in percent (for 50%, this will be 50.0)
     stop_charging_criteria stop_charge;
     
     control_strategy_enums control_enums;
@@ -384,7 +384,7 @@ struct SE_configuration
     int SE_group_id;
     SE_id_type  SE_id;
 	EVSE_type  supply_equipment_type;
-    double lattitude;
+    double lattitude;  // <-- TDDO: misspelled word. Should be "latitude"
     double longitude;
     grid_node_id_type grid_node_id;
     std::string location_type;
