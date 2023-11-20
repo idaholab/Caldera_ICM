@@ -462,7 +462,12 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
         
         if(it == this->gridNodeId_to_SE_ptrs.end())
         {
-            // There is no SE on this grid node
+            // There is no SE on this grid node. Just put zeros in there.
+            P3_kW = 0;
+            Q3_kVAR = 0;
+            tmp_pwr.first = P3_kW;
+            tmp_pwr.second = Q3_kVAR;
+            return_val[pu_Vrms_pair.first] = tmp_pwr;
         }
         else
         {
