@@ -41,7 +41,7 @@ public:
     void get_time_to_complete_active_charge_hrs(double setpoint_P3kW, bool& pev_is_connected_to_SE, double& time_to_complete_charge_hrs);
     void get_active_charge_profile_forecast_allInfo(double setpoint_P3kW, double time_step_mins, bool& pev_is_connected_to_SE, std::vector<pev_charge_profile_result>& charge_profile);
     void get_active_charge_profile_forecast_akW(double setpoint_P3kW, double time_step_mins, bool& pev_is_connected_to_SE, std::vector<double>& charge_profile);
-    void add_charge_event(charge_event_data& charge_event);
+    void add_charge_event( const charge_event_data& charge_event );
 	void set_target_acP3_kW(double target_acP3_kW);
     void set_target_acQ3_kVAR(double target_acQ3_kVAR);
     bool pev_is_connected_to_SE(double now_unix_time);

@@ -11,11 +11,11 @@
 #include <string>
 #include <unordered_set>
 
-interface_to_SE_groups::interface_to_SE_groups(const std::string& input_path,
-    const interface_to_SE_groups_inputs& inputs)
-    : loader{ input_path },
-    inventory{ this->loader.get_EV_EVSE_inventory() },
-    charge_profile_library{ load_charge_profile_library(inputs) }
+interface_to_SE_groups::interface_to_SE_groups( const std::string& input_path,
+                                                const interface_to_SE_groups_inputs& inputs )
+                            : loader{ input_path },
+                              inventory{ this->loader.get_EV_EVSE_inventory() },
+                              charge_profile_library{ load_charge_profile_library(inputs) }
 {
     EV_EVSE_ramping_map ramping_by_pevType_seType_map;
     for (const pev_charge_ramping_workaround& X : inputs.ramping_by_pevType_seType)
@@ -85,7 +85,9 @@ interface_to_SE_groups::interface_to_SE_groups(const std::string& input_path,
     //=========================================================================
 
     for (supply_equipment* SE_ptr : this->SE_ptr_vector)
+    {
         SE_ptr->set_ensure_pev_charge_needs_met_for_ext_control_strategy(inputs.ensure_pev_charge_needs_met);
+    }
 
 }
 
@@ -126,12 +128,14 @@ void interface_to_SE_groups::stop_active_charge_events(std::vector<SE_id_type> S
 }
 
 
-void interface_to_SE_groups::add_charge_events(std::vector<charge_event_data> charge_events)
+void interface_to_SE_groups::add_charge_events( const std::vector<charge_event_data>& charge_events )
 {
     try
     {
-        for(charge_event_data& X : charge_events)
+        for( const charge_event_data& X : charge_events )
+        {
             this->SEid_to_SE_ptr[X.SE_id]->add_charge_event(X);
+        }
     }
     catch(...)
     {
@@ -141,23 +145,25 @@ void interface_to_SE_groups::add_charge_events(std::vector<charge_event_data> ch
 }
 
 
-void interface_to_SE_groups::add_charge_events_by_SE_group(std::vector<SE_group_charge_event_data> SE_group_charge_events)
+void interface_to_SE_groups::add_charge_events_by_SE_group( const std::vector<SE_group_charge_event_data>& SE_group_charge_events )
 {    
-    for(SE_group_charge_event_data& CE_data : SE_group_charge_events)
+    for( const SE_group_charge_event_data& CE_data : SE_group_charge_events)
     {
-        if(this->SE_group_Id_to_ptr.count(CE_data.SE_group_id) == 0)
+        if( this->SE_group_Id_to_ptr.count(CE_data.SE_group_id) == 0 )
         {
             // Throw and Error or something ???
             std::cout << "Houston we have a problem!  Location: interface_to_SE_groups::add_charge_events_by_SE_group" << std::endl;
         }
         else
         {
-            std::vector<charge_event_data>& charge_events = CE_data.charge_events;            
+            const std::vector<charge_event_data>& charge_events = CE_data.charge_events;            
             
             try
             {
-                for(charge_event_data& X : charge_events)
+                for( const charge_event_data& X : charge_events )
+                {
                     this->SEid_to_SE_ptr[X.SE_id]->add_charge_event(X);
+                }
             }
             catch(...)
             {
