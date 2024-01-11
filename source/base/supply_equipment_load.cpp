@@ -28,12 +28,15 @@ inline double overlap(double start_A, double end_A, double start_B, double end_B
 
 void charge_event_handler::add_charge_event( charge_event_data& CE )
 {
+    // Make a copy so we can edit it a little bit if needed before saving it.
+    charge_event_data mutable_CE = CE;
+    
     double max_allowed_overlap_time_sec = this->CE_queuing_inputs.max_allowed_overlap_time_sec;
     queuing_mode_enum queuing_mode = this->CE_queuing_inputs.queuing_mode;
     
     if(queuing_mode == overlapLimited_mostRecentlyQueuedHasPriority)
     {
-        std::set<charge_event_data>::iterator it_lb = this->charge_events.upper_bound(CE);
+        std::set<charge_event_data>::iterator it_lb = this->charge_events.upper_bound(mutable_CE);
         if(it_lb != this->charge_events.begin())
             it_lb--;
 
@@ -42,12 +45,12 @@ void charge_event_handler::add_charge_event( charge_event_data& CE )
 
         for(std::set<charge_event_data>::iterator it = it_lb; it != this->charge_events.end(); it++)
         {
-            overlap_time_sec = overlap(it->arrival_unix_time, it->departure_unix_time, CE.arrival_unix_time, CE.departure_unix_time);
+            overlap_time_sec = overlap(it->arrival_unix_time, it->departure_unix_time, mutable_CE.arrival_unix_time, mutable_CE.departure_unix_time);
             
             if(overlap_time_sec > max_allowed_overlap_time_sec)  
                 its_to_remove.push_back(it);
             
-            else if(it->arrival_unix_time > CE.departure_unix_time)
+            else if(it->arrival_unix_time > mutable_CE.departure_unix_time)
                 break;
         }
 
@@ -62,14 +65,18 @@ void charge_event_handler::add_charge_event( charge_event_data& CE )
     {
         while(true)
         {
-            if(this->charge_events.count(CE) == 0)
+            if(this->charge_events.count(mutable_CE) == 0)
+            {
                 break;
+            }
             else
-                CE.arrival_unix_time += 0.001;
+            {
+                mutable_CE.arrival_unix_time += 0.001;
+            }
         }
     }
 
-    this->charge_events.insert(CE);
+    this->charge_events.insert(mutable_CE);
 }
 
 
@@ -536,7 +543,7 @@ std::vector<completed_CE> supply_equipment_load::get_completed_CE()
 }
 
 
-void supply_equipment_load::add_charge_event(charge_event_data& charge_event)
+void supply_equipment_load::add_charge_event( const charge_event_data& charge_event )
 {
     this->event_handler.add_charge_event(charge_event);
 }

@@ -80,7 +80,7 @@ public:
     void get_active_charge_profile_forecast_allInfo(double setpoint_P3kW, double time_step_mins, bool& pev_is_connected_to_SE, std::vector<pev_charge_profile_result>& charge_profile);
     void get_active_charge_profile_forecast_akW(double setpoint_P3kW, double time_step_mins, bool& pev_is_connected_to_SE, std::vector<double>& charge_profile);
     
-    void add_charge_event(charge_event_data& charge_event);
+    void add_charge_event( const charge_event_data& charge_event );
     std::vector<completed_CE> get_completed_CE();
 	void set_target_acP3_kW(double target_acP3_kW_);
     void set_target_acQ3_kVAR(double target_acQ3_kVAR_);

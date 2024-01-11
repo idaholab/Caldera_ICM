@@ -93,7 +93,7 @@ void supply_equipment::get_active_charge_profile_forecast_akW(double setpoint_P3
 }
 
 
-void supply_equipment::add_charge_event(charge_event_data& charge_event)
+void supply_equipment::add_charge_event( const charge_event_data& charge_event )
 {
     this->SE_Load.add_charge_event(charge_event);
 }
@@ -125,13 +125,15 @@ void supply_equipment::get_next(double prev_unix_time, double now_unix_time, dou
         now_unix_time = prev_unix_time + 0.5;
     }
     
-        // SE_control.execute_control_strategy must preceed SE_Load.get_next
-        // to ensure PEV charging needs are met even if control won't allow this.
+    // SE_control.execute_control_strategy must preceed SE_Load.get_next
+    // to ensure PEV charging needs are met even if control won't allow this.
     this->SE_control.execute_control_strategy(prev_unix_time, now_unix_time, pu_Vrms, this->SE_Load);
     bool is_new_CE__update_control_strategies = this->SE_Load.get_next(prev_unix_time, now_unix_time, pu_Vrms, soc, ac_power);
     
     if(is_new_CE__update_control_strategies)
+    {
         this->SE_control.update_parameters_for_CE(this->SE_Load);
+    }
 }
 
 
