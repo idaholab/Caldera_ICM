@@ -118,7 +118,7 @@ void interface_to_SE_groups::stop_active_charge_events(std::vector<SE_id_type> S
     try
     {
         for(SE_id_type x : SE_ids)
-            this->SEid_to_SE_ptr[x]->stop_active_CE();
+            this->SEid_to_SE_ptr.at(x)->stop_active_CE();
     }
     catch(...)
     {
@@ -134,7 +134,7 @@ void interface_to_SE_groups::add_charge_events( const std::vector<charge_event_d
     {
         for( const charge_event_data& X : charge_events )
         {
-            this->SEid_to_SE_ptr[X.SE_id]->add_charge_event(X);
+            this->SEid_to_SE_ptr.at(X.SE_id)->add_charge_event(X);
         }
     }
     catch(...)
@@ -162,7 +162,7 @@ void interface_to_SE_groups::add_charge_events_by_SE_group( const std::vector<SE
             {
                 for( const charge_event_data& X : charge_events )
                 {
-                    this->SEid_to_SE_ptr[X.SE_id]->add_charge_event(X);
+                    this->SEid_to_SE_ptr.at(X.SE_id)->add_charge_event(X);
                 }
             }
             catch(...)
@@ -190,7 +190,7 @@ void interface_to_SE_groups::set_PQ_setpoints(double now_unix_time, std::vector<
         }
         else
         {
-            SE_ptr = this->SEid_to_SE_ptr[X.SE_id];
+            SE_ptr = this->SEid_to_SE_ptr.at(X.SE_id);
             Z = SE_ptr->get_control_strategy_enums();
             
             if(SE_ptr->pev_is_connected_to_SE(now_unix_time) == false)
@@ -271,7 +271,7 @@ std::vector<CE_FICE_in_SE_group> interface_to_SE_groups::get_FICE_by_SE_groups(s
         }
         else
         {
-            this->SE_group_Id_to_ptr[group_id]->get_CE_FICE(inputs, X);
+            this->SE_group_Id_to_ptr.at(group_id)->get_CE_FICE(inputs, X);
             Y.SE_group_id = group_id;
             Y.SE_FICE_vals = X;
             return_val.push_back(Y);
@@ -298,7 +298,7 @@ std::vector<CE_FICE> interface_to_SE_groups::get_FICE_by_SEids(std::vector<int> 
         }
         else
         {            
-            this->SEid_to_SE_ptr[SE_id]->get_CE_FICE(inputs, pev_is_connected_to_SE, FICE_val);
+            this->SEid_to_SE_ptr.at(SE_id)->get_CE_FICE(inputs, pev_is_connected_to_SE, FICE_val);
             
             if(pev_is_connected_to_SE)
                 return_val.push_back(FICE_val);
@@ -380,7 +380,7 @@ std::map<int, std::vector<active_CE> > interface_to_SE_groups::get_active_CEs_by
         }
         else
         {
-            this->SE_group_Id_to_ptr[group_id]->get_active_CEs(X);
+            this->SE_group_Id_to_ptr.at(group_id)->get_active_CEs(X);
             return_val[group_id] = X;
         }
     }
@@ -405,7 +405,7 @@ std::vector<active_CE> interface_to_SE_groups::get_active_CEs_by_SEids(std::vect
         }
         else
         {            
-            this->SEid_to_SE_ptr[SE_id]->get_active_CE(pev_is_connected_to_SE, active_CE_val);
+            this->SEid_to_SE_ptr.at(SE_id)->get_active_CE(pev_is_connected_to_SE, active_CE_val);
             
             if(pev_is_connected_to_SE)
                 return_val.push_back(active_CE_val);
@@ -428,7 +428,7 @@ std::vector<double> interface_to_SE_groups::get_SE_charge_profile_forecast_akW(S
     else
     {
         bool pev_is_connected_to_SE;
-        this->SEid_to_SE_ptr[SE_id]->get_active_charge_profile_forecast_akW(setpoint_P3kW, time_step_mins, pev_is_connected_to_SE, charge_profile);
+        this->SEid_to_SE_ptr.at(SE_id)->get_active_charge_profile_forecast_akW(setpoint_P3kW, time_step_mins, pev_is_connected_to_SE, charge_profile);
     }
     
     return charge_profile;
@@ -445,7 +445,7 @@ std::vector<double> interface_to_SE_groups::get_SE_group_charge_profile_forecast
         std::cout << "Houston we have a problem!  Location: interface_to_SE_groups::get_SE_group_charge_profile_forecast_akW" << std::endl;
     }
     else
-        this->SE_group_Id_to_ptr[SE_group]->get_SE_group_charge_profile_forecast_akW(setpoint_P3kW, time_step_mins, charge_profile);
+        this->SE_group_Id_to_ptr.at(SE_group)->get_SE_group_charge_profile_forecast_akW(setpoint_P3kW, time_step_mins, charge_profile);
 
     return charge_profile;
 }
@@ -524,8 +524,8 @@ SE_power interface_to_SE_groups::get_SE_power(SE_id_type SE_id, double prev_unix
         //CE_status charge_status;
         ac_power_metrics ac_power;
         
-        //this->SEid_to_SE_ptr[SE_id]->get_current_CE_status(pev_is_connected_to_SE, SE_status_val, charge_status);
-        this->SEid_to_SE_ptr[SE_id]->get_next(prev_unix_time, now_unix_time, pu_Vrms, soc, ac_power);
+        //this->SEid_to_SE_ptr.at(SE_id)->get_current_CE_status(pev_is_connected_to_SE, SE_status_val, charge_status);
+        this->SEid_to_SE_ptr.at(SE_id)->get_next(prev_unix_time, now_unix_time, pu_Vrms, soc, ac_power);
 
         return_val.time_step_duration_hrs = ac_power.time_step_duration_hrs;
         return_val.P1_kW = ac_power.P1_kW;
@@ -577,7 +577,7 @@ void interface_to_SE_groups::ES500_set_energy_setpoints(ES500_aggregator_e_step_
         }
         else
         {
-            this->SEid_to_SE_ptr[SE_id[i]]->ES500_set_energy_setpoints(e3_step_kWh[i]);
+            this->SEid_to_SE_ptr.at(SE_id.at(i))->ES500_set_energy_setpoints(e3_step_kWh[i]);
         }
     }
 }
