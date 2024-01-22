@@ -55,7 +55,8 @@ CP_interface::CP_interface(const std::string& input_path, bool save_validation_d
 {
 }
 
-pev_charge_profile_library CP_interface::load_CP_library(const EV_EVSE_inventory& inventory, bool save_validation_data)
+pev_charge_profile_library CP_interface::load_CP_library( const EV_EVSE_inventory& inventory,
+                                                          const bool save_validation_data ) const
 {
     bool create_charge_profile_library = true;
     factory_charge_profile_library CP_Factory{ inventory };
@@ -74,35 +75,49 @@ std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_d
 }
 
     
-charge_event_P3kW_limits CP_interface::get_charge_event_P3kW_limits(EV_type pev_type, EVSE_type SE_type)
+charge_event_P3kW_limits CP_interface::get_charge_event_P3kW_limits( const EV_type pev_type,
+                                                                     const EVSE_type SE_type )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
     return CP_ptr->get_charge_event_P3kW_limits();
 }
 
 
-std::vector<double> CP_interface::get_P3kW_setpoints_of_charge_profiles(EV_type pev_type, EVSE_type SE_type)
+std::vector<double> CP_interface::get_P3kW_setpoints_of_charge_profiles( const EV_type pev_type,
+                                                                         const EVSE_type SE_type )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
     return CP_ptr->get_P3kW_setpoints_of_charge_profiles();
 }
 
 
-pev_charge_profile_result CP_interface::find_result_given_startSOC_and_endSOC(EV_type pev_type, EVSE_type SE_type, double setpoint_P3kW, double startSOC, double endSOC)
+pev_charge_profile_result CP_interface::find_result_given_startSOC_and_endSOC( const EV_type pev_type,
+                                                                               const EVSE_type SE_type,
+                                                                               const double setpoint_P3kW,
+                                                                               const double startSOC,
+                                                                               const double endSOC )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
     return CP_ptr->find_result_given_startSOC_and_endSOC(setpoint_P3kW, startSOC, endSOC);
 }
 
 
-pev_charge_profile_result CP_interface::find_result_given_startSOC_and_chargeTime(EV_type pev_type, EVSE_type SE_type, double setpoint_P3kW, double startSOC, double charge_time_hrs)
+pev_charge_profile_result CP_interface::find_result_given_startSOC_and_chargeTime( const EV_type pev_type,
+                                                                                   const EVSE_type SE_type,
+                                                                                   const double setpoint_P3kW,
+                                                                                   const double startSOC,
+                                                                                   const double charge_time_hrs )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
     return CP_ptr->find_result_given_startSOC_and_chargeTime(setpoint_P3kW, startSOC, charge_time_hrs);
 }
 
 
-std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_startSOC_and_endSOCs(EV_type pev_type, EVSE_type SE_type, double setpoint_P3kW, double startSOC, std::vector<double> endSOC)
+std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_startSOC_and_endSOCs( const EV_type pev_type,
+                                                                                                    const EVSE_type SE_type,
+                                                                                                    const double setpoint_P3kW,
+                                                                                                    const double startSOC,
+                                                                                                    const std::vector<double> endSOC )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
     
@@ -113,7 +128,11 @@ std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_st
 }
 
 
-std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_startSOC_and_chargeTimes(EV_type pev_type, EVSE_type SE_type, double setpoint_P3kW, double startSOC, std::vector<double> charge_time_hrs)
+std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_startSOC_and_chargeTimes( const EV_type pev_type,
+                                                                                                        const EVSE_type SE_type,
+                                                                                                        const double setpoint_P3kW,
+                                                                                                        const double startSOC,
+                                                                                                        const std::vector<double> charge_time_hrs )
 {
     pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
         
@@ -124,7 +143,10 @@ std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_st
 }
 
 
-std::vector<pev_charge_fragment> CP_interface::USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile(double time_step_sec, double target_acP3_kW, EV_type pev_type, EVSE_type SE_type)
+std::vector<pev_charge_fragment> CP_interface::USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( const double time_step_sec,
+                                                                                                   const double target_acP3_kW,
+                                                                                                   const EV_type pev_type,
+                                                                                                   const EVSE_type SE_type ) const
 {
     factory_charge_profile_library CP_Factory{this->inventory};
     return CP_Factory.USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile(time_step_sec, target_acP3_kW, pev_type, SE_type);

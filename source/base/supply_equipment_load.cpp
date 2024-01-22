@@ -629,9 +629,13 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 EV_type pev_type = charge_event.vehicle_type;
                 
                 if(this->charge_profile_library != NULL)
+                {
                     this->cur_charge_profile = this->charge_profile_library->get_charge_profile(pev_type, SE_type);
-                else  
+                }
+                else
+                {
                     this->cur_charge_profile = NULL;  // This is what is used when creating charge_profile_library.
+                }
                 
                 //--------------------------------
                 //  Create ac_to_dc_converter_obj
@@ -639,7 +643,9 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 charge_event_P3kW_limits P3kW_limits;
                 
                 if(this->cur_charge_profile != NULL)
+                {
                     P3kW_limits = this->cur_charge_profile->get_charge_event_P3kW_limits();
+                }
                 else
                 {
                     // This is what is used when creating charge_profile_library.
@@ -649,7 +655,9 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 
                 ac_to_dc_converter_enum converter_type = pf;
                 if(this->control_enums.inverter_model_supports_Qsetpoint)
+                {
                     converter_type = Q_setpoint;
+                }
                 
                 if(this->ac_to_dc_converter_obj != NULL)
                 {
@@ -663,9 +671,13 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //          Set P3, Q3 Targets 
                 //----------------------------------------
                 if(this->control_enums.ES_control_strategy == NA && control_enums.ext_control_strategy == "NA")
+                {
                     set_target_acP3_kW(1.3*this->P2_limit_kW);      // Uncontrolled Charging - (Nominal Power May increase with Vrms)
+                }
                 else
+                {
                     set_target_acP3_kW(0);
+                }
                 
                 set_target_acQ3_kVAR(0);
             }
