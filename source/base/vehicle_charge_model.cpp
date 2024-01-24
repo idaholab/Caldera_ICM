@@ -74,7 +74,11 @@ void vehicle_charge_model::get_E1_battery_limits(double& max_E1_limit, double& m
 }
 
 
-void vehicle_charge_model::get_next(double prev_unix_time, double now_unix_time, double pu_Vrms, bool& charge_has_completed, battery_state& bat_state)
+void vehicle_charge_model::get_next( const double prev_unix_time,
+                                     const double now_unix_time,
+                                     const double pu_Vrms,
+                                     bool& charge_has_completed,
+                                     battery_state& bat_state )
 {
 	if(this->arrival_unix_time <= now_unix_time)
 	{
