@@ -40,29 +40,29 @@ private:
 	line_segment bat_eff_vs_P2_charging;
 	line_segment bat_eff_vs_P2_discharging;
 
-	double get_zero_slope_threshold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs);
+	double get_zero_slope_threshold_bat_eff_vs_P2( const vehicle_charge_model_inputs& inputs );
 	
 public:
 	// Debugging
 	double max_E1_limit, min_E1_limit;
     bool print_debug_info;
 
-	battery(const vehicle_charge_model_inputs& inputs);
+	battery( const vehicle_charge_model_inputs& inputs );
 
-	void set_soc_of_full_and_empty_battery(double soc_of_full_battery_, 
-										   double soc_of_empty_battery_);
+	void set_soc_of_full_and_empty_battery( const double soc_of_full_battery_, 
+										    const double soc_of_empty_battery_ );
     
     // This should only be used for debugging purposes or maybe by battery_factory
     void set_P2_kW(double P2_kW);
     
-    void set_target_P2_kW(double target_P2_kW_);
+    void set_target_P2_kW( const double target_P2_kW_ );
     double get_target_P2_kW();
-	void get_next(double prev_unix_time, 
-				  double now_unix_time, 
-				  double target_soc, 
-				  double pu_Vrms, 
-				  bool stop_charging_at_target_soc, 
-				  battery_state& return_val);
+	void get_next( const double prev_unix_time, 
+				   const double now_unix_time, 
+				   const double target_soc, 
+				   const double pu_Vrms, 
+				   const bool stop_charging_at_target_soc, 
+				   battery_state& return_val );
 };
 
 

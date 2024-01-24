@@ -23,7 +23,7 @@ std::ostream& operator<<(std::ostream& out, battery_state& x)
 //          battery
 //###########################################
 
-battery::battery(const vehicle_charge_model_inputs& inputs)
+battery::battery( const vehicle_charge_model_inputs& inputs )
 	: get_E1_limits_charging{ calculate_E1_energy_limit{ charging, inputs } },
 	get_E1_limits_discharging{ calculate_E1_energy_limit{ discharging, inputs } },
 	get_next_P2{ inputs.CT_factory.get_charging_transitions(inputs.EV, inputs.EVSE) },
@@ -43,7 +43,7 @@ battery::battery(const vehicle_charge_model_inputs& inputs)
 {
 }
 
-double battery::get_zero_slope_threshold_bat_eff_vs_P2(const vehicle_charge_model_inputs& inputs)
+double battery::get_zero_slope_threshold_bat_eff_vs_P2( const vehicle_charge_model_inputs& inputs )
 {
 	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).zero_slope_threshold;
 	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).zero_slope_threshold;
@@ -51,19 +51,19 @@ double battery::get_zero_slope_threshold_bat_eff_vs_P2(const vehicle_charge_mode
 	return (charging_zst < discharging_zst) ? charging_zst : discharging_zst;
 }
 
-void battery::set_soc_of_full_and_empty_battery(double soc_of_full_battery_, 
-												double soc_of_empty_battery_)
+void battery::set_soc_of_full_and_empty_battery( const double soc_of_full_battery_, 
+												 const double soc_of_empty_battery_ )
 {
     this->soc_of_full_battery = soc_of_full_battery_;
     this->soc_of_empty_battery = soc_of_empty_battery_;
 }
 
-void battery::set_P2_kW(double P2_kW) 
+void battery::set_P2_kW( const double P2_kW ) 
 {
 	this->get_next_P2.set_init_state(P2_kW);
 }
 
-void battery::set_target_P2_kW(double target_P2_kW_) 
+void battery::set_target_P2_kW( const double target_P2_kW_ ) 
 {
 	this->target_P2_kW = target_P2_kW_;
 }
@@ -74,12 +74,12 @@ double battery::get_target_P2_kW()
 }
 
 
-void battery::get_next(double prev_unix_time, 
-					   double now_unix_time, 
-					   double target_soc, 
-					   double pu_Vrms, 
-					   bool stop_charging_at_target_soc, 
-					   battery_state& return_val)
+void battery::get_next( const double prev_unix_time, 
+					    const double now_unix_time, 
+					    const double target_soc, 
+					    const double pu_Vrms, 
+					    const bool stop_charging_at_target_soc, 
+					    battery_state& return_val )
 {
 	double time_step_sec, time_step_hrs;
 	
@@ -115,9 +115,13 @@ void battery::get_next(double prev_unix_time,
 	if(this->soc_of_empty_battery < this->soc)
 	{
 		if(this->will_never_discharge)	// {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
+        {
 			E1_limit_LB = {100, 0, 0, can_not_reach_energy_target_this_timestep, 0, -1};
+        }
 		else
+        {
 			this->get_E1_limits_discharging.get_E1_limit(time_step_sec, this->soc, target_soc, pu_Vrms, E1_limit_LB);
+        }
 
 		E1_kWh_LB = (E1_limit_LB.reached_target_status == can_reach_energy_target_this_timestep && stop_charging_at_target_soc) ? E1_limit_LB.E1_energy_to_target_soc_kWh : E1_limit_LB.max_E1_energy_kWh;
 	}
@@ -133,11 +137,11 @@ void battery::get_next(double prev_unix_time,
 	this->max_E1_limit = E1_kWh_UB; 
     this->min_E1_limit = E1_kWh_LB; 
 	
-		//---------------------------------------
-		// eff_bat(avgP2) = c*avgP2 + d
-		// x = c/(t1-t0)
-		// E2 = [-d + sqrt(d^2 + 4*x*E1)]/(2*x)  
-		//---------------------------------------
+	//---------------------------------------
+	// eff_bat(avgP2) = c*avgP2 + d
+	// x = c/(t1-t0)
+	// E2 = [-d + sqrt(d^2 + 4*x*E1)]/(2*x)  
+	//---------------------------------------
 	
 	//------------------
 	// Get E2_limit_UB
@@ -199,28 +203,32 @@ void battery::get_next(double prev_unix_time,
 	P2_kW_LB = E2_kWh_LB/time_step_hrs;
 	
 	if(target_P2 > P2_kW_UB)
+    {
 		target_P2 = P2_kW_UB;
+    }
 	else if(target_P2 < P2_kW_LB)
+    {
 		target_P2 = P2_kW_LB;
+    }
 	
 	P2_struct = this->get_next_P2.get_next(target_P2, prev_unix_time, now_unix_time);
 	P2_kW = P2_struct.avg_X;
 
-/*
-this->get_next_P2.print_debug_info = false;
-if(this->print_debug_info)
-{
-  this->get_next_P2.print_debug_info = true;
-    
-  std::cout << "E1_kWh_LB: " << E1_kWh_LB << "  E2_kWh_LB: " << E2_kWh_LB << "  P2_kW_LB: " << P2_kW_LB << std::endl;
-  std::cout << "E1_kWh_UB: " << E1_kWh_UB << "  E2_kWh_UB: " << E2_kWh_UB << "  P2_kW_UB: " << P2_kW_UB << std::endl;
-  std::cout << "target_P2: " << target_P2 << "  P2_kW: " << P2_kW << std::endl;
-  
-  debug_data data;
-  this->get_next_P2.get_debug_data(data);
-  std::cout << "trans_state: " << data.trans_state << "  end_of_interval_X: " << data.end_of_interval_X << "  transition_status_size: " << data.trans_status_vec.size() << std::endl;
-}
-*/
+
+    // this->get_next_P2.print_debug_info = false;
+    // if(this->print_debug_info)
+    // {
+    //     this->get_next_P2.print_debug_info = true;
+    // 
+    //     std::cout << "E1_kWh_LB: " << E1_kWh_LB << "  E2_kWh_LB: " << E2_kWh_LB << "  P2_kW_LB: " << P2_kW_LB << std::endl;
+    //     std::cout << "E1_kWh_UB: " << E1_kWh_UB << "  E2_kWh_UB: " << E2_kWh_UB << "  P2_kW_UB: " << P2_kW_UB << std::endl;
+    //     std::cout << "target_P2: " << target_P2 << "  P2_kW: " << P2_kW << std::endl;
+    // 
+    //     debug_data data;
+    //     this->get_next_P2.get_debug_data(data);
+    //     std::cout << "trans_state: " << data.trans_state << "  end_of_interval_X: " << data.end_of_interval_X << "  transition_status_size: " << data.trans_status_vec.size() << std::endl;
+    // }
+
 	//------------------------------
 	//      Calculate P1_kW
 	//------------------------------
@@ -245,9 +253,13 @@ if(this->print_debug_info)
 	this->soc += P1_kW*time_step_hrs / this->soc_to_energy;
 
 	if(this->soc < 0)
+    {
         this->soc = 0;
+    }
     else if(this->soc > 100)
+    {
         this->soc = 100;
+    }
 
 	//---------------------------------
 	//     Update Return Values
