@@ -1,6 +1,46 @@
 
 #include "datatypes_global.h"
 
+//==================================================================
+//                timeseries
+//==================================================================
+
+
+timeseries::timeseries(const double data_starttime_sec, const double data_timestep_sec, const std::vector<double>& data)
+    :
+    data_starttime_sec{ data_starttime_sec },
+    data_timestep_sec{ data_timestep_sec },
+    data{ data },
+    data_endtime_sec{ this->data_starttime_sec + this->data.size() * this->data_timestep_sec }
+{
+
+}
+
+
+double timeseries::get_val_from_time(double time_sec)
+{
+    //std::cout << "timeseries time_sec : " << time_sec << std::endl;
+    //std::cout << "timeseries this->data_starttime_sec : " << this->data_starttime_sec << std::endl;
+    //std::cout << "timeseries this->data_timestep_sec : " << this->data_timestep_sec << std::endl;
+
+    time_sec = fmod(time_sec, this->data_endtime_sec - this->data_starttime_sec);
+    //std::cout << "timeseries time_sec after rounding: " << time_sec << std::endl;
+
+    int index = int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
+    //std::cout << "timeseries index : " << index << std::endl;
+    return this->data.at(index);
+}
+
+double timeseries::get_val_from_index(int index)
+{
+    return this->data.at(index);
+}
+
+double timeseries::get_time_from_index_sec(int index)
+{
+    return this->data_starttime_sec + index * this->data_timestep_sec;
+}
+
 
 //==================================================================
 //                Low Pass Filter Parameters

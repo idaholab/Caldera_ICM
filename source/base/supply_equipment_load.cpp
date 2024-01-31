@@ -82,7 +82,7 @@ bool charge_event_handler::charge_event_is_available(double now_unix_time)
     
     for(std::set<charge_event_data>::iterator it = this->charge_events.begin(); it != this->charge_events.end(); it++)
     {
-        if(it->departure_unix_time - now_unix_time < 60)
+        if(it->departure_unix_time - now_unix_time < 30*60)
             its_to_remove.push_back(it);
         else
             break;
@@ -102,8 +102,10 @@ bool charge_event_handler::charge_event_is_available(double now_unix_time)
     
     std::set<charge_event_data>::iterator it = this->charge_events.begin();
     
-    if(it->arrival_unix_time - now_unix_time <= 0)
+    if (it->arrival_unix_time - now_unix_time <= 0)
+    {
         return true;
+    }
     else
         return false;
 }
@@ -455,16 +457,23 @@ void supply_equipment_load::get_active_CE(bool& pev_is_connected_to_SE, active_C
     
     if(pev_is_connected_to_SE)
     {
+
         active_CE_val.SE_id = this->SE_config.SE_id;
+        active_CE_val.supply_equipment_type = this->SE_config.supply_equipment_type;
         active_CE_val.charge_event_id = this->SE_stat.current_charge.charge_event_id;
+        active_CE_val.vehicle_id = this->SE_stat.current_charge.vehicle_id;
+        active_CE_val.vehicle_type = this->SE_stat.current_charge.vehicle_type;
+        active_CE_val.arrival_unix_time = this->SE_stat.current_charge.arrival_unix_time;
+        active_CE_val.departure_unix_time = this->SE_stat.current_charge.departure_unix_time;
+        active_CE_val.arrival_SOC = this->SE_stat.current_charge.arrival_SOC;
+        active_CE_val.departure_SOC = this->SE_stat.current_charge.departure_SOC;
+
         active_CE_val.now_unix_time = this->SE_stat.now_unix_time;
         active_CE_val.now_soc = this->SE_stat.current_charge.now_soc;
         active_CE_val.now_charge_energy_ackWh = this->SE_stat.current_charge.now_charge_energy_E3kWh;
         active_CE_val.now_dcPkW = this->SE_stat.current_charge.now_dcPkW;
         active_CE_val.now_acPkW = this->SE_stat.current_charge.now_acPkW;
         active_CE_val.now_acQkVAR = this->SE_stat.current_charge.now_acQkVAR;
-        active_CE_val.vehicle_id = this->SE_stat.current_charge.vehicle_id;
-        active_CE_val.vehicle_type = this->SE_stat.current_charge.vehicle_type;
         
         //----------------------------
         

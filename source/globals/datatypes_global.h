@@ -32,6 +32,38 @@ double time_sec = time_diff.count();
 */
 
 //==================================================================
+//                timeseries
+//==================================================================
+
+
+// TODO: Merge the timeseries type with time_series in CDM_global.h
+// TODO: Improve by templating this
+struct timeseries
+{
+    double data_starttime_sec;
+    double data_timestep_sec;
+    std::vector<double> data;
+
+    double data_endtime_sec;
+
+    // constructor
+    timeseries(const double data_starttime_sec, const double data_timestep_sec, const std::vector<double>& data);
+
+    // The function will return the data corresponding to the time that is loop.
+    // If there is 24 hours of data, when requesting for the 25th hour, this will 
+    // return the data in the first index. 
+    double get_val_from_time(double time_sec);
+
+    // The function will return the data corresponding to the index.
+    // There is no looping. throws an error when index is out of range.
+    double get_val_from_index(int index);
+
+    // The function will return time correcponding to the index.
+    double get_time_from_index_sec(int index);
+};
+
+
+//==================================================================
 //                Low Pass Filter Parameters
 //==================================================================
 
@@ -450,9 +482,17 @@ struct CE_FICE_in_SE_group
 
 
 struct active_CE
-{    
+{
     SE_id_type SE_id;
+    EVSE_type supply_equipment_type;
     int charge_event_id;
+    vehicle_id_type vehicle_id;
+    EV_type vehicle_type;
+    double arrival_unix_time;
+    double departure_unix_time;
+    double arrival_SOC;
+    double departure_SOC;
+
     double now_unix_time;
     double now_soc;
     double min_remaining_charge_time_hrs;
@@ -462,8 +502,7 @@ struct active_CE
     double now_dcPkW;
     double now_acPkW;  
     double now_acQkVAR;
-    vehicle_id_type vehicle_id;
-    EV_type vehicle_type;
+
 
     active_CE() {};
 };

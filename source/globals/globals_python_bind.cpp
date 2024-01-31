@@ -22,6 +22,36 @@ PYBIND11_MODULE(Caldera_globals, m)
 	m.def("is_L2_VS_control_strategy", &is_L2_VS_control_strategy);
 
 	//--------------------------------------------
+	//       timeseries
+	//--------------------------------------------
+	py::class_<timeseries>(m, "timeseries")
+		.def(py::init<const double, const double, const std::vector<double>& >())
+		.def_readwrite("data_starttime_sec", &timeseries::data_starttime_sec)
+		.def_readwrite("data_timestep_sec", &timeseries::data_timestep_sec)
+		.def_readwrite("data", &timeseries::data)
+		.def_readwrite("data_endtime_sec", &timeseries::data_endtime_sec)
+		.def("get_val_from_time", &timeseries::get_val_from_time)
+		.def("get_val_from_index", &timeseries::get_val_from_index)
+		.def("get_time_from_index_sec", &timeseries::get_time_from_index_sec)
+		.def(py::pickle(
+			[](const timeseries& obj)
+			{  // __getstate__
+				return py::make_tuple(obj.data_starttime_sec, obj.data_timestep_sec, obj.data);
+			},
+			[](py::tuple t)
+			{  // __setstate__
+				
+				double data_starttime_sec = t[0].cast<double>();
+				double data_timestep_sec = t[1].cast<double>();
+				std::vector<double> data = {};
+				for(auto x : t[2])
+					data.push_back(x.cast<double>());
+
+				return timeseries{ data_starttime_sec, data_timestep_sec, data };
+			}
+	));
+
+	//--------------------------------------------
 	//       interface_to_SE_groups_inputs
 	//--------------------------------------------
 
@@ -278,24 +308,33 @@ PYBIND11_MODULE(Caldera_globals, m)
 	py::class_<active_CE>(m, "active_CE")
 		.def(py::init<>())
 		.def_readwrite("SE_id", &active_CE::SE_id)
+		.def_readwrite("supply_equipment_type", &active_CE::supply_equipment_type)
 		.def_readwrite("charge_event_id", &active_CE::charge_event_id)
+		.def_readwrite("vehicle_id", &active_CE::vehicle_id)
+		.def_readwrite("vehicle_type", &active_CE::vehicle_type)
+		.def_readwrite("arrival_unix_time", &active_CE::arrival_unix_time)
+		.def_readwrite("departure_unix_time", &active_CE::departure_unix_time)
+		.def_readwrite("arrival_SOC", &active_CE::arrival_SOC)
+		.def_readwrite("departure_SOC", &active_CE::departure_SOC)
+
 		.def_readwrite("now_unix_time", &active_CE::now_unix_time)
 		.def_readwrite("now_soc", &active_CE::now_soc)
-		.def_readwrite("now_dcPkW", &active_CE::now_dcPkW)
-		.def_readwrite("now_acPkW", &active_CE::now_acPkW)
-		.def_readwrite("now_acQkVAR", &active_CE::now_acQkVAR)
 		//.def_readwrite("min_remaining_charge_time_hrs", &active_CE::min_remaining_charge_time_hrs)
 		//.def_readwrite("min_time_to_complete_entire_charge_hrs", &active_CE::min_time_to_complete_entire_charge_hrs)
 		.def_readwrite("now_charge_energy_ackWh", &active_CE::now_charge_energy_ackWh)
 		.def_readwrite("energy_of_complete_charge_ackWh", &active_CE::energy_of_complete_charge_ackWh)
-		.def_readwrite("vehicle_id", &active_CE::vehicle_id)
-		.def_readwrite("vehicle_type", &active_CE::vehicle_type)
+		.def_readwrite("now_dcPkW", &active_CE::now_dcPkW)
+		.def_readwrite("now_acPkW", &active_CE::now_acPkW)
+		.def_readwrite("now_acQkVAR", &active_CE::now_acQkVAR)
+		
+		
 		.def(py::pickle(
 			[](const active_CE& obj)
 			{  // __getstate__
-				return py::make_tuple(obj.SE_id, obj.charge_event_id, obj.now_unix_time, obj.now_soc,
-				obj.now_charge_energy_ackWh, obj.energy_of_complete_charge_ackWh,
-				obj.now_dcPkW, obj.now_acPkW, obj.now_acQkVAR, obj.vehicle_id, obj.vehicle_type
+				return py::make_tuple(obj.SE_id, obj.supply_equipment_type, obj.charge_event_id, obj.vehicle_id, obj.vehicle_type, 
+				obj.arrival_unix_time, obj.departure_unix_time, obj.arrival_SOC, obj.departure_SOC, obj.now_unix_time,
+				obj.now_soc, obj.now_charge_energy_ackWh, obj.energy_of_complete_charge_ackWh, obj.now_dcPkW, obj.now_acPkW, 
+				obj.now_acQkVAR
 				//obj.min_remaining_charge_time_hrs, obj.min_time_to_complete_entire_charge_hrs
 				);
 			},
@@ -303,16 +342,23 @@ PYBIND11_MODULE(Caldera_globals, m)
 			{  // __setstate_
 				active_CE obj;
 				obj.SE_id = t[0].cast<SE_id_type>();
-				obj.charge_event_id = t[1].cast<int>();
-				obj.now_unix_time = t[2].cast<double>();
-				obj.now_soc = t[3].cast<double>();
-				obj.now_charge_energy_ackWh = t[4].cast<double>();
-				obj.energy_of_complete_charge_ackWh = t[5].cast<double>();
-				obj.now_dcPkW = t[6].cast<double>();
-				obj.now_acPkW = t[7].cast<double>();
-				obj.now_acQkVAR = t[8].cast<double>();
-				obj.vehicle_id = t[9].cast<vehicle_id_type>();
-				obj.vehicle_type = t[10].cast<EV_type>();
+				obj.supply_equipment_type = t[1].cast<EVSE_type>();
+				obj.charge_event_id = t[2].cast<int>();
+				obj.vehicle_id = t[3].cast<vehicle_id_type>();
+				obj.vehicle_type = t[4].cast<EV_type>();
+				obj.arrival_unix_time = t[5].cast<double>();
+				obj.departure_unix_time = t[6].cast<double>();
+				obj.arrival_SOC = t[7].cast<double>();
+				obj.departure_SOC = t[8].cast<double>();
+				
+				obj.now_unix_time = t[9].cast<double>();
+				obj.now_soc = t[10].cast<double>();
+				obj.now_charge_energy_ackWh = t[11].cast<double>();
+				obj.energy_of_complete_charge_ackWh = t[12].cast<double>();
+				obj.now_dcPkW = t[13].cast<double>();
+				obj.now_acPkW = t[14].cast<double>();
+				obj.now_acQkVAR = t[15].cast<double>();
+				
 				//obj.min_remaining_charge_time_hrs = t[6].cast<double>();                
 				//obj.min_time_to_complete_entire_charge_hrs = t[7].cast<double>();
 
@@ -563,6 +609,22 @@ PYBIND11_MODULE(Caldera_globals, m)
 				return obj;
 			}
 	));
+
+	double timestep_sec;
+	std::vector<double> P1_kW;
+	std::vector<double> P2_kW;
+	std::vector<double> P3_kW;
+	std::vector<double> Q3_kVAR;
+	std::vector<double> soc;
+
+	py::class_<all_charge_profile_data>(m, "all_charge_profile_data")
+		.def(py::init<>())
+		.def_readwrite("timestep_sec", &all_charge_profile_data::timestep_sec)
+		.def_readwrite("P1_kW", &all_charge_profile_data::P1_kW)
+		.def_readwrite("P2_kW", &all_charge_profile_data::P2_kW)
+		.def_readwrite("P3_kW", &all_charge_profile_data::P3_kW)
+		.def_readwrite("Q3_kVAR", &all_charge_profile_data::Q3_kVAR)
+		.def_readwrite("soc", &all_charge_profile_data::soc);
 
 	py::class_<charge_event_P3kW_limits>(m, "charge_event_P3kW_limits")
 		.def(py::init<>())

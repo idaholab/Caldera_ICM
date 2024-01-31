@@ -166,18 +166,18 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model(double
     std::vector<ac_power_metrics> ac_power_vec;
     
     CP_Factory_v2.create_charge_profile(time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, ac_power_vec);
-    
+
     //---------------------
     
     int num_elements = soc.size();
     
-    for(int i=0; i<=num_elements; i++)
+    for(int i=0; i<num_elements; i++)
     {
-        return_val.P1_kW.push_back(ac_power_vec[i].P1_kW);
-        return_val.P2_kW.push_back(ac_power_vec[i].P2_kW);
-        return_val.P3_kW.push_back(ac_power_vec[i].P3_kW);
-        return_val.Q3_kVAR.push_back(ac_power_vec[i].Q3_kVAR);
-        return_val.soc.push_back(soc[i]);
+        return_val.P1_kW.push_back(ac_power_vec.at(i).P1_kW);
+        return_val.P2_kW.push_back(ac_power_vec.at(i).P2_kW);
+        return_val.P3_kW.push_back(ac_power_vec.at(i).P3_kW);
+        return_val.Q3_kVAR.push_back(ac_power_vec.at(i).Q3_kVAR);
+        return_val.soc.push_back(soc.at(i));
     }
     
     //-----------------------------
