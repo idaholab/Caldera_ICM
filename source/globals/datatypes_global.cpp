@@ -1,5 +1,6 @@
 
 #include "datatypes_global.h"
+#include <cmath>
 
 //==================================================================
 //                timeseries
