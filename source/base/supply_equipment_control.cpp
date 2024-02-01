@@ -1048,19 +1048,29 @@ int manage_L2_control_strategy_parameters::get_LPF_max_window_size()
     int max_window_size = 0;
     
     if(parameters.VS100.voltage_LPF.is_active)
+    {
         max_window_size = std::max({max_window_size, parameters.VS100.voltage_LPF.window_size_UB});
+    }
     
     if(parameters.VS200_A.voltage_LPF.is_active)
+    {
         max_window_size = std::max({max_window_size, parameters.VS200_A.voltage_LPF.window_size_UB});
+    }
     
     if(parameters.VS200_B.voltage_LPF.is_active)
+    {
         max_window_size = std::max({max_window_size, parameters.VS200_B.voltage_LPF.window_size_UB});
+    }
     
     if(parameters.VS200_C.voltage_LPF.is_active)
+    {
         max_window_size = std::max({max_window_size, parameters.VS200_C.voltage_LPF.window_size_UB});
+    }
     
     if(parameters.VS300.voltage_LPF.is_active)
+    {
         max_window_size = std::max({max_window_size, parameters.VS300.voltage_LPF.window_size_UB});
+    }
     
     return max_window_size;
 }

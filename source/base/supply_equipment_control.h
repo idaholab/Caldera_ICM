@@ -294,7 +294,10 @@ private:
     
 public:
     supply_equipment_control() {};
-    supply_equipment_control(bool building_charge_profile_library_, const SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_);
+    supply_equipment_control( bool building_charge_profile_library_,
+                              const SE_configuration& SE_config_,
+                              get_base_load_forecast* baseLD_forecaster_,
+                              manage_L2_control_strategy_parameters* manage_L2_control_ );
     
     control_strategy_enums get_control_strategy_enums();
     std::string get_external_control_strategy();
