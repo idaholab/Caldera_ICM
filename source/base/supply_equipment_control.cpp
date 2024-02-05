@@ -651,12 +651,17 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 //===============================================================================================
 //===============================================================================================
 
-supply_equipment_control::supply_equipment_control(bool building_charge_profile_library_, const SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_)
+supply_equipment_control::supply_equipment_control( const bool building_charge_profile_library_,
+                                                    const SE_configuration& SE_config_,
+                                                    get_base_load_forecast* baseLD_forecaster_,
+                                                    manage_L2_control_strategy_parameters* manage_L2_control_ )
 {
     this->building_charge_profile_library = building_charge_profile_library_;
     
     if(this->building_charge_profile_library)
+    {
         return;
+    }
     
     //----------------
     
@@ -724,13 +729,13 @@ std::string supply_equipment_control::get_external_control_strategy()
 }
 
 
-void supply_equipment_control::set_ensure_pev_charge_needs_met_for_ext_control_strategy(bool ensure_pev_charge_needs_met)
+void supply_equipment_control::set_ensure_pev_charge_needs_met_for_ext_control_strategy( const bool ensure_pev_charge_needs_met )
 {
     this->ensure_pev_charge_needs_met_for_ext_control_strategy = ensure_pev_charge_needs_met;
 }
 
 
-void supply_equipment_control::update_parameters_for_CE(supply_equipment_load& SE_load)
+void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& SE_load )
 {
     if(this->building_charge_profile_library)
         return;
@@ -853,10 +858,15 @@ void supply_equipment_control::update_parameters_for_CE(supply_equipment_load& S
 }
 
 
-void supply_equipment_control::execute_control_strategy(double prev_unix_time, double now_unix_time, double pu_Vrms, supply_equipment_load& SE_load)
+void supply_equipment_control::execute_control_strategy( const double prev_unix_time,
+                                                         const double now_unix_time,    
+                                                         const double pu_Vrms,
+                                                         supply_equipment_load& SE_load )
 {
     if(this->building_charge_profile_library)
+    {
         return;
+    }
     
     //----------------
     
@@ -871,7 +881,9 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
     //  Return if Charging is Uncontrolled
     //--------------------------------------
     if(this->L2_control_enums.ES_control_strategy == NA && this->L2_control_enums.VS_control_strategy == NA && this->L2_control_enums.ext_control_strategy == "NA")
+    {
         return;
+    }
     
     //----------------------------------
     // Return if PEV is not Connected
@@ -881,8 +893,10 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
     SE_charging_status SE_status_val;
     SE_load.get_current_CE_status(pev_is_connected_to_SE, SE_status_val, this->charge_status);
     
-    if(!pev_is_connected_to_SE)
+    if( !pev_is_connected_to_SE )
+    {
         return;
+    }
 
     //-----------------------------
     //  Calculate Charging Bounds
@@ -897,13 +911,19 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
     double P3kW_LB = charge_priority * this->P3kW_limits.max_P3kW;
     
     if(P3kW_LB < this->P3kW_limits.min_P3kW)
+    {
         P3kW_LB = this->P3kW_limits.min_P3kW;
+    }
     
     if(this->P3kW_limits.max_P3kW < P3kW_LB)
+    {
         P3kW_LB = this->P3kW_limits.max_P3kW;
+    }
     
     if(charge_priority > 0.97)
+    {
         this->must_charge_for_remainder_of_park = true;
+    }
     
     //-----------------------------------------------------------------
     //  Ensure Charge Needs met when using External Control Strategy
@@ -926,48 +946,71 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
     bool is_charging = true;
     
     if(this->must_charge_for_remainder_of_park)
+    {
         P3kW_setpoint = this->P3kW_limits.max_P3kW;
+    }
     else
     {
         if(this->L2_control_enums.ES_control_strategy == ES100_A)
+        {
             P3kW_setpoint = this->ES100A_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
-        
+        }
         else if(this->L2_control_enums.ES_control_strategy == ES100_B)
+        {
             P3kW_setpoint = this->ES100B_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
-        
+        }
         else if(this->L2_control_enums.ES_control_strategy == ES110)
+        {
             P3kW_setpoint = this->ES110_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
-        
+        }
         else if(this->L2_control_enums.ES_control_strategy == ES200)
+        {
             P3kW_setpoint = this->ES200_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
-        
+        }
         else if(this->L2_control_enums.ES_control_strategy == ES300)
+        {
             P3kW_setpoint = this->ES300_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
-        
-        else if(this->L2_control_enums.ES_control_strategy == ES500) 
+        }
+        else if(this->L2_control_enums.ES_control_strategy == ES500)
+        {
             P3kW_setpoint = this->ES500_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
+        }
+        else
+        {
+            throw std::invalid_argument("CALDERA ERROR: We should never get to the else block.");
+        }
     
         //---------------------
         
-        if(std::abs(P3kW_setpoint) < 0.00001)
+        if( std::abs(P3kW_setpoint) < 0.00001 )
+        {
             is_charging = false;
+        }
         
-        if(is_charging && P3kW_setpoint < P3kW_LB)
+        if( is_charging && P3kW_setpoint < P3kW_LB )
+        {
             P3kW_setpoint = P3kW_LB;
+        }
     }
     
     //------------------------------
     //  Voltage Supporting via PkW 
     //------------------------------
         
-    if(this->L2_control_enums.VS_control_strategy == VS100)
+    if( this->L2_control_enums.VS_control_strategy == VS100 )
+    {
         P3kW_setpoint = this->VS100_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
+    }
     
     // Bind P3kW_setpoint
     if(this->must_charge_for_remainder_of_park)
+    {
         P3kW_setpoint = this->P3kW_limits.max_P3kW;
-    else if(is_charging && P3kW_setpoint < P3kW_LB)
+    }
+    else if( is_charging && P3kW_setpoint < P3kW_LB )
+    {
         P3kW_setpoint = P3kW_LB;
+    }
     
     //------------------------------
     // Voltage Supporting via QkVAR 
@@ -976,16 +1019,24 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
     double Q3kVAR_setpoint = 0;
     
     if(this->L2_control_enums.VS_control_strategy == VS200_A)
+    {
         Q3kVAR_setpoint = this->VS200A_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
+    }
     
     else if(this->L2_control_enums.VS_control_strategy == VS200_B)
+    {
         Q3kVAR_setpoint = this->VS200B_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
+    }
     
     else if(this->L2_control_enums.VS_control_strategy == VS200_C)
+    {
         Q3kVAR_setpoint = this->VS200C_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
+    }
     
     else if(this->L2_control_enums.VS_control_strategy == VS300)
+    {
         Q3kVAR_setpoint = this->VS300_obj.get_Q3kVAR_setpoint(pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
+    }
     
     //---------------------
     //   Apply Setpoints
@@ -995,10 +1046,15 @@ void supply_equipment_control::execute_control_strategy(double prev_unix_time, d
 }
 
 
-void supply_equipment_control::ES500_get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step, supply_equipment_load& SE_load, ES500_aggregator_pev_charge_needs& pev_charge_needs)
+void supply_equipment_control::ES500_get_charging_needs( const double unix_time_now,
+                                                         const double unix_time_begining_of_next_agg_step,
+                                                         supply_equipment_load& SE_load,
+                                                         ES500_aggregator_pev_charge_needs& pev_charge_needs)
 {
-    if(this->building_charge_profile_library)
+    if( this->building_charge_profile_library )
+    {
         return;
+    }
     
     //----------------
     
@@ -1015,16 +1071,24 @@ void supply_equipment_control::ES500_get_charging_needs(double unix_time_now, do
     bool pev_is_connected_to_SE;
     SE_charging_status SE_status_val;
     CE_status tmp_charge_status;
-    SE_load.get_current_CE_status(pev_is_connected_to_SE, SE_status_val, tmp_charge_status);
+    SE_load.get_current_CE_status( pev_is_connected_to_SE, SE_status_val, tmp_charge_status );
     
-    this->ES500_obj.get_charging_needs(unix_time_now, unix_time_begining_of_next_agg_step, this->charge_profile, tmp_charge_status, this->P3kW_limits, this->SE_config, pev_charge_needs);
+    this->ES500_obj.get_charging_needs( unix_time_now,
+                                        unix_time_begining_of_next_agg_step,
+                                        this->charge_profile,
+                                        tmp_charge_status,
+                                        this->P3kW_limits,
+                                        this->SE_config,
+                                        pev_charge_needs );
 }
 
 
-void supply_equipment_control::ES500_set_energy_setpoints(double e3_setpoint_kWh)
+void supply_equipment_control::ES500_set_energy_setpoints( const double e3_setpoint_kWh )
 {
-    if(this->building_charge_profile_library)
+    if( this->building_charge_profile_library )
+    {
         return;
+    }
     
     //----------------
     
