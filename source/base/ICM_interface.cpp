@@ -466,7 +466,7 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     {
         it = this->gridNodeId_to_SE_ptrs.find(pu_Vrms_pair.first);
         
-        if(it == this->gridNodeId_to_SE_ptrs.end())
+        if( it == this->gridNodeId_to_SE_ptrs.end() )
         {
             // There is no SE on this grid node. Just put zeros in there.
             P3_kW = 0;
@@ -477,10 +477,13 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
         }
         else
         {
+            // Access the object the iterator is pointing to.
+            const std::pair< grid_node_id_type, std::vector<supply_equipment*> >& gridnodeid_SEvec_pair = *it; 
+            
+            // Iterate over each supply_equipment pointer and sum up the power used by each during this timestep.
             P3_kW = 0;
             Q3_kVAR = 0;
-        
-            for(supply_equipment* SE_ptr : it->second)
+            for( supply_equipment* SE_ptr : gridnodeid_SEvec_pair.second )
             {
                 SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
                 

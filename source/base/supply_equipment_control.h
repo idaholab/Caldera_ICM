@@ -294,7 +294,7 @@ private:
     
 public:
     supply_equipment_control() {};
-    supply_equipment_control( bool building_charge_profile_library_,
+    supply_equipment_control( const bool building_charge_profile_library_,
                               const SE_configuration& SE_config_,
                               get_base_load_forecast* baseLD_forecaster_,
                               manage_L2_control_strategy_parameters* manage_L2_control_ );
@@ -303,18 +303,23 @@ public:
     std::string get_external_control_strategy();
     L2_control_strategies_enum  get_L2_ES_control_strategy();
     L2_control_strategies_enum  get_L2_VS_control_strategy();
-    void update_parameters_for_CE(supply_equipment_load& SE_load);
+    void update_parameters_for_CE( supply_equipment_load& SE_load );
     
-    void set_ensure_pev_charge_needs_met_for_ext_control_strategy(bool ensure_pev_charge_needs_met);
+    void set_ensure_pev_charge_needs_met_for_ext_control_strategy( const bool ensure_pev_charge_needs_met );
     
-    void execute_control_strategy(double prev_unix_time, double now_unix_time, double pu_Vrms, supply_equipment_load& SE_load);
+    void execute_control_strategy( const double prev_unix_time,
+                                   const double now_unix_time,
+                                   const double pu_Vrms,
+                                   supply_equipment_load& SE_load );
     
     //------------------------
     //         ES500
     //------------------------
-    void ES500_get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step, supply_equipment_load& SE_load,
-                                  ES500_aggregator_pev_charge_needs& pev_charge_needs);
-    void ES500_set_energy_setpoints(double e3_setpoint_kWh);
+    void ES500_get_charging_needs( const double unix_time_now,
+                                   const double unix_time_begining_of_next_agg_step,
+                                   supply_equipment_load& SE_load,
+                                   ES500_aggregator_pev_charge_needs& pev_charge_needs);
+    void ES500_set_energy_setpoints( const double e3_setpoint_kWh );
 };
 
 #endif
