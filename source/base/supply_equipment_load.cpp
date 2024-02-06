@@ -113,7 +113,9 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
 bool charge_event_handler::charge_event_is_available( const double now_unix_time ) const
 {
     if(this->charge_events.size() == 0)
+    {
         return false;
+    }
     
     std::set<charge_event_data>::iterator it = this->charge_events.begin();
     
@@ -122,7 +124,9 @@ bool charge_event_handler::charge_event_is_available( const double now_unix_time
         return true;
     }
     else
+    {
         return false;
+    }
 }
 
 
