@@ -25,11 +25,15 @@ private:
     
 public:
 	charge_event_handler() {};
-    charge_event_handler(charge_event_queuing_inputs& CE_queuing_inputs_);
+    charge_event_handler( charge_event_queuing_inputs& CE_queuing_inputs_ );
     
-    void add_charge_event(charge_event_data& charge_event);
-    bool charge_event_is_available(double now_unix_time);
-    charge_event_data  get_next_charge_event(double now_unix_time);
+    void add_charge_event( charge_event_data& CE );
+    
+    void remove_charge_events_that_are_ending_soon( const double now_unix_time, const double time_limit_seconds );
+    
+    bool charge_event_is_available( const double now_unix_time ) const;
+    
+    charge_event_data get_next_charge_event( const double now_unix_time );
 };
 
 
