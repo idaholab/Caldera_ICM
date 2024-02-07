@@ -102,9 +102,10 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
     
     for(std::set<charge_event_data>::iterator it : its_to_remove)
 	{
-        this->charge_events.erase(it);
         std::stringstream str_ss;
         str_ss << "Warning : Charge Event removed since charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
+        // Erasing the item after we create the Warning string so that the iterator is still valid.
+        this->charge_events.erase(it);
 		std::cout << str_ss.str() << std::endl;
 	}
 }
@@ -594,7 +595,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         this->SE_stat.pev_is_connected_to_SE = false;
 
         // Remove any charge-events that are ending too soon.
-        const double time_limit_seconds = 60.0;
+        const double time_limit_seconds = 60.0;  //<----- TODO: I think this should be equal to the current Caldera_ICM timestep.
         this->event_handler.remove_charge_events_that_are_ending_soon( now_unix_time, time_limit_seconds );
 
         // If there is another event available, process it.
