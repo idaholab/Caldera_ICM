@@ -26,7 +26,7 @@ inline double overlap(double start_A, double end_A, double start_B, double end_B
 }
 
 
-void charge_event_handler::add_charge_event( charge_event_data& CE )
+void charge_event_handler::add_charge_event( const charge_event_data& CE )
 {
     // Make a copy so we can edit it a little bit if needed before saving it.
     charge_event_data mutable_CE = CE;
