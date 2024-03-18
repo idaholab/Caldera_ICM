@@ -1,15 +1,99 @@
 
 #include "ICM_interface.h"
-#include "SE_EV_factory.h"                          // factory_EV_charge_model, factory_supply_equipment_model
 #include "ac_to_dc_converter.h"		                // ac_to_dc_converter
 #include "datatypes_module.h"	                    // ac_power_metrics
 
 #include "SE_EV_factory_charge_profile.h"
 
+#include "load_EV_EVSE_inventory.h"
+
 #include <iostream>
 #include <string>
 #include <unordered_set>
 
+interface_to_SE_groups::interface_to_SE_groups(const std::string& input_path,
+    const interface_to_SE_groups_inputs& inputs)
+    : loader{ input_path },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
+    charge_profile_library{ load_charge_profile_library(inputs) }
+{
+    EV_EVSE_ramping_map ramping_by_pevType_seType_map;
+    for (const pev_charge_ramping_workaround& X : inputs.ramping_by_pevType_seType)
+    {
+        ramping_by_pevType_seType_map[std::make_pair(X.pev_type, X.SE_type)] = X.pev_charge_ramping_obj;
+    }
+
+    //--------------------
+
+    this->EV_model_factory = new factory_EV_charge_model(this->inventory, inputs.ramping_by_pevType_only, ramping_by_pevType_seType_map, false);
+
+    this->ac_to_dc_converter_factory = new factory_ac_to_dc_converter(this->inventory);
+
+    this->baseLD_forecaster = get_base_load_forecast{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs };
+
+    this->manage_L2_control = manage_L2_control_strategy_parameters{ inputs.L2_parameters };
+
+    //==========================================
+    //          Initialize infrastructure
+    //==========================================
+
+    factory_supply_equipment_model SE_factory(this->inventory, inputs.CE_queuing_inputs);
+    factory_EV_charge_model* EV_model = this->EV_model_factory;
+    factory_ac_to_dc_converter* ac_to_dc_converter = this->ac_to_dc_converter_factory;
+    pev_charge_profile_library* charge_profile_library_ = &this->charge_profile_library;
+    get_base_load_forecast* baseLD_forecaster_ = &this->baseLD_forecaster;
+    manage_L2_control_strategy_parameters* manage_L2_control_ = &this->manage_L2_control;
+
+    for (const SE_group_configuration& SE_group_conf : inputs.infrastructure_topology)
+    {
+        supply_equipment_group Y(SE_group_conf, SE_factory, EV_model, ac_to_dc_converter, charge_profile_library_, baseLD_forecaster_, manage_L2_control_);
+        this->SE_group_objs.push_back(Y);
+    }
+
+    //---------------------------------
+
+    for (supply_equipment_group& SE_group : this->SE_group_objs)
+    {
+        SE_group_configuration SE_group_conf = SE_group.get_SE_group_configuration();
+        this->SE_group_Id_to_ptr[SE_group_conf.SE_group_id] = &SE_group;
+
+        //------------------------
+
+        std::vector<supply_equipment*> SE_ptrs = SE_group.get_pointers_to_all_SE_objects();
+
+        for (supply_equipment* SE_ptr : SE_ptrs)
+        {
+            this->SE_ptr_vector.push_back(SE_ptr);
+
+            SE_configuration SE_conf = SE_ptr->get_SE_configuration();
+            this->SEid_to_SE_ptr[SE_conf.SE_id] = SE_ptr;
+
+            //-------------------
+
+            if (this->gridNodeId_to_SE_ptrs.count(SE_conf.grid_node_id) == 0)
+            {
+                std::vector<supply_equipment*> X;
+                this->gridNodeId_to_SE_ptrs[SE_conf.grid_node_id] = X;
+            }
+
+            this->gridNodeId_to_SE_ptrs[SE_conf.grid_node_id].push_back(SE_ptr);
+        }
+    }
+
+    //=========================================================================
+    //         set_ensure_pev_charge_needs_met_for_ext_control_strategy
+    //=========================================================================
+
+    for (supply_equipment* SE_ptr : this->SE_ptr_vector)
+        SE_ptr->set_ensure_pev_charge_needs_met_for_ext_control_strategy(inputs.ensure_pev_charge_needs_met);
+
+}
+
+pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library(const interface_to_SE_groups_inputs& inputs)
+{
+    factory_charge_profile_library X{ inventory };
+    return X.get_charge_profile_library(false, inputs.create_charge_profile_library);
+}
 
 interface_to_SE_groups::~interface_to_SE_groups()
 {
@@ -23,100 +107,6 @@ interface_to_SE_groups::~interface_to_SE_groups()
     {
         delete this->ac_to_dc_converter_factory;
         this->ac_to_dc_converter_factory = NULL;
-    }
-}
-
-
-void interface_to_SE_groups::initialize(bool create_charge_profile_library, std::map<vehicle_enum, pev_charge_ramping> ramping_by_pevType_only, std::vector<pev_charge_ramping_workaround> ramping_by_pevType_seType)
-{
-    // These both have to be pointers otherwise it will not compile.
-    // Has to do with the fact that neither of these classes are imported directly into the interface.h file.
-    
-    //--------------------
-    
-    std::map< std::tuple<vehicle_enum, supply_equipment_enum>, pev_charge_ramping> ramping_by_pevType_seType_map;    
-    for(pev_charge_ramping_workaround& X : ramping_by_pevType_seType)
-    {        
-        std::tuple<vehicle_enum, supply_equipment_enum> key(X.pev_type, X.SE_type);
-        ramping_by_pevType_seType_map[key] = X.pev_charge_ramping_obj;
-    }
-    
-    //--------------------
-    
-    this->EV_model_factory = new factory_EV_charge_model();  // Should the parenthesis be here???
-    this->EV_model_factory->initialize_custome_parameters(ramping_by_pevType_only, ramping_by_pevType_seType_map);
-	
-    this->ac_to_dc_converter_factory = new factory_ac_to_dc_converter();
-
-    factory_charge_profile_library X;
-    this->charge_profile_library = X.get_charge_profile_library(false, create_charge_profile_library);  // save_validation_data = false
-}
-
-
-void interface_to_SE_groups::initialize_L2_control_strategy_parameters(L2_control_strategy_parameters L2_parameters)
-{
-    manage_L2_control_strategy_parameters X(L2_parameters);
-    this->manage_L2_control = X;
-}
-
-
-void interface_to_SE_groups::set_ensure_pev_charge_needs_met_for_ext_control_strategy(bool ensure_pev_charge_needs_met)
-{
-    for(supply_equipment* SE_ptr : this->SE_ptr_vector)
-        SE_ptr->set_ensure_pev_charge_needs_met_for_ext_control_strategy(ensure_pev_charge_needs_met);
-}
-
-
-void interface_to_SE_groups::initialize_baseLD_forecaster(double data_start_unix_time, int data_timestep_sec, std::vector<double>& actual_load_akW, std::vector<double>& forecast_load_akW, double adjustment_interval_hrs)
-{
-    get_base_load_forecast X(data_start_unix_time, data_timestep_sec, actual_load_akW, forecast_load_akW, adjustment_interval_hrs);
-    this->baseLD_forecaster = X;
-}
-
-
-void interface_to_SE_groups::initialize_infrastructure(charge_event_queuing_inputs CE_queuing_inputs, std::vector<SE_group_configuration> infrastructure_topology)
-{
-    factory_supply_equipment_model SE_factory(CE_queuing_inputs);
-    factory_EV_charge_model* EV_model = this->EV_model_factory;
-    factory_ac_to_dc_converter* ac_to_dc_converter = this->ac_to_dc_converter_factory;
-    pev_charge_profile_library* charge_profile_library_ = &this->charge_profile_library;
-    get_base_load_forecast* baseLD_forecaster_ = &this->baseLD_forecaster;
-    manage_L2_control_strategy_parameters* manage_L2_control_ = &this->manage_L2_control;
-    
-    for(SE_group_configuration& SE_group_conf : infrastructure_topology)
-    {
-        supply_equipment_group Y(SE_group_conf, SE_factory, EV_model, ac_to_dc_converter, charge_profile_library_, baseLD_forecaster_, manage_L2_control_);
-        this->SE_group_objs.push_back(Y);
-    }
-    
-    //---------------------------------
-    
-    for(supply_equipment_group& SE_group : this->SE_group_objs)
-    {
-        SE_group_configuration SE_group_conf = SE_group.get_SE_group_configuration();        
-        this->SE_group_Id_to_ptr[SE_group_conf.SE_group_id] = &SE_group;
-        
-        //------------------------
-     
-        std::vector<supply_equipment*> SE_ptrs = SE_group.get_pointers_to_all_SE_objects();
-     
-        for(supply_equipment* SE_ptr : SE_ptrs)
-        {            
-            this->SE_ptr_vector.push_back(SE_ptr);
-                        
-            SE_configuration SE_conf = SE_ptr->get_SE_configuration();
-            this->SEid_to_SE_ptr[SE_conf.SE_id] = SE_ptr;
-            
-            //-------------------
-            
-            if(this->gridNodeId_to_SE_ptrs.count(SE_conf.grid_node_id) == 0)
-            {
-                std::vector<supply_equipment*> X;
-                this->gridNodeId_to_SE_ptrs[SE_conf.grid_node_id] = X;
-            }            
-
-            this->gridNodeId_to_SE_ptrs[SE_conf.grid_node_id].push_back(SE_ptr);
-        }
     }
 }
 
@@ -472,7 +462,12 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
         
         if(it == this->gridNodeId_to_SE_ptrs.end())
         {
-            // There is no SE on this grid node
+            // There is no SE on this grid node. Just put zeros in there.
+            P3_kW = 0;
+            Q3_kVAR = 0;
+            tmp_pwr.first = P3_kW;
+            tmp_pwr.second = Q3_kVAR;
+            return_val[pu_Vrms_pair.first] = tmp_pwr;
         }
         else
         {
@@ -518,7 +513,7 @@ SE_power interface_to_SE_groups::get_SE_power(SE_id_type SE_id, double prev_unix
     else
     {
         //bool pev_is_connected_to_SE;
-        SE_charging_status SE_status_val;
+        SE_charging_status SE_status_val{};
         double soc;
         //CE_status charge_status;
         ac_power_metrics ac_power;
@@ -579,27 +574,5 @@ void interface_to_SE_groups::ES500_set_energy_setpoints(ES500_aggregator_e_step_
             this->SEid_to_SE_ptr[SE_id[i]]->ES500_set_energy_setpoints(e3_step_kWh[i]);
         }
     }
-    
-/*
-    std::map<SE_id_type, supply_equipment*>::iterator it;
-
-    for(int i=0; i<SE_id.size(); i++)
-    {
-        it = this->SEid_to_SE_ptr.find(SE_id[i]);
-        
-        std::cout << SE_id[i] << "    " << e3_step_kWh[i] << std::endl;
-        
-        if(it == this->SEid_to_SE_ptr.end())
-        {
-            std::cout << "No findy" << std::endl;
-            
-            // Throw an Error
-        }
-        else
-        {
-            it->second->ES500_set_energy_setpoints(e3_step_kWh[i]);
-        }   
-    }
-*/
 }
 

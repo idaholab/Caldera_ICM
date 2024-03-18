@@ -651,7 +651,7 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 //===============================================================================================
 //===============================================================================================
 
-supply_equipment_control::supply_equipment_control(bool building_charge_profile_library_, SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_)
+supply_equipment_control::supply_equipment_control(bool building_charge_profile_library_, const SE_configuration& SE_config_, get_base_load_forecast* baseLD_forecaster_, manage_L2_control_strategy_parameters* manage_L2_control_)
 {
     this->building_charge_profile_library = building_charge_profile_library_;
     
@@ -1066,7 +1066,7 @@ int manage_L2_control_strategy_parameters::get_LPF_max_window_size()
 }
 
 
-manage_L2_control_strategy_parameters::manage_L2_control_strategy_parameters(L2_control_strategy_parameters& parameters_)
+manage_L2_control_strategy_parameters::manage_L2_control_strategy_parameters(const L2_control_strategy_parameters& parameters_)
 {
     this->parameters = parameters_;
     

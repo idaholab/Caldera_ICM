@@ -1,0 +1,5 @@
+enable_testing()
+
+add_subdirectory(test_charging_models_DirectXFC)
+add_subdirectory(test_charging_models_eMosaic)
+add_subdirectory(test_charging_models_EVs_at_Risk)

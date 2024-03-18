@@ -65,7 +65,7 @@ pev_charge_profile_result get_default_charge_profile_result()
 //                           pev_charge_profile_aux
 //==============================================================================
 
-pev_charge_profile_aux::pev_charge_profile_aux(vehicle_enum pev_type_, supply_equipment_enum SE_type_, double setpoint_P3kW_, std::vector<pev_charge_fragment>& charge_fragments_)
+pev_charge_profile_aux::pev_charge_profile_aux(EV_type pev_type_, EVSE_type SE_type_, double setpoint_P3kW_, std::vector<pev_charge_fragment>& charge_fragments_)
 {
     this->pev_type = pev_type_;
     this->SE_type = SE_type_;
@@ -264,7 +264,7 @@ void pev_charge_profile_aux::find_chargeProfile_given_startSOC_and_chargeTimes(d
 //                             pev_charge_profile
 //==============================================================================
 
-pev_charge_profile::pev_charge_profile(vehicle_enum pev_type_, supply_equipment_enum SE_type_, charge_event_P3kW_limits& CE_P3kW_limits_, std::vector<pev_charge_profile_aux>& charge_profiles_)
+pev_charge_profile::pev_charge_profile(EV_type pev_type_, EVSE_type SE_type_, charge_event_P3kW_limits& CE_P3kW_limits_, std::vector<pev_charge_profile_aux>& charge_profiles_)
 {
     this->pev_type = pev_type_;
     this->SE_type = SE_type_;
@@ -363,11 +363,12 @@ void pev_charge_profile::find_chargeProfile_given_startSOC_and_chargeTimes(doubl
 //                          pev_charge_profile_library
 //==============================================================================
 
-pev_charge_profile_library::pev_charge_profile_library()
+pev_charge_profile_library::pev_charge_profile_library(const EV_EVSE_inventory& inventory)
+    : inventory(inventory)
 {
     // Dummy Values for default profile
-    vehicle_enum pev_type = get_default_vehicle_enum();
-    supply_equipment_enum SE_type = get_default_supply_equipment_enum(); 
+    EV_type pev_type = inventory.get_default_EV();
+    EVSE_type SE_type = inventory.get_default_EVSE();
     charge_event_P3kW_limits CE_P3kW_limits;
     CE_P3kW_limits.min_P3kW = 0;
     CE_P3kW_limits.max_P3kW = 1;
@@ -398,9 +399,9 @@ pev_charge_profile_library::pev_charge_profile_library()
 }
 
 
-void pev_charge_profile_library::add_charge_profile_to_library(vehicle_enum pev_type, supply_equipment_enum SE_type, pev_charge_profile& charge_profile)
+void pev_charge_profile_library::add_charge_profile_to_library(EV_type pev_type, EVSE_type SE_type, pev_charge_profile& charge_profile)
 {
-    std::pair<vehicle_enum, supply_equipment_enum> key;
+    std::pair<EV_type, EVSE_type> key;
     key = std::make_pair(pev_type, SE_type);
     
     if(this->charge_profile.count(key) == 0)
@@ -410,9 +411,9 @@ void pev_charge_profile_library::add_charge_profile_to_library(vehicle_enum pev_
 }
 
 
-pev_charge_profile* pev_charge_profile_library::get_charge_profile(vehicle_enum pev_type, supply_equipment_enum SE_type)
+pev_charge_profile* pev_charge_profile_library::get_charge_profile(EV_type pev_type, EVSE_type SE_type)
 {
-    std::pair<vehicle_enum, supply_equipment_enum> key;
+    std::pair<EV_type, EVSE_type> key;
     key = std::make_pair(pev_type, SE_type);
     
     pev_charge_profile* return_val;
@@ -433,9 +434,15 @@ pev_charge_profile* pev_charge_profile_library::get_charge_profile(vehicle_enum 
 //                          pev_charge_profile_library_v2
 //==============================================================================
 
-void pev_charge_profile_library_v2::add_charge_PkW_profile_to_library(vehicle_enum pev_type, supply_equipment_enum SE_type, double timestep_sec, std::vector<double>& soc, std::vector<ac_power_metrics>& profile)
+pev_charge_profile_library_v2::pev_charge_profile_library_v2(const EV_EVSE_inventory& inventory)
+    : inventory{ inventory }
 {
-    std::pair<vehicle_enum, supply_equipment_enum> key;
+
+}
+
+void pev_charge_profile_library_v2::add_charge_PkW_profile_to_library(EV_type pev_type, EVSE_type SE_type, double timestep_sec, std::vector<double>& soc, std::vector<ac_power_metrics>& profile)
+{
+    std::pair<EV_type, EVSE_type> key;
     key = std::make_pair(pev_type, SE_type);
     
     tmp_charge_profile X;
@@ -497,7 +504,7 @@ void pev_charge_profile_library_v2::find_start_end_indexes_from_start_end_soc(do
 }
 
 
-void pev_charge_profile_library_v2::get_P3kW_charge_profile(double start_soc, double end_soc, vehicle_enum pev_type, supply_equipment_enum SE_type, double& timestep_sec, std::vector<double>& P3kW_charge_profile)
+void pev_charge_profile_library_v2::get_P3kW_charge_profile(double start_soc, double end_soc, EV_type pev_type, EVSE_type SE_type, double& timestep_sec, std::vector<double>& P3kW_charge_profile)
 {
     timestep_sec = 1;
     P3kW_charge_profile.clear();
@@ -512,7 +519,7 @@ void pev_charge_profile_library_v2::get_P3kW_charge_profile(double start_soc, do
     
     //-----------------------------
     
-    std::pair<vehicle_enum, supply_equipment_enum> key;
+    std::pair<EV_type, EVSE_type> key;
     key = std::make_pair(pev_type, SE_type);
     
     if(this->PkW_profile.count(key) == 0)
@@ -535,7 +542,7 @@ void pev_charge_profile_library_v2::get_P3kW_charge_profile(double start_soc, do
 }
 
 
-void pev_charge_profile_library_v2::get_all_charge_profile_data(double start_soc, double end_soc, vehicle_enum pev_type, supply_equipment_enum SE_type, all_charge_profile_data& return_val)
+void pev_charge_profile_library_v2::get_all_charge_profile_data(double start_soc, double end_soc, EV_type pev_type, EVSE_type SE_type, all_charge_profile_data& return_val)
 {
     return_val.timestep_sec = 1;
     return_val.P1_kW.clear();
@@ -554,7 +561,7 @@ void pev_charge_profile_library_v2::get_all_charge_profile_data(double start_soc
     
     //-----------------------------
     
-    std::pair<vehicle_enum, supply_equipment_enum> key;
+    std::pair<EV_type, EVSE_type> key;
     key = std::make_pair(pev_type, SE_type);
     
     if(this->PkW_profile.count(key) == 0)

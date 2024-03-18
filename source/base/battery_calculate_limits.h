@@ -5,9 +5,10 @@
 
 #include <vector>
 #include <iostream>   	// Stream to consol (may be needed for files too???)
+#include <memory>
 
-#include "helper.h"  // line_segment
-
+#include "inputs.h"							// vehicle_charge_model_inputs
+#include "helper.h"                         // line_segment
 
 //-----------------------------------------------
 
@@ -38,72 +39,70 @@ std::ostream& operator<<(std::ostream& out, E1_energy_limit& x);
 //                 Algroithm soc_t1 from (t1-t0) and soc_t0  
 //#############################################################################
 
-
 class algorithm_P2_vs_soc
 {
 private:
-	algorithm_P2_vs_soc& operator=(const algorithm_P2_vs_soc& obj) = default;
 	
 protected:
-    algorithm_P2_vs_soc(const algorithm_P2_vs_soc& obj) = default;
-    
-    std::vector<line_segment> *P2_vs_soc;
+
+    std::shared_ptr<std::vector<line_segment> > P2_vs_soc;
+
     int seg_index, ref_seg_index;
-    double soc_to_energy, exp_term, prev_exp_val;
-	double recalc_exponent_threashold, zero_slope_threashold_P2_vs_soc;
+    double soc_to_energy, prev_exp_val, exp_term;
+	double recalc_exponent_threshold, zero_slope_threshold_P2_vs_soc;
 	bool segment_is_flat_P2_vs_soc, P2_vs_soc_segments_changed;
 
 public:
-    algorithm_P2_vs_soc(){};
-    algorithm_P2_vs_soc(double battery_size_kWh, double recalc_exponent_threashold_, double zero_slope_threashold_P2_vs_soc_);
-    virtual algorithm_P2_vs_soc* clone() const = 0;
+
+    algorithm_P2_vs_soc(const vehicle_charge_model_inputs& inputs);
     
-    void find_line_segment_index(double init_soc, bool &line_segment_not_found);    
+    void find_line_segment_index(double init_soc, 
+                                 bool &line_segment_not_found);    
     double get_soc_UB() const;
     double get_soc_LB() const;
     double get_soc_to_energy() const;
-    void get_next_line_segment(bool is_charging_not_discharging, bool &next_line_segment_exists);
-    void set_P2_vs_soc(std::vector<line_segment> *P2_vs_soc_);
-    virtual double get_soc_t1(double t1_minus_t0_hrs, double soc_t0) = 0;
-    virtual double get_time_to_soc_t1_hrs(double soc_t0, double soc_t1) = 0;
+    void get_next_line_segment(bool is_charging_not_discharging, 
+                               bool &next_line_segment_exists);
+    void set_P2_vs_soc(std::shared_ptr<std::vector<line_segment> > P2_vs_soc);
+    virtual double get_soc_t1(double t1_minus_t0_hrs, 
+                              double soc_t0) = 0;
+    virtual double get_time_to_soc_t1_hrs(double soc_t0, 
+                                          double soc_t1) = 0;
 };
 
 
 class algorithm_P2_vs_soc_no_losses:public algorithm_P2_vs_soc
 {
 private:
-	algorithm_P2_vs_soc_no_losses& operator=(const algorithm_P2_vs_soc_no_losses& obj) = default;
-	algorithm_P2_vs_soc_no_losses(const algorithm_P2_vs_soc_no_losses& obj);
 
     double a, b, A;
     
 public:
-    algorithm_P2_vs_soc_no_losses(){};
-    algorithm_P2_vs_soc_no_losses(double battery_size_kWh, double recalc_exponent_threashold_, double zero_slope_threashold_P2_vs_soc_);
-    virtual algorithm_P2_vs_soc_no_losses* clone() const override final;
+    algorithm_P2_vs_soc_no_losses(const battery_charge_mode& mode, 
+                                  const vehicle_charge_model_inputs& inputs);
     
-    virtual double get_soc_t1(double t1_minus_t0_hrs, double soc_t0) override final;
-    virtual double get_time_to_soc_t1_hrs(double soc_t0, double soc_t1) override final;
+    virtual double get_soc_t1(double t1_minus_t0_hrs, 
+                              double soc_t0) override final;
+    virtual double get_time_to_soc_t1_hrs(double soc_t0, 
+                                          double soc_t1) override final;
 };
 
 
 class algorithm_P2_vs_soc_losses:public algorithm_P2_vs_soc
 {
 private:
-	algorithm_P2_vs_soc_losses& operator=(const algorithm_P2_vs_soc_losses& obj) = default;
-	algorithm_P2_vs_soc_losses(const algorithm_P2_vs_soc_losses& obj);
 
     double a, b, c, d, A, B, C, D, z;
-    line_segment bat_eff_vs_P2;
+    const line_segment& bat_eff_vs_P2;
 
 public:
-    algorithm_P2_vs_soc_losses(){};
-    algorithm_P2_vs_soc_losses(double battery_size_kWh, double recalc_exponent_threashold_,  double zero_slope_threashold_P2_vs_soc_, 
-                               const line_segment& bat_eff_vs_P2_);
-	virtual algorithm_P2_vs_soc_losses* clone() const override final;
-
-    virtual double get_soc_t1(double t1_minus_t0_hrs, double soc_t0) override final;
-    virtual double get_time_to_soc_t1_hrs(double soc_t0, double soc_t1) override final;
+    algorithm_P2_vs_soc_losses(const battery_charge_mode& mode, 
+                               const vehicle_charge_model_inputs& inputs);
+	
+    virtual double get_soc_t1(double t1_minus_t0_hrs, 
+                              double soc_t0) override final;
+    virtual double get_time_to_soc_t1_hrs(double soc_t0, 
+                                          double soc_t1) override final;
 };
 
 
@@ -114,51 +113,51 @@ public:
 class calc_E1_energy_limit
 {
 private:
-	calc_E1_energy_limit& operator=(const calc_E1_energy_limit& obj) = default;
-	calc_E1_energy_limit(const calc_E1_energy_limit& obj) = default;
 
 protected:
-    algorithm_P2_vs_soc *P2_vs_soc_algorithm;
+    std::shared_ptr<algorithm_P2_vs_soc> P2_vs_soc_algorithm;
 	
 public:
-    calc_E1_energy_limit(){};
-    calc_E1_energy_limit(algorithm_P2_vs_soc *P2_vs_soc_algorithm_);
-    virtual calc_E1_energy_limit* clone() const = 0;
-    virtual ~calc_E1_energy_limit();
+
+    calc_E1_energy_limit(const battery_charge_mode& mode, 
+                         const bool& are_battery_losses, 
+                         const vehicle_charge_model_inputs& inputs);
     
-    virtual void get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::vector<line_segment> *P2_vs_soc_segments, E1_energy_limit& E1_limit) = 0;
+    virtual void get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::shared_ptr<std::vector<line_segment> > P2_vs_soc, E1_energy_limit& E1_limit) = 0;
 };
 
 
 class calc_E1_energy_limit_charging:public calc_E1_energy_limit
 {
 private:
-    calc_E1_energy_limit_charging& operator=(const calc_E1_energy_limit_charging& obj) = default;
-    calc_E1_energy_limit_charging(const calc_E1_energy_limit_charging& obj);
         
 public:
-    calc_E1_energy_limit_charging(){};
-    calc_E1_energy_limit_charging(algorithm_P2_vs_soc *P2_vs_soc_algorithm_);
-    virtual calc_E1_energy_limit_charging* clone() const override final;
-    virtual ~calc_E1_energy_limit_charging() override final;
+    calc_E1_energy_limit_charging(const bool& are_battery_losses, 
+                                  const vehicle_charge_model_inputs& inputs);
     
-    virtual void get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::vector<line_segment> *P2_vs_soc_segments, E1_energy_limit& E1_limit) override final;
+    virtual void get_E1_limit(double time_step_sec, 
+                              double init_soc, 
+                              double target_soc, 
+                              bool P2_vs_soc_segments_changed, 
+                              std::shared_ptr<std::vector<line_segment> > P2_vs_soc, 
+                              E1_energy_limit& E1_limit) override final;
 };
 
 
 class calc_E1_energy_limit_discharging:public calc_E1_energy_limit
 {
 private:
-	calc_E1_energy_limit_discharging& operator=(const calc_E1_energy_limit_discharging& obj) = default;
-	calc_E1_energy_limit_discharging(const calc_E1_energy_limit_discharging& obj);
 
 public:
-    calc_E1_energy_limit_discharging(){};
-    calc_E1_energy_limit_discharging(algorithm_P2_vs_soc *P2_vs_soc_algorithm_);
-    virtual calc_E1_energy_limit_discharging* clone() const override final;
-    virtual ~calc_E1_energy_limit_discharging() override final;
-    
-    virtual void get_E1_limit(double time_step_sec, double init_soc, double target_soc, bool P2_vs_soc_segments_changed, std::vector<line_segment> *P2_vs_soc_segments, E1_energy_limit& E1_limit) override final;
+    calc_E1_energy_limit_discharging(const bool& are_battery_losses, 
+                                     const vehicle_charge_model_inputs& inputs);
+
+    virtual void get_E1_limit(double time_step_sec, 
+                              double init_soc, 
+                              double target_soc, 
+                              bool P2_vs_soc_segments_changed, 
+                              std::shared_ptr<std::vector<line_segment> > P2_vs_soc, 
+                              E1_energy_limit& E1_limit) override final;
 };
 
 
@@ -170,32 +169,33 @@ public:
 class calculate_E1_energy_limit
 {
 private:
-	calc_E1_energy_limit  *calc_E1_limit;
-	poly_function_of_x  P2_vs_puVrms;
-	std::vector<line_segment> orig_P2_vs_soc_segments;
-	std::vector<line_segment> cur_P2_vs_soc_segments;
-	
-	double prev_P2_limit, max_abs_P2_in_P2_vs_soc_segments;
-	double max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments;
-	bool is_charging_not_discharging, prev_P2_limit_binding;
-	
+    battery_charge_mode mode;
+
+    poly_function_of_x  P2_vs_puVrms;
+    double max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments;
+
+    std::vector<line_segment> orig_P2_vs_soc_segments;
+    std::shared_ptr<calc_E1_energy_limit> calc_E1_limit;
+    std::vector<line_segment> cur_P2_vs_soc_segments;
+
+    double prev_P2_limit, max_abs_P2_in_P2_vs_soc_segments;
+    bool prev_P2_limit_binding;
+
 	void apply_P2_limit_to_P2_vs_soc_segments(double P2_limit);
-	calculate_E1_energy_limit(const calculate_E1_energy_limit& obj) = default;
+	
 
 public:
-	calculate_E1_energy_limit() {};
-	calculate_E1_energy_limit(bool is_charging_not_discharging_, double max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments_,
-	                          calc_E1_energy_limit *calc_E1_limit_, poly_function_of_x& P2_vs_puVrms_, std::vector<line_segment>& P2_vs_soc_segments_);
-	calculate_E1_energy_limit& operator=(const calculate_E1_energy_limit& obj);
-	~calculate_E1_energy_limit();
 
-	void get_E1_limit(double time_step_sec, double init_soc, double target_soc, double pu_Vrms, E1_energy_limit& E1_limit);
+    calculate_E1_energy_limit(const battery_charge_mode& mode, 
+                              const vehicle_charge_model_inputs& inputs);
+
+	void get_E1_limit(double time_step_sec, 
+                      double init_soc, 
+                      double target_soc, 
+                      double pu_Vrms, 
+                      E1_energy_limit& E1_limit);
 	
 	void log_cur_P2_vs_soc_segments(std::ostream& out);
 };
 
-
 #endif
-
-
-

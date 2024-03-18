@@ -99,7 +99,7 @@ void transition_of_X_through_time::init_transition(double start_of_transition_un
 	this->target_ref_X = target_ref_X_;
 	
 	if(transition_just_crossed_zero)
-		this->segment_index = this->goto_next_segment_criteria.size() - 1;
+		this->segment_index = (int)this->goto_next_segment_criteria.size() - 1;
 	else if(trans_interruption_state == new_transition_in_opposite_direction)
 		this->segment_index = 1;
 	else if(trans_interruption_state == new_transition_in_same_direction)

@@ -62,6 +62,19 @@ struct transition_goto_next_segment_criteria
     bool inturupt_this_transition_if_target_X_deviation_limit_exceeded;
     double target_X_deviation_limit_to_interupt_this_transition;
     double segment_slope_X_per_sec;
+
+    transition_goto_next_segment_criteria(const transition_criteria_type& criteria_type,
+                                          const double criteria_value,
+                                          const bool inturupt_this_transition_if_target_X_deviation_limit_exceeded,
+                                          const double target_X_deviation_limit_to_interupt_this_transition,
+                                          const double segment_slope_X_per_sec)
+        : criteria_type{ criteria_type },
+        criteria_value{ criteria_value },
+        inturupt_this_transition_if_target_X_deviation_limit_exceeded{ inturupt_this_transition_if_target_X_deviation_limit_exceeded },
+        target_X_deviation_limit_to_interupt_this_transition{ target_X_deviation_limit_to_interupt_this_transition },
+        segment_slope_X_per_sec{ segment_slope_X_per_sec }
+    {
+    }
 };
 
 

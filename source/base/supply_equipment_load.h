@@ -3,7 +3,6 @@
 #define inl_supply_equipment_load_H
 
 #include "datatypes_global.h"                       // SE_configuration, SE_charging_status, charge_event_data
-#include "datatypes_global_SE_EV_definitions.h"
 #include "ac_to_dc_converter.h"		                // ac_to_dc_converter
 #include "vehicle_charge_model.h"	                // vehicle_charge_model
 #include "datatypes_module.h"                       // ac_power_metrics, SE_status, CE_Status
@@ -26,11 +25,15 @@ private:
     
 public:
 	charge_event_handler() {};
-    charge_event_handler(charge_event_queuing_inputs& CE_queuing_inputs_);
+    charge_event_handler( charge_event_queuing_inputs& CE_queuing_inputs_ );
     
-    void add_charge_event(charge_event_data& charge_event);
-    bool charge_event_is_available(double now_unix_time);
-    charge_event_data  get_next_charge_event(double now_unix_time);
+    void add_charge_event( charge_event_data& CE );
+    
+    void remove_charge_events_that_are_ending_soon( const double now_unix_time, const double time_limit_seconds );
+    
+    bool charge_event_is_available( const double now_unix_time ) const;
+    
+    charge_event_data get_next_charge_event( const double now_unix_time );
 };
 
 
@@ -59,7 +62,7 @@ private:
 
 public:
 	supply_equipment_load();
-	supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs);
+	supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs);
 	~supply_equipment_load();
 	//supply_equipment_load& operator=(const supply_equipment_load& obj);
     //supply_equipment_load(const supply_equipment_load& obj);

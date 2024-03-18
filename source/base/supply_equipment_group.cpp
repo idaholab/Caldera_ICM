@@ -1,18 +1,22 @@
 
-#include "supply_equipment_group.h"
-#include "SE_EV_factory.h"                  // factory_EV_charge_model, factory_supply_equipment_model
-#include "datatypes_module.h"               // ac_power_metrics
+#include "supply_equipment_group.h"      
+#include "datatypes_module.h"                   // ac_power_metrics
+#include "factory_EV_charge_model.h"            // factory_EV_charge_model
+#include "factory_supply_equipment_model.h"     // factory_supply_equipment_model
 
 
-
-supply_equipment_group::supply_equipment_group(SE_group_configuration& SE_group_topology_, factory_supply_equipment_model& SE_factory, factory_EV_charge_model* PEV_charge_factory, 
-                                                   factory_ac_to_dc_converter* ac_to_dc_converter_factory, pev_charge_profile_library* charge_profile_library,
-                                                   get_base_load_forecast* baseLD_forecaster, manage_L2_control_strategy_parameters* manage_L2_control)
+supply_equipment_group::supply_equipment_group(const SE_group_configuration& SE_group_topology_, 
+                                               factory_supply_equipment_model& SE_factory, 
+                                               factory_EV_charge_model* PEV_charge_factory,
+                                               factory_ac_to_dc_converter* ac_to_dc_converter_factory, 
+                                               pev_charge_profile_library* charge_profile_library,
+                                               get_base_load_forecast* baseLD_forecaster, 
+                                               manage_L2_control_strategy_parameters* manage_L2_control)
 {
     this->SE_group_topology = SE_group_topology_;    
     this->SE_objs.clear();
     
-    for(SE_configuration& SE_config : SE_group_topology_.SEs)
+    for(const SE_configuration& SE_config : SE_group_topology_.SEs)
     {
         supply_equipment SE_obj;
         bool building_charge_profile_library = false;
