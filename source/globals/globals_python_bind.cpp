@@ -319,8 +319,8 @@ PYBIND11_MODULE(Caldera_globals, m)
 
 		.def_readwrite("now_unix_time", &active_CE::now_unix_time)
 		.def_readwrite("now_soc", &active_CE::now_soc)
-		//.def_readwrite("min_remaining_charge_time_hrs", &active_CE::min_remaining_charge_time_hrs)
-		//.def_readwrite("min_time_to_complete_entire_charge_hrs", &active_CE::min_time_to_complete_entire_charge_hrs)
+		.def_readwrite("min_remaining_charge_time_hrs", &active_CE::min_remaining_charge_time_hrs)
+		.def_readwrite("min_time_to_complete_entire_charge_hrs", &active_CE::min_time_to_complete_entire_charge_hrs)
 		.def_readwrite("now_charge_energy_ackWh", &active_CE::now_charge_energy_ackWh)
 		.def_readwrite("energy_of_complete_charge_ackWh", &active_CE::energy_of_complete_charge_ackWh)
 		.def_readwrite("now_dcPkW", &active_CE::now_dcPkW)
@@ -334,8 +334,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 				return py::make_tuple(obj.SE_id, obj.supply_equipment_type, obj.charge_event_id, obj.vehicle_id, obj.vehicle_type, 
 				obj.arrival_unix_time, obj.departure_unix_time, obj.arrival_SOC, obj.departure_SOC, obj.now_unix_time,
 				obj.now_soc, obj.now_charge_energy_ackWh, obj.energy_of_complete_charge_ackWh, obj.now_dcPkW, obj.now_acPkW, 
-				obj.now_acQkVAR
-				//obj.min_remaining_charge_time_hrs, obj.min_time_to_complete_entire_charge_hrs
+				obj.now_acQkVAR, obj.min_remaining_charge_time_hrs, obj.min_time_to_complete_entire_charge_hrs
 				);
 			},
 			[](py::tuple t)
@@ -359,8 +358,8 @@ PYBIND11_MODULE(Caldera_globals, m)
 				obj.now_acPkW = t[14].cast<double>();
 				obj.now_acQkVAR = t[15].cast<double>();
 				
-				//obj.min_remaining_charge_time_hrs = t[6].cast<double>();                
-				//obj.min_time_to_complete_entire_charge_hrs = t[7].cast<double>();
+				obj.min_remaining_charge_time_hrs = t[16].cast<double>();                
+				obj.min_time_to_complete_entire_charge_hrs = t[17].cast<double>();
 
 				return obj;
 			}
