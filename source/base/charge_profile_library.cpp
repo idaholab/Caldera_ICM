@@ -6,6 +6,7 @@
 #include <random>       // Uniform random number generator
 #include <list>
 #include <iostream>
+#include <iterator>
 
 // ----------------------------------------------------------------------------------------
 //  ???  Riddle  ???
@@ -24,7 +25,7 @@ void search_vector_of_doubles( const double search_value,
                                int& LB_index,
                                int& UB_index )
 {
-    const std::vector<const double>::iterator it_UB = std::upper_bound(search_vector.begin(), search_vector.end(), search_value);
+    const std::vector<double>::const_iterator it_UB = std::upper_bound(search_vector.begin(), search_vector.end(), search_value);
     
     if(it_UB == search_vector.begin())
     {
@@ -38,8 +39,8 @@ void search_vector_of_doubles( const double search_value,
     }
     else
     {
-        UB_index = it_UB - search_vector.begin();
-        
+        UB_index = std::distance(search_vector.begin(), it_UB);
+
         if(UB_index == 0)
         {
             LB_index = 0;
