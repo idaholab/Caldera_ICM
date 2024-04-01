@@ -18,7 +18,7 @@ timeseries::timeseries(const double data_starttime_sec, const double data_timest
 }
 
 
-double timeseries::get_val_from_time(double time_sec)
+double timeseries::get_val_from_time(double time_sec) const
 {
     //std::cout << "timeseries time_sec : " << time_sec << std::endl;
     //std::cout << "timeseries this->data_starttime_sec : " << this->data_starttime_sec << std::endl;
@@ -32,16 +32,20 @@ double timeseries::get_val_from_time(double time_sec)
     return this->data.at(index);
 }
 
-double timeseries::get_val_from_index(int index)
+double timeseries::get_val_from_index(int index) const
 {
     return this->data.at(index);
 }
 
-double timeseries::get_time_from_index_sec(int index)
+double timeseries::get_time_from_index_sec(int index) const
 {
     return this->data_starttime_sec + index * this->data_timestep_sec;
 }
 
+int timeseries::get_index_from_time(double time_sec) const
+{
+    return int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
+}
 
 //==================================================================
 //                Low Pass Filter Parameters

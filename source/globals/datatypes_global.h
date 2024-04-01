@@ -52,14 +52,17 @@ struct timeseries
     // The function will return the data corresponding to the time that is loop.
     // If there is 24 hours of data, when requesting for the 25th hour, this will 
     // return the data in the first index. 
-    double get_val_from_time(double time_sec);
+    double get_val_from_time(double time_sec) const;
 
     // The function will return the data corresponding to the index.
     // There is no looping. throws an error when index is out of range.
-    double get_val_from_index(int index);
+    double get_val_from_index(int index) const;
 
-    // The function will return time correcponding to the index.
-    double get_time_from_index_sec(int index);
+    // The function will return time corresponding to the index.
+    double get_time_from_index_sec(int index) const;
+
+    // The function will return index corresponding to the time.
+    int get_index_from_time(double time_sec) const;
 };
 
 
