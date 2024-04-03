@@ -38,11 +38,12 @@ EV_characteristics::EV_characteristics(const EV_type& type,
     DCFC_capable{ DCFC_capable },
     max_c_rate{ max_c_rate },
     pack_voltage_at_peak_power_V{ pack_voltage_at_peak_power_V },
+
     battery_size_kWh{ this->compute_battery_size_kWh() },
-    battery_size_Ah_1C{ this->compute_battery_size_Ah_1C() },
-    battery_size_with_stochastic_degradation_kWh{ compute_battery_size_with_stochastic_degradation_kWh() }
-{
-}
+    peak_power_kW{ this->compute_peak_power() },
+    battery_size_with_stochastic_degradation_kWh{ this->compute_battery_size_with_stochastic_degradation_kWh() },
+    battery_size_Ah_1C{ this->compute_battery_size_Ah_1C() }
+{ }
 
 const peak_power_per_crate& EV_characteristics::get_charge_profile_peak_power_W_per_Wh() const { return this->charge_profile_peak_power_W_per_Wh; }
 
@@ -57,8 +58,9 @@ const double& EV_characteristics::get_AC_charge_rate_kW() const             { re
 const double& EV_characteristics::get_pack_voltage_at_peak_power_V() const  { return this->pack_voltage_at_peak_power_V; }
 
 const double& EV_characteristics::get_battery_size_kWh() const              { return this->battery_size_kWh; }
-const double& EV_characteristics::get_battery_size_Ah_1C() const            { return this->battery_size_Ah_1C; }
+const double EV_characteristics::get_peak_power_kW() const                  { return this->peak_power_kW; }
 const double& EV_characteristics::get_battery_size_with_stochastic_degradation_kWh() const { return this->battery_size_with_stochastic_degradation_kWh; }
+const double& EV_characteristics::get_battery_size_Ah_1C() const            { return this->battery_size_Ah_1C; }
 
 //Charge Profile Peak Power(W / Wh)
 // c - rate	    LMO	    NMC	    LTO
@@ -114,10 +116,10 @@ double EV_characteristics::compute_battery_size_kWh()
     return this->usable_battery_size_kWh / 0.95;
 }
 
-double EV_characteristics::compute_battery_size_Ah_1C()
+double EV_characteristics::compute_peak_power()
 {
     const std::map<crate, power>& profile_peak_power_W_per_Wh = this->charge_profile_peak_power_W_per_Wh.at(this->chemistry);
-    
+
     crate smallest_crate = profile_peak_power_W_per_Wh.begin()->first;
     crate largest_crate = (--profile_peak_power_W_per_Wh.end())->first;
 
@@ -144,10 +146,13 @@ double EV_characteristics::compute_battery_size_Ah_1C()
     power peak_power_UB = it_UB->second;
 
     power weighted_peak_power_W_per_Wh = peak_power_LB + weight * (peak_power_UB - peak_power_LB);
-    
-    power peak_power_kW = this->battery_size_kWh * weighted_peak_power_W_per_Wh;
 
-    double battery_size_Ah_1C = 1000 * peak_power_kW / (this->max_c_rate * this->pack_voltage_at_peak_power_V);
+    return this->battery_size_kWh * weighted_peak_power_W_per_Wh;
+}
+
+double EV_characteristics::compute_battery_size_Ah_1C()
+{
+    double battery_size_Ah_1C = 1000 * this->peak_power_kW / (this->max_c_rate * this->pack_voltage_at_peak_power_V);
 
     double average_pack_voltage_V = 1000 * this->battery_size_kWh * battery_size_Ah_1C;
 

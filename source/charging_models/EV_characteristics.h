@@ -44,13 +44,15 @@ private:
     const double pack_voltage_at_peak_power_V;
     
     const double battery_size_kWh;
-    const double battery_size_Ah_1C;
+    const double peak_power_kW;
     const double battery_size_with_stochastic_degradation_kWh;
-
+    const double battery_size_Ah_1C;
+    
     peak_power_per_crate compute_charge_profile_peak_power_W_per_Wh();
     double compute_battery_size_kWh();
-    double compute_battery_size_Ah_1C();
+    double compute_peak_power();
     double compute_battery_size_with_stochastic_degradation_kWh();
+    double compute_battery_size_Ah_1C();
 
 public:
 	EV_characteristics(const EV_type& type,
@@ -76,9 +78,9 @@ public:
     const double& get_pack_voltage_at_peak_power_V() const;
     
     const double& get_battery_size_kWh() const;
-    const double& get_battery_size_Ah_1C() const;
+    const double get_peak_power_kW() const;
     const double& get_battery_size_with_stochastic_degradation_kWh() const;
-
+    const double& get_battery_size_Ah_1C() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const EV_characteristics& ev);
