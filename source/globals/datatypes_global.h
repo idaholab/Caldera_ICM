@@ -52,7 +52,12 @@ struct timeseries
     // The function will return the data corresponding to the time that is loop.
     // If there is 24 hours of data, when requesting for the 25th hour, this will 
     // return the data in the first index. 
+    // TODO: rename this to 'get_val_from_time_with_cycling' or something like that.
     double get_val_from_time(double time_sec) const;
+    
+    // This function returns the data corresponding to the given time,
+    // or the default value if the index is out of the range of the array.
+    double get_val_from_time_with_default( const double time_sec, const double out_of_range_default ) const;
 
     // The function will return the data corresponding to the index.
     // There is no looping. throws an error when index is out of range.
