@@ -32,6 +32,19 @@ double timeseries::get_val_from_time(double time_sec) const
     return this->data.at(index);
 }
 
+double timeseries::get_val_from_time_with_default( const double time_sec, const double out_of_range_default ) const
+{
+    const int index = int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
+    if( index >= this->data.size() || index < 0 )
+    {
+        return out_of_range_default;
+    }
+    else
+    {
+        return this->data.at(index);
+    }
+}
+
 double timeseries::get_val_from_index(int index) const
 {
     return this->data.at(index);
