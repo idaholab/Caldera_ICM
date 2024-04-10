@@ -1,4 +1,5 @@
 #include "datatypes_global.h"
+#include <cmath>
 
 class test_datatypes
 {
