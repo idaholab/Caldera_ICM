@@ -1,6 +1,7 @@
 
 #include "datatypes_global.h"
 #include <cmath>
+#include <stdexcept>	// invalid_argument
 
 //==================================================================
 //                timeseries
@@ -27,14 +28,14 @@ double timeseries::get_val_from_time(double time_sec) const
     time_sec = fmod(time_sec, this->data_endtime_sec - this->data_starttime_sec);
     //std::cout << "timeseries time_sec after rounding: " << time_sec << std::endl;
 
-    int index = int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
     //std::cout << "timeseries index : " << index << std::endl;
     return this->data.at(index);
 }
 
 double timeseries::get_val_from_time_with_default( const double time_sec, const double out_of_range_default ) const
 {
-    const int index = int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
     if( index >= this->data.size() || index < 0 )
     {
         return out_of_range_default;
@@ -59,6 +60,130 @@ int timeseries::get_index_from_time(double time_sec) const
 {
     return int(time_sec - this->data_starttime_sec) / int(this->data_timestep_sec);
 }
+
+
+
+
+
+//==================================================================
+//                time_series_v2
+//==================================================================
+
+template <typename ARR_DATA_TYPE>
+time_series_v2<ARR_DATA_TYPE>::time_series_v2(
+                                      const double data_starttime_sec,
+                                      const double data_timestep_sec,
+                                      const std::vector<ARR_DATA_TYPE>& data )
+                                      :
+                                      data_starttime_sec{ data_starttime_sec },
+                                      data_timestep_sec{ data_timestep_sec },
+                                      data{ data },
+                                      data_endtime_sec{ this->data_starttime_sec + this->data.size() * this->data_timestep_sec }
+{
+}
+template time_series_v2<int>::time_series_v2( const double data_starttime_sec,
+                                                const double data_timestep_sec,
+                                                const std::vector<int>& data );
+template time_series_v2<float>::time_series_v2( const double data_starttime_sec,
+                                                const double data_timestep_sec,
+                                                const std::vector<float>& data );
+template time_series_v2<double>::time_series_v2( const double data_starttime_sec,
+                                                 const double data_timestep_sec,
+                                                 const std::vector<double>& data );
+
+
+template <typename ARR_DATA_TYPE>
+ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_time_with_error_check( const double time_sec ) const
+{
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
+    if( index >= this->data.size() || index < 0 )
+    {
+        std::string error_msg = "Error: 'time_sec' is out of scope of the array. [1]";
+		std::cout << error_msg << std::endl;
+		throw(std::invalid_argument(error_msg));
+    }
+    return this->data.at(index);
+}
+template int time_series_v2<int>::get_val_from_time_with_error_check( const double time_sec ) const;
+template float time_series_v2<float>::get_val_from_time_with_error_check( const double time_sec ) const;
+template double time_series_v2<double>::get_val_from_time_with_error_check( const double time_sec ) const;
+
+
+template <typename ARR_DATA_TYPE>
+ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_time_with_cycling( const double time_sec ) const
+{    
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
+    if( index >= this->data.size() || index < 0 )
+    {
+        const double time_sec_cyc = fmod( time_sec, this->data_endtime_sec - this->data_starttime_sec );
+        return this->get_val_from_time_with_cycling( time_sec_cyc );
+    }
+    return this->data.at(index);
+}
+template int time_series_v2<int>::get_val_from_time_with_cycling( const double time_sec ) const;
+template float time_series_v2<float>::get_val_from_time_with_cycling( const double time_sec ) const;
+template double time_series_v2<double>::get_val_from_time_with_cycling( const double time_sec ) const;
+
+
+template <typename ARR_DATA_TYPE>
+ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_time_with_default( const double time_sec, const ARR_DATA_TYPE out_of_range_default ) const
+{
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
+    if( index >= this->data.size() || index < 0 )
+    {
+        return out_of_range_default;
+    }
+    else
+    {
+        return this->data.at(index);
+    }
+}
+template int time_series_v2<int>::get_val_from_time_with_default( const double time_sec, const int out_of_range_default ) const;
+template float time_series_v2<float>::get_val_from_time_with_default( const double time_sec, const float out_of_range_default ) const;
+template double time_series_v2<double>::get_val_from_time_with_default( const double time_sec, const double out_of_range_default ) const;
+
+
+template <typename ARR_DATA_TYPE>
+ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_index( const int index ) const
+{
+    if( index >= this->data.size() || index < 0 )
+    {
+        std::string error_msg = "Error: 'time_sec' is out of scope of the array. [2]";
+		std::cout << error_msg << std::endl;
+		throw(std::invalid_argument(error_msg));
+    }
+    return this->data.at(index);
+}
+template int time_series_v2<int>::get_val_from_index( const int index ) const;
+template float time_series_v2<float>::get_val_from_index( const int index ) const;
+template double time_series_v2<double>::get_val_from_index( const int index ) const;
+
+
+template <typename ARR_DATA_TYPE>
+double time_series_v2<ARR_DATA_TYPE>::get_time_sec_from_index( const int index ) const
+{
+    return this->data_starttime_sec + index * this->data_timestep_sec;
+}
+template double time_series_v2<int>::get_time_sec_from_index( const int index ) const;
+template double time_series_v2<float>::get_time_sec_from_index( const int index ) const;
+template double time_series_v2<double>::get_time_sec_from_index( const int index ) const;
+
+
+template <typename ARR_DATA_TYPE>
+int time_series_v2<ARR_DATA_TYPE>::get_index_from_time( const double time_sec ) const
+{
+    const int index = int( (time_sec - this->data_starttime_sec) / this->data_timestep_sec );
+    return index;
+}
+template int time_series_v2<int>::get_index_from_time( const double time_sec ) const;
+template int time_series_v2<float>::get_index_from_time( const double time_sec ) const;
+template int time_series_v2<double>::get_index_from_time( const double time_sec ) const;
+
+
+
+
+
+
 
 //==================================================================
 //                Low Pass Filter Parameters
