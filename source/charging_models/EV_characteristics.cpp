@@ -176,6 +176,7 @@ double EV_characteristics::compute_battery_size_with_stochastic_degradation_kWh(
     else
     {
         ASSERT(false, "invalid battery chemistry");
+        return 0.0;
     }
 }
 

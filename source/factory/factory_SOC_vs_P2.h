@@ -36,6 +36,7 @@ struct SOC_vs_P2
     const std::vector<line_segment> curve;
     const double zero_slope_threshold;
 
+    SOC_vs_P2() : curve(std::vector<line_segment>()), zero_slope_threshold(0.0) {}
     SOC_vs_P2(const std::vector<line_segment>& curve,
               const double& zero_slope_threshold);
 };
@@ -85,6 +86,7 @@ private:
 
 	const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
 	const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
+    const SOC_vs_P2 error_case_curve; // <-- empty data structure the reference to which is returned in error cases.
 
     const create_dcPkW_from_soc load_LMO_charge();
     const create_dcPkW_from_soc load_NMC_charge();

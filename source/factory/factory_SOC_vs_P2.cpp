@@ -137,6 +137,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_cha
     else
     {
         ASSERT(false, "Error : Unknown battery mode. Its not charging nor discharging");
+        return SOC_vs_P2();
     }
 }
 
@@ -818,6 +819,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
         else
         {
             ASSERT(false, "Error: P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
+            return this->error_case_curve;
         }
     }
     else if (level == DCFC)
@@ -831,11 +833,13 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
         else
         {
             ASSERT(false, "Error: P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
+            return this->error_case_curve;
         }
     }
     else
     {
         ASSERT(false, "invalid EVSE_level");
+        return this->error_case_curve;
     }
 }
 

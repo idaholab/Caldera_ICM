@@ -72,6 +72,53 @@ struct timeseries
 
 
 //==================================================================
+//                time_series_v2
+//==================================================================
+
+template <typename ARR_DATA_TYPE> class time_series_v2
+{
+    public:
+    
+    double data_starttime_sec;
+    double data_timestep_sec;
+    std::vector<ARR_DATA_TYPE> data;
+
+    // This member variable must be listed after the other three so it can
+    // be properly initialized.
+    double data_endtime_sec;
+
+    // constructor
+    time_series_v2( const double data_starttime_sec,
+                    const double data_timestep_sec,
+                    const std::vector<ARR_DATA_TYPE>& data );
+
+    // The function will return the data corresponding to the time that is loop.
+    // If the time is out of range then an error is thrown. 
+    ARR_DATA_TYPE get_val_from_time_with_error_check( const double time_sec ) const;
+
+    // The function will return the data corresponding to the time that is loop.
+    // If there is 24 hours of data, when requesting for the 25th hour, this will 
+    // return the data in the first index. 
+    ARR_DATA_TYPE get_val_from_time_with_cycling( const double time_sec ) const;
+    
+    // This function returns the data corresponding to the given time,
+    // or the default value if the index is out of the range of the array.
+    ARR_DATA_TYPE get_val_from_time_with_default( const double time_sec, const ARR_DATA_TYPE out_of_range_default ) const;
+
+    // The function will return the data corresponding to the index.
+    // There is no looping. throws an error when index is out of range.
+    ARR_DATA_TYPE get_val_from_index( const int index ) const;
+
+    // The function will return time (in seconds) corresponding to the index.
+    double get_time_sec_from_index( const int index ) const;
+
+    // The function will return index corresponding to the time.
+    int get_index_from_time( const double time_sec ) const;
+};
+
+
+
+//==================================================================
 //                Low Pass Filter Parameters
 //==================================================================
 
