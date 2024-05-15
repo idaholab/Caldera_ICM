@@ -609,13 +609,6 @@ PYBIND11_MODULE(Caldera_globals, m)
 			}
 	));
 
-	double timestep_sec;
-	std::vector<double> P1_kW;
-	std::vector<double> P2_kW;
-	std::vector<double> P3_kW;
-	std::vector<double> Q3_kVAR;
-	std::vector<double> soc;
-
 	py::class_<all_charge_profile_data>(m, "all_charge_profile_data")
 		.def(py::init<>())
 		.def_readwrite("timestep_sec", &all_charge_profile_data::timestep_sec)
