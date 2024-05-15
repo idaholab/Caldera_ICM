@@ -10,7 +10,7 @@
 
 int main()
 {
-	load_EV_EVSE_inventory load_inventory{ "C:\\Users\\CEBOM\\Documents\\repos\\Caldera_ICM\\inputs" };
+	load_EV_EVSE_inventory load_inventory{ "..\\inputs\\DirectXFC" };
 	const EV_EVSE_inventory& inventory = load_inventory.get_EV_EVSE_inventory();
 
 	//factory_SOC_vs_P2 soc_vs_p2(inventory);
@@ -40,7 +40,7 @@ int main()
 	int SE_group_id = 1;
 	SE_id_type  SE_id = 1;
 	vehicle_id_type vehicle_id = 1;
-	EV_type vehicle_type = "XFC250_300kW";
+	EV_type vehicle_type = "bev250_350kW";
 	double arrival_unix_time = 1*3600;
 	double departure_unix_time = 4*3600;
 	double arrival_SOC = 0;
