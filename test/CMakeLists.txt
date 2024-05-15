@@ -8,5 +8,5 @@ target_include_directories(run_models PUBLIC ${PROJECT_SOURCE_DIR}/source/factor
 target_include_directories(run_models PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
 
 install(TARGETS run_models
-		DESTINATION ${PROJECT_SOURCE_DIR})
+		DESTINATION ${PROJECT_SOURCE_DIR}/test)
 
