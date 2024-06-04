@@ -130,7 +130,7 @@ int estimate_charging_parameters_using_ICM()
 	// find_chargeProfile_given_startSOC_and_chargeTimes
 	//------------------------------------------------
 	startSOC = 20;
-	charge_time_hrs_vec = { 5 / 60, 10 / 60, 15 / 60, 20 / 60, 25 / 60, 30 / 60, 35 / 60, 40 / 60, 45 / 60, 50 / 60, 60 / 60 };
+	charge_time_hrs_vec = { 5.0 / 60.0, 10.0 / 60.0, 15.0 / 60.0, 20.0 / 60.0, 25.0 / 60.0, 30.0 / 60.0, 35.0 / 60.0, 40.0 / 60.0, 45.0 / 60.0, 50.0 / 60.0, 60.0 / 60.0 };
 	std::vector<pev_charge_profile_result> X3 = ICM_v1.find_chargeProfile_given_startSOC_and_chargeTimes(pev_type, SE_type, setpoint_P3kW, startSOC, charge_time_hrs_vec);
 	
 	std::cout << "-----------------------------------" << "\n";
@@ -142,7 +142,7 @@ int estimate_charging_parameters_using_ICM()
 		std::cout << charge_time_hrs << " ";
 	}
 	std::cout << "\n";
-	for (pev_charge_profile_result x : X2)
+	for (pev_charge_profile_result x : X3)
 	{
 		std::cout << "soc_increase: " << x.soc_increase << " total_time_hrs: " << x.total_charge_time_hrs << " incr_time_hrs : " << x.incremental_chage_time_hrs << "\n";
 	}
