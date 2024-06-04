@@ -260,7 +260,7 @@ int main()
     std::ofstream f_out;
 
     // open the files
-    f_out.open("./outputs/ICM_full_output.csv");
+    f_out.open("./outputs/ICM_Full_output.csv");
     
     // write the data
     f_out << header << data_str;
