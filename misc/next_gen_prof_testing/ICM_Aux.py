@@ -14,6 +14,11 @@ sys.path.insert( index+0, path_to_libs )
 from Caldera_ICM_Aux import CP_interface_v2
 from Caldera_globals import all_charge_profile_data
 
+
+######################################################
+# 	Build Charge Profile Given Start and End SOC
+######################################################
+
 L1_timestep_sec = 1
 L2_timestep_sec = 1
 HPC_timestep_sec = 1
