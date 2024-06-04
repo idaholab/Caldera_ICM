@@ -92,7 +92,7 @@ int estimate_charging_parameters_using_ICM()
 	// find_result_given_startSOC_and_chargeTime
 	//-------------------------------------------
 	startSOC = 20;
-	charge_time_hrs = 15 / 60;
+	charge_time_hrs = 15.0 / 60.0;
 	pev_charge_profile_result X1 = ICM_v1.find_result_given_startSOC_and_chargeTime(pev_type, SE_type, setpoint_P3kW, startSOC, charge_time_hrs);
 
 	std::cout << "-----------------------------------" << "\n";
