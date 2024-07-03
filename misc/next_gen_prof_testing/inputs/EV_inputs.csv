@@ -13,3 +13,7 @@ bev150_ld1_50kW,NMC,45,150,300,6.072,TRUE,0.85,460
 phev_SUV,NMC,23.75,50,475,8.832,FALSE,-1,-1
 phev50,NMC,15.5,50,310,3.016365,FALSE,-1,-1
 phev20,NMC,5,20,250,3.016365,FALSE,-1,-1
+ngp_audi_etron_55_quattro,NMC,95.0,274,237,11.0,TRUE,1.25,500
+ngp_hyundai_ioniq_5_longrange_awd,NMC,74.0,282,192,11.0,TRUE,2.00,800
+ngp_genesis_gv60,NMC,74.0,312,308,11.0,TRUE,2.00,800
+ngp_porsche_taycan_plus,NMC,83.7,225,176,11.0,TRUE,2.00,800
