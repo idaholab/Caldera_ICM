@@ -20,24 +20,13 @@ target_include_directories(ICM_Aux PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inpu
 install(TARGETS ICM_Aux
 		DESTINATION ${PROJECT_SOURCE_DIR}/misc/next_gen_prof_testing)
 
-add_executable(ICM_CC_Generator ICM_CC_Generator.cpp )
-target_link_libraries(ICM_CC_Generator Charging_models Load_inputs factory Base_aux)
-target_compile_features(ICM_CC_Generator PUBLIC cxx_std_17)
-target_include_directories(ICM_CC_Generator PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
-target_include_directories(ICM_CC_Generator PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
-target_include_directories(ICM_CC_Generator PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
-target_include_directories(ICM_CC_Generator PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
+add_executable(ICM_NextGen ICM_NextGen.cpp )
+target_link_libraries(ICM_NextGen Charging_models Load_inputs factory Base_aux)
+target_compile_features(ICM_NextGen PUBLIC cxx_std_17)
+target_include_directories(ICM_NextGen PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
+target_include_directories(ICM_NextGen PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
+target_include_directories(ICM_NextGen PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
+target_include_directories(ICM_NextGen PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
 
-install(TARGETS ICM_CC_Generator
-		DESTINATION ${PROJECT_SOURCE_DIR}/misc/next_gen_prof_testing)
-
-add_executable(ICM_Power_Bug ICM_Power_Bug.cpp )
-target_link_libraries(ICM_Power_Bug Charging_models Load_inputs factory Base_aux)
-target_compile_features(ICM_Power_Bug PUBLIC cxx_std_17)
-target_include_directories(ICM_Power_Bug PUBLIC ${PROJECT_SOURCE_DIR}/source/base)
-target_include_directories(ICM_Power_Bug PUBLIC ${PROJECT_SOURCE_DIR}/source/charging_models)
-target_include_directories(ICM_Power_Bug PUBLIC ${PROJECT_SOURCE_DIR}/source/factory)
-target_include_directories(ICM_Power_Bug PUBLIC ${PROJECT_SOURCE_DIR}/source/load_inputs)
-
-install(TARGETS ICM_Power_Bug
+install(TARGETS ICM_NextGen
 		DESTINATION ${PROJECT_SOURCE_DIR}/misc/next_gen_prof_testing)
