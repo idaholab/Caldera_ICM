@@ -52,6 +52,8 @@ double find_c_rate_input_given_power(const double actual_bat_size_kWh, const dou
             return c_rate;
         }
     }
+    std::cout << "Error: max_c_rate is out-of-bounds." << std::endl;
+    return 0.0;
 }
 
 
