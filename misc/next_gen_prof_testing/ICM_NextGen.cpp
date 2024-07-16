@@ -57,7 +57,7 @@ int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE
 
     oss.str("");
     oss.clear();
-    oss << "./outputs/" << pev_type << " " << SE_type << ".csv";
+    oss << "./outputs/" << "pevtype_" << pev_type << "__setype_" << SE_type << ".csv";
 
     std::string filepath = oss.str();
     std::cout << "Data saved to: " << filepath << std::endl;
