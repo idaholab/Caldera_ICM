@@ -2,6 +2,59 @@
 #include <filesystem>
 #include <sstream>
 
+double find_c_rate_input_given_power(const double actual_bat_size_kWh, const double max_power_kW, const std::string& bat_chem)
+{
+
+    std::vector<double> crate_vec = { 0, 1, 2, 3, 4, 5, 6 };
+    std::vector<double> LMO_power_vec = { 0, 1.27, 2.42, 3.63, 3.63, 3.63, 3.63 };
+    std::vector<double> NMC_power_vec = { 0, 1.25, 2.42, 3.75, 3.75, 3.75, 3.75 };
+    std::vector<double> LTO_power_vec = { 0, 1.13, 2.23, 3.36, 4.52, 5.63, 5.63 };
+
+
+    const std::pair<std::vector<double>, std::vector<double> > crate_vs_pu_power = [&]()
+        {
+            if (bat_chem == "LMO")
+            {
+                return std::make_pair(crate_vec, LMO_power_vec);
+            }
+            else if (bat_chem == "NMC")
+            {
+                return std::make_pair(crate_vec, NMC_power_vec);
+            }
+            else if (bat_chem == "LTO")
+            {
+                return std::make_pair(crate_vec, LTO_power_vec);
+            }
+            else
+            {
+                std::cout << "!!!!!!!!!!!!!!!!ERROR : bat_chem npt supported" << std::endl;
+                return std::make_pair(std::vector<double>{}, std::vector<double>{});
+            }
+        }();
+
+    double max_charge_time_hrs = actual_bat_size_kWh / max_power_kW;
+    double max_c_rate = 1 / max_charge_time_hrs;
+
+
+    std::vector<crate> c_rate_arr = crate_vs_pu_power.first;
+    std::vector<power> power_arr = crate_vs_pu_power.second;
+
+    double weight_0, weight_1, c_rate;
+
+    for (int i = 1; i < power_arr.size(); i++)
+    {
+        if ((max_c_rate >= power_arr[i - 1]) && max_c_rate < power_arr[i])
+        {
+            weight_0 = (power_arr[i] - max_c_rate) / (power_arr[i] - power_arr[i - 1]);
+            weight_1 = 1 - weight_0;
+
+            c_rate = (weight_0)*c_rate_arr[i - 1] + (weight_1)*c_rate_arr[i];
+            return c_rate;
+        }
+    }
+}
+
+
 int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE_type, double &start_soc, double &end_soc)
 {
 
@@ -78,14 +131,14 @@ int main()
     double start_soc = 10;
     double end_soc = 100;
 
-    std::string supply_equipment[3] =
+    std::vector<std::string> supply_equipment =
         {
             "dcfc_50",
             "xfc_150",
             "xfc_350",
         };
 
-    std::string vehicles[4] =
+    std::vector<std::string> vehicles =
         {
             "ngp_audi_etron_55_quattro",
             "ngp_hyundai_ioniq_5_longrange_awd",
@@ -100,4 +153,15 @@ int main()
             return_code += build_entire_charge_profile_using_ICM(ev, evse, start_soc, end_soc);
         }
     }
+
+
+    // An example to find the average c-rate to input in EV_inputs.csv file.
+    // The EV_input file actually takes average c-rate and not max c-rate.
+    double usable_bat_size_kWh = 95.0;                                    
+    double actual_bat_size_kWh = usable_bat_size_kWh / 0.95;                    // This is currently hardcoded in Caldera ICM. 
+    double max_power_kW = 200;
+    std::string bat_chem = "NMC";
+    double crate = find_c_rate_input_given_power(actual_bat_size_kWh, max_power_kW, bat_chem);
+
+    std::cout << "c_rate : " << crate << std::endl;
 }
