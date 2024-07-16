@@ -5,6 +5,7 @@
 #include "EV_characteristics.h"
 #include "EVSE_characteristics.h"
 
+#include <cstdint>
 #include <vector>
 #include <string>
 
