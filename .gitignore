@@ -4,8 +4,17 @@ __pycache__/
 
 # C extensions
 *.so
+*.exe
+*.editorconfig
 
 # Distribution / packaging
 build/
 *.vs*
 CMakeSettings.json
+
+# MacOS stuff
+.DS_Store
+
+# Executables that get created when we run make install
+run_models
+

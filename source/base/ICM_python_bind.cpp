@@ -1,8 +1,7 @@
 
 #include "ICM_interface.h"
 #include "datatypes_global.h"
-#include "datatypes_global_SE_EV_definitions.h"
-
+#include "inputs.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -19,15 +18,15 @@ PYBIND11_MODULE(Caldera_ICM, m)
     //======================================================= 
     
     py::class_<interface_to_SE_groups>(m, "interface_to_SE_groups")
-        .def(py::init<>())
-        .def("initialize", &interface_to_SE_groups::initialize)
-        .def("initialize_infrastructure", &interface_to_SE_groups::initialize_infrastructure)
-        .def("initialize_baseLD_forecaster", &interface_to_SE_groups::initialize_baseLD_forecaster)
-        .def("initialize_L2_control_strategy_parameters", &interface_to_SE_groups::initialize_L2_control_strategy_parameters)
+        .def(py::init<const std::string&, const interface_to_SE_groups_inputs&>())
+        //.def("initialize", &interface_to_SE_groups::initialize)
+        //.def("initialize_infrastructure", &interface_to_SE_groups::initialize_infrastructure)
+        //.def("initialize_baseLD_forecaster", &interface_to_SE_groups::initialize_baseLD_forecaster)
+        //.def("initialize_L2_control_strategy_parameters", &interface_to_SE_groups::initialize_L2_control_strategy_parameters)
         .def("add_charge_events", &interface_to_SE_groups::add_charge_events)
         .def("add_charge_events_by_SE_group", &interface_to_SE_groups::add_charge_events_by_SE_group)
         .def("stop_active_charge_events", &interface_to_SE_groups::stop_active_charge_events)
-        .def("set_ensure_pev_charge_needs_met_for_ext_control_strategy", &interface_to_SE_groups::set_ensure_pev_charge_needs_met_for_ext_control_strategy)        
+        //.def("set_ensure_pev_charge_needs_met_for_ext_control_strategy", &interface_to_SE_groups::set_ensure_pev_charge_needs_met_for_ext_control_strategy)        
         //.def("get_SE_charge_profile_forecast_akW", &interface_to_SE_groups::get_SE_charge_profile_forecast_akW)
         //.def("get_SE_group_charge_profile_forecast_akW", &interface_to_SE_groups::get_SE_group_charge_profile_forecast_akW)
         .def("get_charging_power", &interface_to_SE_groups::get_charging_power)

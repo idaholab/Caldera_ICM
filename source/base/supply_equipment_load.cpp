@@ -1,10 +1,13 @@
 
 #include "supply_equipment_load.h"
-#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
+//#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
 
 #include <cmath>
 #include <algorithm>                // sort
+#include <sstream>
 
+#include "factory_EV_charge_model.h"
+#include "factory_ac_to_dc_converter.h"
 
 //#############################################################################
 //                            Charge  Event  Handler
@@ -23,7 +26,7 @@ inline double overlap(double start_A, double end_A, double start_B, double end_B
 }
 
 
-void charge_event_handler::add_charge_event(charge_event_data& CE)
+void charge_event_handler::add_charge_event( charge_event_data& CE )
 {
     double max_allowed_overlap_time_sec = this->CE_queuing_inputs.max_allowed_overlap_time_sec;
     queuing_mode_enum queuing_mode = this->CE_queuing_inputs.queuing_mode;
@@ -70,44 +73,53 @@ void charge_event_handler::add_charge_event(charge_event_data& CE)
 }
 
 
-bool charge_event_handler::charge_event_is_available(double now_unix_time)
-{    
-    //----------------------------------------------------------------
-    // Delete charge_events if there is less than 60 seconds to charge
-    //----------------------------------------------------------------
+void charge_event_handler::remove_charge_events_that_are_ending_soon( const double now_unix_time, const double time_limit_seconds )
+{
+    //----------------------------------------------------------------------------------
+    // Delete charge_events if there is less than 'time_limit_seconds' seconds to charge
+    //----------------------------------------------------------------------------------
     
     std::vector<std::set<charge_event_data>::iterator> its_to_remove;
     
-    for(std::set<charge_event_data>::iterator it = this->charge_events.begin(); it != this->charge_events.end(); it++)
+    for( std::set<charge_event_data>::iterator it = this->charge_events.begin(); it != this->charge_events.end(); it++ )
     {
-        if(it->departure_unix_time - now_unix_time < 60)
+        if(it->departure_unix_time - now_unix_time < time_limit_seconds)
+        {
             its_to_remove.push_back(it);
+        }
         else
+        {
             break;
+        }
     }
     
     for(std::set<charge_event_data>::iterator it : its_to_remove)
 	{
         this->charge_events.erase(it);
-		std::string str = "Warning : Charge Event removed since charge time < 60 sec.  charge_event_id: " + std::to_string(it->charge_event_id);
-		std::cout << str << std::endl;
+        std::stringstream str_ss;
+        str_ss << "Warning : Charge Event removed since charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
+		std::cout << str_ss.str() << std::endl;
 	}
-    
-    //------------------------------
-    
+}
+
+
+bool charge_event_handler::charge_event_is_available( const double now_unix_time ) const
+{
     if(this->charge_events.size() == 0)
         return false;
     
     std::set<charge_event_data>::iterator it = this->charge_events.begin();
     
-    if(it->arrival_unix_time - now_unix_time <= 0)
+    if (it->arrival_unix_time - now_unix_time <= 0)
+    {
         return true;
+    }
     else
         return false;
 }
 
 
-charge_event_data charge_event_handler::get_next_charge_event(double now_unix_time)
+charge_event_data charge_event_handler::get_next_charge_event( const double now_unix_time )
 {
     std::set<charge_event_data>::iterator it = this->charge_events.begin();
     charge_event_data x = *it;
@@ -132,7 +144,7 @@ supply_equipment_load::supply_equipment_load()
 }
 
 
-supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
+supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
 {
 	this->P2_limit_kW = P2_limit_kW_;
 	this->standby_acP_kW = standby_acP_kW_;
@@ -453,16 +465,23 @@ void supply_equipment_load::get_active_CE(bool& pev_is_connected_to_SE, active_C
     
     if(pev_is_connected_to_SE)
     {
+
         active_CE_val.SE_id = this->SE_config.SE_id;
+        active_CE_val.supply_equipment_type = this->SE_config.supply_equipment_type;
         active_CE_val.charge_event_id = this->SE_stat.current_charge.charge_event_id;
+        active_CE_val.vehicle_id = this->SE_stat.current_charge.vehicle_id;
+        active_CE_val.vehicle_type = this->SE_stat.current_charge.vehicle_type;
+        active_CE_val.arrival_unix_time = this->SE_stat.current_charge.arrival_unix_time;
+        active_CE_val.departure_unix_time = this->SE_stat.current_charge.departure_unix_time;
+        active_CE_val.arrival_SOC = this->SE_stat.current_charge.arrival_SOC;
+        active_CE_val.departure_SOC = this->SE_stat.current_charge.departure_SOC;
+
         active_CE_val.now_unix_time = this->SE_stat.now_unix_time;
         active_CE_val.now_soc = this->SE_stat.current_charge.now_soc;
         active_CE_val.now_charge_energy_ackWh = this->SE_stat.current_charge.now_charge_energy_E3kWh;
         active_CE_val.now_dcPkW = this->SE_stat.current_charge.now_dcPkW;
         active_CE_val.now_acPkW = this->SE_stat.current_charge.now_acPkW;
         active_CE_val.now_acQkVAR = this->SE_stat.current_charge.now_acQkVAR;
-        active_CE_val.vehicle_id = this->SE_stat.current_charge.vehicle_id;
-        active_CE_val.vehicle_type = this->SE_stat.current_charge.vehicle_type;
         
         //----------------------------
         
@@ -563,14 +582,19 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
     {
         this->SE_stat.pev_is_connected_to_SE = false;
 
-        if(this->event_handler.charge_event_is_available(now_unix_time))
+        // Remove any charge-events that are ending too soon.
+        const double time_limit_seconds = 60.0;
+        this->event_handler.remove_charge_events_that_are_ending_soon( now_unix_time, time_limit_seconds );
+
+        // If there is another event available, process it.
+        if( this->event_handler.charge_event_is_available(now_unix_time) )
         {
         	charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
-        	supply_equipment_enum SE_type = this->SE_config.supply_equipment_type;
+        	EVSE_type SE_type = this->SE_config.supply_equipment_type;
 
         	this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
 
-        		// ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
+        	// ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
         	if(this->ev_charge_model != NULL)
         	{
                 this->SE_stat.current_charge.charge_event_id = charge_event.charge_event_id;
@@ -594,8 +618,8 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //--------------------------------
                 //  Update Charge Profile
                 //--------------------------------
-                supply_equipment_enum SE_type = this->SE_config.supply_equipment_type;
-                vehicle_enum pev_type = charge_event.vehicle_type;
+                SE_type = this->SE_config.supply_equipment_type;
+                EV_type pev_type = charge_event.vehicle_type;
                 
                 if(this->charge_profile_library != NULL)
                     this->cur_charge_profile = this->charge_profile_library->get_charge_profile(pev_type, SE_type);
