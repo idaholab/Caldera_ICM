@@ -338,6 +338,11 @@ struct charge_event_data
 	{
 		return this->arrival_unix_time < rhs.arrival_unix_time;
 	}
+
+    bool operator<(charge_event_data& rhs) const
+	{
+		return this->arrival_unix_time < rhs.arrival_unix_time;
+	}
 };
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x);
 
@@ -554,7 +559,12 @@ struct pev_charge_fragment
     pev_charge_fragment() {};
     pev_charge_fragment(double soc_, double E1_kWh_, double E2_kWh_, double E3_kWh_, double cumQ3_kVARh_, double time_since_charge_began_hrs_);
     
-    bool operator<(const pev_charge_fragment &rhs)
+    bool operator<(const pev_charge_fragment &rhs) const
+    {
+        return (this->time_since_charge_began_hrs < rhs.time_since_charge_began_hrs);
+    }
+
+    bool operator<(pev_charge_fragment &rhs) const
     {
         return (this->time_since_charge_began_hrs < rhs.time_since_charge_began_hrs);
     }

@@ -32,7 +32,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     
     double arrival_unix_time = charge_status.arrival_unix_time;
     double departure_unix_time = charge_status.departure_unix_time;
-    
+
     pev_charge_profile_result Z = charge_profile->find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
     double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
 
@@ -86,12 +86,18 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     
     double time_ahead_of_midnight_sec = fmod(arrival_unix_time, 24.0*3600.0);
     double midnight_nearest_arrival_unix_time = arrival_unix_time - time_ahead_of_midnight_sec;
-    if(time_ahead_of_midnight_sec > 12.0*3600.0)
-        midnight_nearest_arrival_unix_time += 24.0*3600.0;
+
+    // midnight_nearest_arrival_unix_time moves a day ahead when it crosses 12, doesn't work with intra day TOU period
+    //if(time_ahead_of_midnight_sec > 12.0*3600.0)
+    //       midnight_nearest_arrival_unix_time += 24.0*3600.0;
     
     double beginning_of_TofU_rate_period_unix_time = midnight_nearest_arrival_unix_time + beginning_of_TofU_rate_period__time_from_midnight_sec;
     double end_of_TofU_rate_period_unix_time = midnight_nearest_arrival_unix_time + end_of_TofU_rate_period__time_from_midnight_sec;
     
+    // Fixes TOU rate period when end TOU is smaller than start TOU. i.e intra day TOU. e.g. (8, -6) aka (8, 18)
+    if (end_of_TofU_rate_period_unix_time < beginning_of_TofU_rate_period_unix_time)
+        end_of_TofU_rate_period_unix_time += 24.0 * 3600;
+  
     //-----------------------------------------
     //  Calculate this->charge_start_unix_time
     //-----------------------------------------

@@ -21,7 +21,12 @@ struct line_segment
    	double y_LB() const {return this->a*this->x_LB + this->b;}
     double y(double x) const {return this->a*x + this->b;}
     
-   	bool operator < (const line_segment& rhs) const
+   	bool operator<(const line_segment& rhs) const
+   	{
+   		return this->x_LB < rhs.x_LB;
+   	}
+
+    bool operator<(line_segment& rhs) const
    	{
    		return this->x_LB < rhs.x_LB;
    	}
@@ -53,7 +58,12 @@ struct poly_segment
     double d;
     double e;
     
-    bool operator<(const poly_segment &rhs)
+    bool operator<(const poly_segment &rhs) const
+    {
+        return x_LB < rhs.x_LB;
+    }
+
+    bool operator<(poly_segment &rhs) const
     {
         return x_LB < rhs.x_LB;
     }
@@ -301,6 +311,11 @@ struct dcfc_charge_event
     bool stop_charging_at_target_soc_even_if_not_depart_time;
     
 	bool operator<(const dcfc_charge_event& x) const
+	{
+		return arrival_unix_time < x.arrival_unix_time;
+	}
+
+    bool operator<(dcfc_charge_event& x) const
 	{
 		return arrival_unix_time < x.arrival_unix_time;
 	}

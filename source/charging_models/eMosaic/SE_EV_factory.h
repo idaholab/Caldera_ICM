@@ -50,7 +50,12 @@ private:
 		double puVrms;
 		double P2_val;
 		
-		bool operator<(const point_P2_vs_puVrms& rhs)
+		bool operator<(const point_P2_vs_puVrms& rhs) const
+		{
+			return (this->puVrms < rhs.puVrms);
+		}
+
+		bool operator<(point_P2_vs_puVrms& rhs) const
 		{
 			return (this->puVrms < rhs.puVrms);
 		}
