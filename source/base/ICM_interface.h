@@ -42,15 +42,16 @@ private:
     manage_L2_control_strategy_parameters manage_L2_control;
     
 public:
-    interface_to_SE_groups(const std::string& input_path, const interface_to_SE_groups_inputs& inputs);
+    interface_to_SE_groups( const std::string& input_path,
+                            const interface_to_SE_groups_inputs& inputs );
 
     ~interface_to_SE_groups();
 
     pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
     
     void stop_active_charge_events(std::vector<SE_id_type> SE_ids);
-    void add_charge_events(std::vector<charge_event_data> charge_events);
-    void add_charge_events_by_SE_group(std::vector<SE_group_charge_event_data> SE_group_charge_events);
+    void add_charge_events( const std::vector<charge_event_data>& charge_events );
+    void add_charge_events_by_SE_group( const std::vector<SE_group_charge_event_data>& SE_group_charge_events );
     void set_PQ_setpoints(double now_unix_time, std::vector<SE_setpoint> SE_setpoints);
     std::vector<completed_CE> get_completed_CE();
 

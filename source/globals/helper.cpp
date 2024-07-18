@@ -333,7 +333,9 @@ LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
     this->cur_raw_data_index = 0;
     
     for(int i=0; i<max_window_size; i++)
+    {
         this->raw_data.push_back(initial_raw_data_value);
+    }
     
     LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
