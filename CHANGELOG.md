@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/idaholab/Caldera_ICM/compare/v1.1.0...v1.1.1) (2024-07-18)
+
+
+### Bug Fixes
+
+* cleanup ICM code ([6afd70a](https://github.com/idaholab/Caldera_ICM/commit/6afd70a75c4c1179ceb6cc3e5c0485f3fdaf9f5b))
+
 ## 1.1.0 (2024-07-17)
 
 
