@@ -26,14 +26,17 @@ inline double overlap(double start_A, double end_A, double start_B, double end_B
 }
 
 
-void charge_event_handler::add_charge_event( charge_event_data& CE )
+void charge_event_handler::add_charge_event( const charge_event_data& CE )
 {
+    // Make a copy so we can edit it a little bit if needed before saving it.
+    charge_event_data mutable_CE = CE;
+    
     double max_allowed_overlap_time_sec = this->CE_queuing_inputs.max_allowed_overlap_time_sec;
     queuing_mode_enum queuing_mode = this->CE_queuing_inputs.queuing_mode;
     
     if(queuing_mode == overlapLimited_mostRecentlyQueuedHasPriority)
     {
-        std::set<charge_event_data>::iterator it_lb = this->charge_events.upper_bound(CE);
+        std::set<charge_event_data>::iterator it_lb = this->charge_events.upper_bound(mutable_CE);
         if(it_lb != this->charge_events.begin())
             it_lb--;
 
@@ -42,12 +45,12 @@ void charge_event_handler::add_charge_event( charge_event_data& CE )
 
         for(std::set<charge_event_data>::iterator it = it_lb; it != this->charge_events.end(); it++)
         {
-            overlap_time_sec = overlap(it->arrival_unix_time, it->departure_unix_time, CE.arrival_unix_time, CE.departure_unix_time);
+            overlap_time_sec = overlap(it->arrival_unix_time, it->departure_unix_time, mutable_CE.arrival_unix_time, mutable_CE.departure_unix_time);
             
             if(overlap_time_sec > max_allowed_overlap_time_sec)  
                 its_to_remove.push_back(it);
             
-            else if(it->arrival_unix_time > CE.departure_unix_time)
+            else if(it->arrival_unix_time > mutable_CE.departure_unix_time)
                 break;
         }
 
@@ -62,14 +65,18 @@ void charge_event_handler::add_charge_event( charge_event_data& CE )
     {
         while(true)
         {
-            if(this->charge_events.count(CE) == 0)
+            if(this->charge_events.count(mutable_CE) == 0)
+            {
                 break;
+            }
             else
-                CE.arrival_unix_time += 0.001;
+            {
+                mutable_CE.arrival_unix_time += 0.001;
+            }
         }
     }
 
-    this->charge_events.insert(CE);
+    this->charge_events.insert(mutable_CE);
 }
 
 
@@ -95,9 +102,10 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
     
     for(std::set<charge_event_data>::iterator it : its_to_remove)
 	{
-        this->charge_events.erase(it);
         std::stringstream str_ss;
         str_ss << "Warning : Charge Event removed since charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
+        // Erasing the item after we create the Warning string so that the iterator is still valid.
+        this->charge_events.erase(it);
 		std::cout << str_ss.str() << std::endl;
 	}
 }
@@ -106,7 +114,9 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
 bool charge_event_handler::charge_event_is_available( const double now_unix_time ) const
 {
     if(this->charge_events.size() == 0)
+    {
         return false;
+    }
     
     std::set<charge_event_data>::iterator it = this->charge_events.begin();
     
@@ -115,7 +125,9 @@ bool charge_event_handler::charge_event_is_available( const double now_unix_time
         return true;
     }
     else
+    {
         return false;
+    }
 }
 
 
@@ -536,7 +548,7 @@ std::vector<completed_CE> supply_equipment_load::get_completed_CE()
 }
 
 
-void supply_equipment_load::add_charge_event(charge_event_data& charge_event)
+void supply_equipment_load::add_charge_event( const charge_event_data& charge_event )
 {
     this->event_handler.add_charge_event(charge_event);
 }
@@ -583,7 +595,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         this->SE_stat.pev_is_connected_to_SE = false;
 
         // Remove any charge-events that are ending too soon.
-        const double time_limit_seconds = 60.0;
+        const double time_limit_seconds = 60.0;  //<----- TODO: I think this should be equal to the current Caldera_ICM timestep.
         this->event_handler.remove_charge_events_that_are_ending_soon( now_unix_time, time_limit_seconds );
 
         // If there is another event available, process it.
@@ -622,9 +634,13 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 EV_type pev_type = charge_event.vehicle_type;
                 
                 if(this->charge_profile_library != NULL)
+                {
                     this->cur_charge_profile = this->charge_profile_library->get_charge_profile(pev_type, SE_type);
-                else  
+                }
+                else
+                {
                     this->cur_charge_profile = NULL;  // This is what is used when creating charge_profile_library.
+                }
                 
                 //--------------------------------
                 //  Create ac_to_dc_converter_obj
@@ -632,7 +648,9 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 charge_event_P3kW_limits P3kW_limits;
                 
                 if(this->cur_charge_profile != NULL)
+                {
                     P3kW_limits = this->cur_charge_profile->get_charge_event_P3kW_limits();
+                }
                 else
                 {
                     // This is what is used when creating charge_profile_library.
@@ -642,7 +660,9 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 
                 ac_to_dc_converter_enum converter_type = pf;
                 if(this->control_enums.inverter_model_supports_Qsetpoint)
+                {
                     converter_type = Q_setpoint;
+                }
                 
                 if(this->ac_to_dc_converter_obj != NULL)
                 {
@@ -656,9 +676,13 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //          Set P3, Q3 Targets 
                 //----------------------------------------
                 if(this->control_enums.ES_control_strategy == NA && control_enums.ext_control_strategy == "NA")
+                {
                     set_target_acP3_kW(1.3*this->P2_limit_kW);      // Uncontrolled Charging - (Nominal Power May increase with Vrms)
+                }
                 else
+                {
                     set_target_acP3_kW(0);
+                }
                 
                 set_target_acQ3_kVAR(0);
             }
