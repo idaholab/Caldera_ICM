@@ -168,7 +168,7 @@ supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby
 	
     this->SE_stat.SE_config = SE_config_;
     this->SE_stat.now_unix_time = -1;
-    this->SE_stat.SE_charging_status_val = no_ev_plugged_in;
+    this->SE_stat.SE_charging_status_val = SE_charging_status::no_ev_plugged_in;
     this->SE_stat.pev_is_connected_to_SE = false;
     
     this->ac_to_dc_converter_obj = NULL;
@@ -658,10 +658,10 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                     P3kW_limits.max_P3kW = 1;
                 }
 
-                ac_to_dc_converter_enum converter_type = pf;
+                ac_to_dc_converter_enum converter_type = ac_to_dc_converter_enum::pf;
                 if(this->control_enums.inverter_model_supports_Qsetpoint)
                 {
-                    converter_type = Q_setpoint;
+                    converter_type = ac_to_dc_converter_enum::Q_setpoint;
                 }
                 
                 if(this->ac_to_dc_converter_obj != NULL)
@@ -733,7 +733,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 //    std::cout << "Charge Completed!  now_time_hrs: " << now_unix_time/3600.0 << "  charge_event_id: " << this->SE_stat.current_charge.charge_event_id << "  soc: " << bat_state.soc_t1 << "  SE_type: " << this->SE_config.supply_equipment_type << "  EV_type: " << this->SE_stat.current_charge.vehicle_type << std::endl;
 //################
 
-			SE_charge_status = ev_charge_complete;
+			SE_charge_status = SE_charging_status::ev_charge_complete;
 			
             delete this->ev_charge_model;
             this->ev_charge_model = NULL;
@@ -747,14 +747,14 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         else
         {
         	if(std::abs(bat_state.P1_kW) < 0.0001)
-        		SE_charge_status = ev_plugged_in_not_charging;
+        		SE_charge_status = SE_charging_status::ev_plugged_in_not_charging;
         	else
-        		SE_charge_status = ev_charging;
+        		SE_charge_status = SE_charging_status::ev_charging;
         }
 	}
 	else
 	{
-		SE_charge_status = no_ev_plugged_in;
+		SE_charge_status = SE_charging_status::no_ev_plugged_in;
         this->SE_stat.pev_is_connected_to_SE = false;
 	}
     
@@ -780,7 +780,7 @@ void supply_equipment_load::stop_active_CE()
 {
     if(this->ev_charge_model != NULL)
 	{
-        this->SE_stat.SE_charging_status_val = ev_charge_ended_early;
+        this->SE_stat.SE_charging_status_val = SE_charging_status::ev_charge_ended_early;
         
         delete this->ev_charge_model;
         this->ev_charge_model = NULL;

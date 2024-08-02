@@ -108,10 +108,10 @@ void factory_charge_profile_library::create_charge_fragments_vector(int charge_e
             SE_obj.set_target_acQ3_kVAR(0);
         }
         
-        if((now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == ev_charge_complete || status_obj.SE_charging_status_val == no_ev_plugged_in))
+        if((now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == SE_charging_status::ev_charge_complete || status_obj.SE_charging_status_val == SE_charging_status::no_ev_plugged_in))
             break;
         
-        if(status_obj.SE_charging_status_val == ev_charging || status_obj.SE_charging_status_val == ev_plugged_in_not_charging)
+        if(status_obj.SE_charging_status_val == SE_charging_status::ev_charging || status_obj.SE_charging_status_val == SE_charging_status::ev_plugged_in_not_charging)
         {
             if(ac_power.P3_kW > max_P3kW)
                 max_P3kW = ac_power.P3_kW;
@@ -460,10 +460,10 @@ void factory_charge_profile_library_v2::create_charge_profile(double time_step_s
             SE_obj.set_target_acQ3_kVAR(0);
         }
         
-        if((now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == ev_charge_complete || status_obj.SE_charging_status_val == no_ev_plugged_in))
+        if((now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == SE_charging_status::ev_charge_complete || status_obj.SE_charging_status_val == SE_charging_status::no_ev_plugged_in))
             break;
         
-        if(status_obj.SE_charging_status_val == ev_charging || status_obj.SE_charging_status_val == ev_plugged_in_not_charging)
+        if(status_obj.SE_charging_status_val == SE_charging_status::ev_charging || status_obj.SE_charging_status_val == SE_charging_status::ev_plugged_in_not_charging)
         {
             charge_profile.push_back(ac_power);
             soc.push_back(soc_val);
