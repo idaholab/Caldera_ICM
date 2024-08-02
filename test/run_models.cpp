@@ -10,7 +10,7 @@
 void create_infrastruture_from_EVSE_inputs(const std::vector<std::string>& EVs, const std::vector<std::string>& EVSEs, std::vector<SE_configuration>& infrastructure_topology)
 {
     int SE_group_id = 1;
-    SE_id_type SE_id = 1;
+    SupplyEquipmentId SE_id = 1;
     EVSE_type evse_type = "";
     double lattitude = 0.0;
     double longitude = 0.0;
@@ -113,7 +113,7 @@ void create_charge_events(const std::vector<std::string>& EVs, const std::vector
      
     int charge_event_id = 1;    // is updated down below
     int SE_group_id = 1;
-    SE_id_type SE_id = 1;   // is updated down below
+    SupplyEquipmentId SE_id = 1;   // is updated down below
     vehicle_id_type vehicle_id = 1; // is updated down below
     EV_type vehicle_type = "";
     double arrival_unix_time = 1.0 * 3600;

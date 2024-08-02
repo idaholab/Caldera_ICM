@@ -8,9 +8,10 @@
 #include <vector>
 #include <string>
 
-
+// The ids typedefs
+using StationId = int;
 using vehicle_id_type = int;
-using SE_id_type = int;
+using SupplyEquipmentId = int;
 using grid_node_id_type = std::string;
 
 using process_id = std::string;
@@ -311,7 +312,7 @@ bool is_L2_VS_control_strategy(L2_control_strategies_enum control_strategy_enum)
 
 struct ES500_aggregator_pev_charge_needs
 {
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
 	double departure_unix_time;
     double e3_charge_remain_kWh;
     double e3_step_max_kWh;
@@ -348,12 +349,12 @@ struct ES500_aggregator_charging_needs
 struct ES500_aggregator_e_step_setpoints
 {
 	double next_aggregator_timestep_start_time;
-	std::vector<SE_id_type> SE_id;
+	std::vector<SupplyEquipmentId> SE_id;
 	std::vector<double> e3_step_kWh;
 	std::vector<double> charge_progression;
     
     ES500_aggregator_e_step_setpoints() : next_aggregator_timestep_start_time(0.0) {}
-    ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SE_id_type> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_);
+    ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SupplyEquipmentId> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_);
 
     bool is_empty();
 };
@@ -464,7 +465,7 @@ struct charge_event_data
 {
 	int charge_event_id;
     int SE_group_id;
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
    	vehicle_id_type vehicle_id;
     EV_type vehicle_type;
     double arrival_unix_time;    // in seconds
@@ -488,7 +489,7 @@ struct charge_event_data
     
     charge_event_data( int charge_event_id_,
                        int SE_group_id_,
-                       SE_id_type SE_id_,
+                       SupplyEquipmentId SE_id_,
                        vehicle_id_type vehicle_id_,
                        EV_type vehicle_type,
                        double arrival_unix_time_,
@@ -551,7 +552,7 @@ struct charge_event_queuing_inputs
 struct SE_configuration
 {	
     int SE_group_id;
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
 	EVSE_type supply_equipment_type;
     double lattitude;  // <-- TDDO: misspelled word. Should be "latitude"
     double longitude;
@@ -568,7 +569,7 @@ struct SE_configuration
             location_type("") {};
     
     SE_configuration( int SE_group_id_,
-                      SE_id_type SE_id_,
+                      SupplyEquipmentId SE_id_,
                       EVSE_type supply_equipment_type_,
                       double lat_,
                       double long_,
@@ -614,7 +615,7 @@ struct FICE_inputs // Future Interval Charge Energy
 
 struct CE_FICE
 {   
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     int charge_event_id;
     double charge_energy_ackWh;
     double interval_duration_hrs;
@@ -634,7 +635,7 @@ struct CE_FICE_in_SE_group
 
 struct active_CE
 {
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     EVSE_type supply_equipment_type;
     int charge_event_id;
     vehicle_id_type vehicle_id;
@@ -674,7 +675,7 @@ struct active_CE
 
 struct SE_setpoint
 {
-    SE_id_type SE_id; 
+    SupplyEquipmentId SE_id; 
     double PkW;
     double QkVAR = 0;
     
@@ -684,7 +685,7 @@ struct SE_setpoint
 
 struct completed_CE
 {
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     int charge_event_id;    
     double final_soc;
     

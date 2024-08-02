@@ -22,7 +22,7 @@ void supply_equipment::set_pointers_in_SE_Load( factory_EV_charge_model* PEV_cha
 }
    
 
-bool supply_equipment::is_SE_with_id( const SE_id_type SE_id )
+bool supply_equipment::is_SE_with_id( const SupplyEquipmentId SE_id )
 {
     return (this->SE_config.SE_id == SE_id);
 }

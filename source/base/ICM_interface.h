@@ -2,7 +2,7 @@
 #ifndef inl_ICM_interface_H
 #define inl_ICM_interface_H
 
-#include "datatypes_global.h"                       // grid_node_id_type, SE_id_type, station_configuration, station_charge_event_data, station_status
+#include "datatypes_global.h"                       // grid_node_id_type, SupplyEquipmentId, station_configuration, station_charge_event_data, station_status
 #include "supply_equipment_group.h"                 // supply_equipment_group
 #include "supply_equipment.h"                       // supply_equipment
 #include "supply_equipment_control.h"               // manage_L2_control_strategy_parameters
@@ -30,7 +30,7 @@ private:
 
     std::vector<supply_equipment_group> SE_group_objs;
     std::map<int, supply_equipment_group*> SE_group_Id_to_ptr;
-    std::map<SE_id_type, supply_equipment*> SEid_to_SE_ptr;
+    std::map<SupplyEquipmentId, supply_equipment*> SEid_to_SE_ptr;
     std::vector<supply_equipment*> SE_ptr_vector;
     std::map<grid_node_id_type, std::vector<supply_equipment*> > gridNodeId_to_SE_ptrs;
     
@@ -49,7 +49,7 @@ public:
 
     pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
     
-    void stop_active_charge_events(std::vector<SE_id_type> SE_ids);
+    void stop_active_charge_events(std::vector<SupplyEquipmentId> SE_ids);
     void add_charge_events( const std::vector<charge_event_data>& charge_events );
     void add_charge_events_by_SE_group( const std::vector<SE_group_charge_event_data>& SE_group_charge_events );
     void set_PQ_setpoints(double now_unix_time, std::vector<SE_setpoint> SE_setpoints);
@@ -62,14 +62,14 @@ public:
     std::vector<active_CE> get_all_active_CEs();
     std::map<std::string, std::vector<active_CE> > get_active_CEs_by_extCS(std::vector<std::string> external_control_strategies);
     std::map<int, std::vector<active_CE> > get_active_CEs_by_SE_groups(std::vector<int> SE_group_ids);
-    std::vector<active_CE> get_active_CEs_by_SEids(std::vector<SE_id_type> SEids);
+    std::vector<active_CE> get_active_CEs_by_SEids(std::vector<SupplyEquipmentId> SEids);
 
-    std::vector<double> get_SE_charge_profile_forecast_akW(SE_id_type SE_id, double setpoint_P3kW, double time_step_mins);
+    std::vector<double> get_SE_charge_profile_forecast_akW(SupplyEquipmentId SE_id, double setpoint_P3kW, double time_step_mins);
     std::vector<double> get_SE_group_charge_profile_forecast_akW(int SE_group, double setpoint_P3kW, double time_step_mins);
     
     std::map<grid_node_id_type, std::pair<double, double> > get_charging_power(double prev_unix_time, double now_unix_time, std::map<grid_node_id_type, double> pu_Vrms);
     // "pu_Vrms" means "per unit voltage root mean squared"
-    SE_power get_SE_power(SE_id_type SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms);
+    SE_power get_SE_power(SupplyEquipmentId SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms);
     
     //---------------------------------------------
     
