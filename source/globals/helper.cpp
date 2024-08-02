@@ -248,18 +248,18 @@ double poly_function_of_x::get_val(double x)
     
     //-------------------------------------------    
     
-    if(degree == first)
+    if(degree == poly_degree::first)
         return a*x + b;
-    else if(degree == second)
+    else if(degree == poly_degree::second)
         return a*x*x + b*x + c;
     else
     {
         double x_2 = x*x;
         double x_3 = x*x_2;
         
-        if(degree == third)
+        if(degree == poly_degree::third)
             return a*x_3 + b*x_2 + c*x + d;
-        else if(degree == fourth)
+        else if(degree == poly_degree::fourth)
         {
             double x_4 = x*x_3;
             return a*x_4 + b*x_3 + c*x_2 + d*x + e;
