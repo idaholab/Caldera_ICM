@@ -2,7 +2,7 @@
 #ifndef inl_Aux_interface_H
 #define inl_Aux_interface_H
 
-#include "datatypes_global.h"                       // SE_id_type,  station_charge_event_data, station_status
+#include "datatypes_global.h"                       // SupplyEquipmentId,  station_charge_event_data, station_status
 #include "charge_profile_library.h"                 // pev_charge_profile_library
 #include "helper.h"                                 // get_base_load_forecast
 #include "load_EV_EVSE_inventory.h"

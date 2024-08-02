@@ -363,7 +363,7 @@ bool ES500_aggregator_e_step_setpoints::is_empty()
 }
 
 
-ES500_aggregator_e_step_setpoints::ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SE_id_type> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_)
+ES500_aggregator_e_step_setpoints::ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SupplyEquipmentId> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_)
 {
     this->next_aggregator_timestep_start_time = next_aggregator_timestep_start_time_;
     this->SE_id = SE_id_;
@@ -447,7 +447,7 @@ stop_charging_criteria::stop_charging_criteria(stop_charging_decision_metric dec
 }
 
 
-charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SE_id_type SE_id_, vehicle_id_type vehicle_id_, EV_type vehicle_type,
+charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SupplyEquipmentId SE_id_, vehicle_id_type vehicle_id_, EV_type vehicle_type,
                                      double arrival_unix_time_, double departure_unix_time_, double arrival_SOC_, double departure_SOC_, 
                                      stop_charging_criteria stop_charge_, control_strategy_enums control_enums_)
 { 
@@ -476,7 +476,7 @@ SE_group_charge_event_data::SE_group_charge_event_data(int SE_group_id_, std::ve
 //                       SE_group Configuration
 //==================================================================
 
-SE_configuration::SE_configuration(int SE_group_id_, SE_id_type SE_id_, EVSE_type supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_)
+SE_configuration::SE_configuration(int SE_group_id_, SupplyEquipmentId SE_id_, EVSE_type supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_)
 {
     this->SE_group_id = SE_group_id_;
     this->SE_id = SE_id_;
