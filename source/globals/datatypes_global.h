@@ -426,7 +426,7 @@ struct ES500_stop_charge_cycling_decision_parameters
 bool ext_strategy_str_is_valid(std::string ext_str);
 
 
-enum stop_charging_decision_metric
+enum class stop_charging_decision_metric
 {
 	stop_charging_using_target_soc = 0,
 	stop_charging_using_depart_time = 1,
@@ -435,7 +435,7 @@ enum stop_charging_decision_metric
 std::ostream& operator<<(std::ostream& out, const stop_charging_decision_metric& x);
 
 
-enum stop_charging_mode
+enum class stop_charging_mode
 {
 	target_charging = 0,
 	block_charging = 1
@@ -528,7 +528,7 @@ struct SE_group_charge_event_data
 //=====================================
 
 
-enum queuing_mode_enum
+enum class queuing_mode_enum
 {
     overlapAllowed_earlierArrivalTimeHasPriority = 0,
     overlapLimited_mostRecentlyQueuedHasPriority = 1
