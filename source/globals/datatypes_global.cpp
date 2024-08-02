@@ -403,17 +403,17 @@ ES500_charge_cycling_control_boundary_point::ES500_charge_cycling_control_bounda
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_decision_metric& x)
 {
-    if(x == stop_charging_using_target_soc) 				    out << "stop_charging_using_target_soc";
-	else if(x == stop_charging_using_depart_time)  				out << "stop_charging_using_depart_time";
-	else if(x == stop_charging_using_whatever_happens_first)  	out << "stop_charging_using_whatever_happens_first";
+    if(x == stop_charging_decision_metric::stop_charging_using_target_soc) 				        out << "stop_charging_using_target_soc";
+	else if(x == stop_charging_decision_metric::stop_charging_using_depart_time)  				out << "stop_charging_using_depart_time";
+	else if(x == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)  	out << "stop_charging_using_whatever_happens_first";
 		
 	return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_mode& x)
 {
-	     if(x == target_charging) 	out << "target_charging";
-	else if(x == block_charging) 	out << "block_charging";
+	     if(x == stop_charging_mode::target_charging) 	out << "target_charging";
+	else if(x == stop_charging_mode::block_charging) 	out << "block_charging";
 	
 	return out;
 }
@@ -447,9 +447,9 @@ std::string charge_event_data::get_file_header()
     
 stop_charging_criteria::stop_charging_criteria()
 {
-    this->decision_metric = stop_charging_using_whatever_happens_first;
-    this->soc_mode = target_charging;
-    this->depart_time_mode = block_charging;
+    this->decision_metric = stop_charging_decision_metric::stop_charging_using_whatever_happens_first;
+    this->soc_mode = stop_charging_mode::target_charging;
+    this->depart_time_mode = stop_charging_mode::block_charging;
     this->soc_block_charging_max_undershoot_percent = 50;
     this->depart_time_block_charging_max_undershoot_percent = 40;
 }

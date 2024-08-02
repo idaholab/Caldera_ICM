@@ -34,7 +34,7 @@ void charge_event_handler::add_charge_event( const charge_event_data& CE )
     double max_allowed_overlap_time_sec = this->CE_queuing_inputs.max_allowed_overlap_time_sec;
     queuing_mode_enum queuing_mode = this->CE_queuing_inputs.queuing_mode;
     
-    if(queuing_mode == overlapLimited_mostRecentlyQueuedHasPriority)
+    if(queuing_mode == queuing_mode_enum::overlapLimited_mostRecentlyQueuedHasPriority)
     {
         std::set<charge_event_data>::iterator it_lb = this->charge_events.upper_bound(mutable_CE);
         if(it_lb != this->charge_events.begin())
@@ -61,7 +61,7 @@ void charge_event_handler::add_charge_event( const charge_event_data& CE )
             std::cout << str << std::endl;
         }
     }
-    else if(queuing_mode == overlapAllowed_earlierArrivalTimeHasPriority)
+    else if(queuing_mode == queuing_mode_enum::overlapAllowed_earlierArrivalTimeHasPriority)
     {
         while(true)
         {
@@ -339,7 +339,7 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
     pev_charge_profile_result target_soc_val, depart_time_val;
     bool return_val_is_zero = false;
     
-    if(stop_charge_val.decision_metric == stop_charging_using_target_soc || stop_charge_val.decision_metric == stop_charging_using_whatever_happens_first)
+    if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_target_soc || stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
     {
         if(departure_SOC < endSOC)
             endSOC = departure_SOC;
@@ -350,7 +350,7 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
             target_soc_val = this->cur_charge_profile->find_result_given_startSOC_and_endSOC(setpoint_P3kW, nowSOC, endSOC);
     }
     
-    if(stop_charge_val.decision_metric == stop_charging_using_depart_time || stop_charge_val.decision_metric == stop_charging_using_whatever_happens_first)
+    if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_depart_time || stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
     {
         if(departure_unix_time < end_unix_time)
             end_unix_time = departure_unix_time;
@@ -376,11 +376,11 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
         return_val.total_charge_time_hrs = 0.00001;  // prevent divide by zero error in calling function (when calculate PkW)
         return_val.incremental_chage_time_hrs = -1;        
     }    
-    else if(stop_charge_val.decision_metric == stop_charging_using_target_soc)
+    else if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_target_soc)
         return_val = target_soc_val;
-    else if(stop_charge_val.decision_metric == stop_charging_using_depart_time)
+    else if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_depart_time)
         return_val = depart_time_val;
-    else if(stop_charge_val.decision_metric == stop_charging_using_whatever_happens_first)
+    else if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
     {
         if(depart_time_val.total_charge_time_hrs < target_soc_val.total_charge_time_hrs)
             return_val = depart_time_val;
