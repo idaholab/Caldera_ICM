@@ -12,7 +12,7 @@
 
 //-----------------------------------------------
 
-enum energy_target_reached_status
+enum class energy_target_reached_status
 {
     can_not_reach_energy_target_this_timestep = 0,
     can_reach_energy_target_this_timestep = 1,

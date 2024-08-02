@@ -201,13 +201,13 @@ std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val)
 		if (!std::isspace(str_val[i]))
 			tmp_str += str_val[i];
 
-	     if	(tmp_str == "Hanning") 	    enum_val = Hanning;
-	else if	(tmp_str == "Blackman") 	enum_val = Blackman;
-    else if	(tmp_str == "Rectangular") 	enum_val = Rectangular;
+	     if	(tmp_str == "Hanning") 	    enum_val = LPF_window_enum::Hanning;
+	else if	(tmp_str == "Blackman") 	enum_val = LPF_window_enum::Blackman;
+    else if	(tmp_str == "Rectangular") 	enum_val = LPF_window_enum::Rectangular;
 	else
 	{
         conversion_successfull = false;
-        enum_val = Rectangular;
+        enum_val = LPF_window_enum::Rectangular;
     }
     
     std::pair<bool, LPF_window_enum> return_val = {conversion_successfull, enum_val};
@@ -250,7 +250,12 @@ bool L2_control_strategy_supports_Vrms_using_QkVAR(L2_control_strategies_enum  c
 {
     bool return_val = false;
     
-    std::vector<L2_control_strategies_enum> QkVAR_strategies = {VS200_A, VS200_B, VS200_C, VS300};
+    std::vector<L2_control_strategies_enum> QkVAR_strategies = {
+        L2_control_strategies_enum::VS200_A,
+        L2_control_strategies_enum::VS200_B,
+        L2_control_strategies_enum::VS200_C,
+        L2_control_strategies_enum::VS300
+    };
     
     for(L2_control_strategies_enum x : QkVAR_strategies)
     {
@@ -277,23 +282,23 @@ std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const
 		if (!std::isspace(str_val[i]))
 			tmp_str += str_val[i];
 
-	if 		(tmp_str == "NA") 	    enum_val = NA;
-	else if	(tmp_str == "ES100-A") 	enum_val = ES100_A;
-    else if	(tmp_str == "ES100-B") 	enum_val = ES100_B;
-    else if	(tmp_str == "ES110") 	enum_val = ES110;
-	else if (tmp_str == "ES200") 	enum_val = ES200;
-	else if (tmp_str == "ES300") 	enum_val = ES300;
-	else if (tmp_str == "ES500") 	enum_val = ES500;
+	if 		(tmp_str == "NA") 	    enum_val = L2_control_strategies_enum::NA;
+	else if	(tmp_str == "ES100-A") 	enum_val = L2_control_strategies_enum::ES100_A;
+    else if	(tmp_str == "ES100-B") 	enum_val = L2_control_strategies_enum::ES100_B;
+    else if	(tmp_str == "ES110") 	enum_val = L2_control_strategies_enum::ES110;
+	else if (tmp_str == "ES200") 	enum_val = L2_control_strategies_enum::ES200;
+	else if (tmp_str == "ES300") 	enum_val = L2_control_strategies_enum::ES300;
+	else if (tmp_str == "ES500") 	enum_val = L2_control_strategies_enum::ES500;
     
-	else if (tmp_str == "VS100") 	enum_val = VS100;
-	else if (tmp_str == "VS200-A") 	enum_val = VS200_A;
-    else if (tmp_str == "VS200-B") 	enum_val = VS200_B;
-    else if (tmp_str == "VS200-C") 	enum_val = VS200_C;
-    else if (tmp_str == "VS300") 	enum_val = VS300;
+	else if (tmp_str == "VS100") 	enum_val = L2_control_strategies_enum::VS100;
+	else if (tmp_str == "VS200-A") 	enum_val = L2_control_strategies_enum::VS200_A;
+    else if (tmp_str == "VS200-B") 	enum_val = L2_control_strategies_enum::VS200_B;
+    else if (tmp_str == "VS200-C") 	enum_val = L2_control_strategies_enum::VS200_C;
+    else if (tmp_str == "VS300") 	enum_val = L2_control_strategies_enum::VS300;
 	else
 	{
         conversion_successfull = false;
-        enum_val = NA;
+        enum_val = L2_control_strategies_enum::NA;
     }
     
     std::pair<bool, L2_control_strategies_enum> return_val = {conversion_successfull, enum_val};
@@ -304,7 +309,14 @@ std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const
 
 bool is_L2_ES_control_strategy(L2_control_strategies_enum control_strategy_enum)
 {
-    std::vector<L2_control_strategies_enum> ES_strategies = {ES100_A, ES100_B, ES110, ES200, ES300, ES500};
+    std::vector<L2_control_strategies_enum> ES_strategies = {
+        L2_control_strategies_enum::ES100_A,
+        L2_control_strategies_enum::ES100_B,
+        L2_control_strategies_enum::ES110,
+        L2_control_strategies_enum::ES200,
+        L2_control_strategies_enum::ES300,
+        L2_control_strategies_enum::ES500
+    };
     
     bool return_val = false;
     for(L2_control_strategies_enum x : ES_strategies)
@@ -322,7 +334,13 @@ bool is_L2_ES_control_strategy(L2_control_strategies_enum control_strategy_enum)
 
 bool is_L2_VS_control_strategy(L2_control_strategies_enum control_strategy_enum)
 {
-    std::vector<L2_control_strategies_enum> VS_strategies = {VS100, VS200_A, VS200_B, VS200_C, VS300};
+    std::vector<L2_control_strategies_enum> VS_strategies = {
+        L2_control_strategies_enum::VS100,
+        L2_control_strategies_enum::VS200_A,
+        L2_control_strategies_enum::VS200_B,
+        L2_control_strategies_enum::VS200_C,
+        L2_control_strategies_enum::VS300
+    };
     
     bool return_val = false;
     for(L2_control_strategies_enum x : VS_strategies)
@@ -341,8 +359,8 @@ bool is_L2_VS_control_strategy(L2_control_strategies_enum control_strategy_enum)
 control_strategy_enums::control_strategy_enums()
 {
     this->inverter_model_supports_Qsetpoint = false;
-    this->ES_control_strategy = NA;
-    this->VS_control_strategy = NA;
+    this->ES_control_strategy = L2_control_strategies_enum::NA;
+    this->VS_control_strategy = L2_control_strategies_enum::NA;
     this->ext_control_strategy = "NA";
 }
 

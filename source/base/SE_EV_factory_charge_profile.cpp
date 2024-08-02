@@ -68,8 +68,8 @@ void factory_charge_profile_library::create_charge_fragments_vector(int charge_e
     //------------------------
     control_strategy_enums control_enums;
     control_enums.inverter_model_supports_Qsetpoint = false;
-    control_enums.ES_control_strategy = NA;
-    control_enums.VS_control_strategy = NA;
+    control_enums.ES_control_strategy = L2_control_strategies_enum::NA;
+    control_enums.VS_control_strategy = L2_control_strategies_enum::NA;
     control_enums.ext_control_strategy = "NA";
 
     stop_charging_criteria stop_charge;
@@ -146,9 +146,9 @@ double factory_charge_profile_library::get_min_P3kW(double max_P3kW, pev_SE_pair
 {
     double min_P3kW;
 
-    if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L1)
+    if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
         min_P3kW = 0.8*max_P3kW;    
-    else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L2)
+    else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
         min_P3kW = 0.5*max_P3kW;
     else
         min_P3kW = 1;
@@ -292,9 +292,9 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
         
         for(const pev_SE_pair& pev_SE : all_pev_SE_pairs)
         {
-            if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L1)
+            if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
                 get_max_time_step_sec = 60;
-            else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L2)
+            else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
                 get_max_time_step_sec = 30;
             else
                 get_max_time_step_sec = 1;
@@ -424,8 +424,8 @@ void factory_charge_profile_library_v2::create_charge_profile(double time_step_s
     //------------------------
     control_strategy_enums control_enums;
     control_enums.inverter_model_supports_Qsetpoint = false;
-    control_enums.ES_control_strategy = NA;
-    control_enums.VS_control_strategy = NA;
+    control_enums.ES_control_strategy = L2_control_strategies_enum::NA;
+    control_enums.VS_control_strategy = L2_control_strategies_enum::NA;
     control_enums.ext_control_strategy = "NA";
 
     stop_charging_criteria stop_charge;
@@ -489,9 +489,9 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
     
     for(pev_SE_pair pev_SE : all_pev_SE_pairs)
     {
-        if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L1)
+        if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
             time_step_sec = L1_timestep_sec;
-        else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == L2)
+        else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
             time_step_sec = L2_timestep_sec;
         else
             time_step_sec = HPC_timestep_sec;

@@ -24,8 +24,8 @@ std::ostream& operator<<(std::ostream& out, battery_state& x)
 //###########################################
 
 battery::battery( const vehicle_charge_model_inputs& inputs )
-	: get_E1_limits_charging{ calculate_E1_energy_limit{ charging, inputs } },
-	get_E1_limits_discharging{ calculate_E1_energy_limit{ discharging, inputs } },
+	: get_E1_limits_charging{ calculate_E1_energy_limit{ battery_charge_mode::charging, inputs } },
+	get_E1_limits_discharging{ calculate_E1_energy_limit{ battery_charge_mode::discharging, inputs } },
 	get_next_P2{ inputs.CT_factory.get_charging_transitions(inputs.EV, inputs.EVSE) },
 	battery_size_kWh{ inputs.battery_size_kWh },
 	soc{ inputs.CE.arrival_SOC },
@@ -35,8 +35,8 @@ battery::battery( const vehicle_charge_model_inputs& inputs )
 	will_never_discharge{ true },
 	soc_of_full_battery{ 100 },
 	soc_of_empty_battery{ 0.0 },
-	bat_eff_vs_P2_charging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).curve },
-	bat_eff_vs_P2_discharging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).curve },
+	bat_eff_vs_P2_charging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, battery_charge_mode::charging).curve },
+	bat_eff_vs_P2_discharging{ inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, battery_charge_mode::discharging).curve },
 	max_E1_limit{ 0.0 },
 	min_E1_limit{ 0.0 },
 	print_debug_info{ false }
@@ -45,8 +45,8 @@ battery::battery( const vehicle_charge_model_inputs& inputs )
 
 double battery::get_zero_slope_threshold_bat_eff_vs_P2( const vehicle_charge_model_inputs& inputs )
 {
-	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, charging).zero_slope_threshold;
-	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, discharging).zero_slope_threshold;
+	double charging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, battery_charge_mode::charging).zero_slope_threshold;
+	double discharging_zst = inputs.PE_factory.get_P2_vs_battery_eff(inputs.EV, battery_charge_mode::discharging).zero_slope_threshold;
 
 	return (charging_zst < discharging_zst) ? charging_zst : discharging_zst;
 }
@@ -100,12 +100,12 @@ void battery::get_next( const double prev_unix_time,
 	if(this->soc < this->soc_of_full_battery)
 	{
 		this->get_E1_limits_charging.get_E1_limit(time_step_sec, this->soc, target_soc, pu_Vrms, E1_limit_UB);
-		E1_kWh_UB = (E1_limit_UB.reached_target_status == can_reach_energy_target_this_timestep && stop_charging_at_target_soc) ? E1_limit_UB.E1_energy_to_target_soc_kWh : E1_limit_UB.max_E1_energy_kWh;
+		E1_kWh_UB = (E1_limit_UB.reached_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep && stop_charging_at_target_soc) ? E1_limit_UB.E1_energy_to_target_soc_kWh : E1_limit_UB.max_E1_energy_kWh;
 	}
 	else
 	{
 		E1_kWh_UB = 0;					// {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
-		E1_limit_UB = {this->soc_of_full_battery, 0, 0, unknown, 0, -1};
+		E1_limit_UB = {this->soc_of_full_battery, 0, 0, energy_target_reached_status::unknown, 0, -1};
 	}
 	
 	//------------------
@@ -116,19 +116,19 @@ void battery::get_next( const double prev_unix_time,
 	{
 		if(this->will_never_discharge)	// {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
         {
-			E1_limit_LB = {100, 0, 0, can_not_reach_energy_target_this_timestep, 0, -1};
+			E1_limit_LB = {100, 0, 0, energy_target_reached_status::can_not_reach_energy_target_this_timestep, 0, -1};
         }
 		else
         {
 			this->get_E1_limits_discharging.get_E1_limit(time_step_sec, this->soc, target_soc, pu_Vrms, E1_limit_LB);
         }
 
-		E1_kWh_LB = (E1_limit_LB.reached_target_status == can_reach_energy_target_this_timestep && stop_charging_at_target_soc) ? E1_limit_LB.E1_energy_to_target_soc_kWh : E1_limit_LB.max_E1_energy_kWh;
+		E1_kWh_LB = (E1_limit_LB.reached_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep && stop_charging_at_target_soc) ? E1_limit_LB.E1_energy_to_target_soc_kWh : E1_limit_LB.max_E1_energy_kWh;
 	}
 	else
 	{
 		E1_kWh_LB = 0;					// {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
-		E1_limit_LB = {this->soc_of_empty_battery, 0, 0, unknown, 0, -1};
+		E1_limit_LB = {this->soc_of_empty_battery, 0, 0, energy_target_reached_status::unknown, 0, -1};
 	}
 	
 	//-----------------------
@@ -268,7 +268,7 @@ void battery::get_next( const double prev_unix_time,
 	return_val.P1_kW = P1_kW;
 	return_val.P2_kW = P2_kW;
 	return_val.time_step_duration_hrs = time_step_hrs;
-	return_val.reached_target_status = (this->target_P2_kW == 0) ? target_P2_is_zero : (this->target_P2_kW >= 0) ? E1_limit_UB.reached_target_status : E1_limit_LB.reached_target_status;
+	return_val.reached_target_status = (this->target_P2_kW == 0) ? energy_target_reached_status::target_P2_is_zero : (this->target_P2_kW >= 0) ? E1_limit_UB.reached_target_status : E1_limit_LB.reached_target_status;
 	return_val.E1_energy_to_target_soc_kWh = (this->target_P2_kW == 0) ? 0 :(this->target_P2_kW >= 0) ? E1_limit_UB.E1_energy_to_target_soc_kWh : E1_limit_LB.E1_energy_to_target_soc_kWh;
 	return_val.min_time_to_target_soc_hrs = (this->target_P2_kW == 0) ? -1 :(this->target_P2_kW >= 0) ? E1_limit_UB.min_time_to_target_soc_hrs : E1_limit_LB.min_time_to_target_soc_hrs;
 }

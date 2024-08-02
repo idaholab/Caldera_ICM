@@ -42,7 +42,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     double beginning_of_TofU_rate_period__time_from_midnight_sec, end_of_TofU_rate_period__time_from_midnight_sec;
     double M1_delay_period_sec, w;
     
-    if(this->L2_CS_enum == ES100_A)
+    if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
     {
         const ES100_L2_parameters& X = this->params->get_ES100_A();
         
@@ -58,7 +58,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
             return;
         }
     }
-    else if(this->L2_CS_enum == ES100_B)
+    else if(this->L2_CS_enum == L2_control_strategies_enum::ES100_B)
     {
         const ES100_L2_parameters& X = this->params->get_ES100_B();
         
@@ -526,7 +526,7 @@ double VS200_control_strategy::get_Q3kVAR_setpoint(double prev_unix_time, double
 {
     double max_delta_kVAR_per_min, percQ, puV;
     
-    if(this->L2_CS_enum == VS200_A)
+    if(this->L2_CS_enum == L2_control_strategies_enum::VS200_A)
     {
         const VS200_L2_parameters& X = this->params->get_VS200_A();
         puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -534,7 +534,7 @@ double VS200_control_strategy::get_Q3kVAR_setpoint(double prev_unix_time, double
         max_delta_kVAR_per_min = X.max_delta_kVAR_per_min;
         percQ = this->params->VS200A_get_percQ_from_volt_var_curve(puV);
     }
-    else if(this->L2_CS_enum == VS200_B)
+    else if(this->L2_CS_enum == L2_control_strategies_enum::VS200_B)
     {
         const VS200_L2_parameters& X = this->params->get_VS200_B();
         puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -542,7 +542,7 @@ double VS200_control_strategy::get_Q3kVAR_setpoint(double prev_unix_time, double
         max_delta_kVAR_per_min = X.max_delta_kVAR_per_min;
         percQ = this->params->VS200B_get_percQ_from_volt_var_curve(puV);
     }
-    else if(this->L2_CS_enum == VS200_C)
+    else if(this->L2_CS_enum == L2_control_strategies_enum::VS200_C)
     {
         const VS200_L2_parameters& X = this->params->get_VS200_C();
         puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -669,17 +669,17 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
     this->baseLD_forecaster = baseLD_forecaster_;
     this->manage_L2_control = manage_L2_control_;
     
-    ES100_control_strategy ES100A_tmp(ES100_A, this->manage_L2_control);  this->ES100A_obj = ES100A_tmp;
-    ES100_control_strategy ES100B_tmp(ES100_B, this->manage_L2_control);  this->ES100B_obj = ES100B_tmp;
+    ES100_control_strategy ES100A_tmp(L2_control_strategies_enum::ES100_A, this->manage_L2_control);  this->ES100A_obj = ES100A_tmp;
+    ES100_control_strategy ES100B_tmp(L2_control_strategies_enum::ES100_B, this->manage_L2_control);  this->ES100B_obj = ES100B_tmp;
     ES110_control_strategy ES110_tmp(this->manage_L2_control);  this->ES110_obj = ES110_tmp; 
     ES200_control_strategy ES200_tmp(this->manage_L2_control);  this->ES200_obj = ES200_tmp; 
     ES300_control_strategy ES300_tmp(this->manage_L2_control);  this->ES300_obj = ES300_tmp; 
     ES500_control_strategy ES500_tmp(this->manage_L2_control);  this->ES500_obj = ES500_tmp;
     
     VS100_control_strategy VS100_tmp(this->manage_L2_control);  this->VS100_obj = VS100_tmp;
-    VS200_control_strategy VS200A_tmp(VS200_A, this->manage_L2_control);  this->VS200A_obj = VS200A_tmp;
-    VS200_control_strategy VS200B_tmp(VS200_B, this->manage_L2_control);  this->VS200B_obj = VS200B_tmp;
-    VS200_control_strategy VS200C_tmp(VS200_C, this->manage_L2_control);  this->VS200C_obj = VS200C_tmp;
+    VS200_control_strategy VS200A_tmp(L2_control_strategies_enum::VS200_A, this->manage_L2_control);  this->VS200A_obj = VS200A_tmp;
+    VS200_control_strategy VS200B_tmp(L2_control_strategies_enum::VS200_B, this->manage_L2_control);  this->VS200B_obj = VS200B_tmp;
+    VS200_control_strategy VS200C_tmp(L2_control_strategies_enum::VS200_C, this->manage_L2_control);  this->VS200C_obj = VS200C_tmp;
     VS300_control_strategy VS300_tmp(this->manage_L2_control);  this->VS300_obj = VS300_tmp;
     
     //--------------
@@ -691,7 +691,7 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
     
     LPF_parameters LPF_params;
     LPF_params.window_size = 1;
-    LPF_params.window_type = Rectangular;
+    LPF_params.window_type = LPF_window_enum::Rectangular;
     this->LPF.update_LPF(LPF_params);
     
     //--------------
@@ -744,7 +744,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
     
     LPF_parameters LPF_params;
     LPF_params.window_size = 1;
-    LPF_params.window_type = Rectangular;
+    LPF_params.window_type = LPF_window_enum::Rectangular;
     
     this->must_charge_for_remainder_of_park = false;
     this->L2_control_enums = SE_load.get_control_strategy_enums();
@@ -755,7 +755,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
 
     //----------------
     
-    if(this->L2_control_enums.ES_control_strategy == NA && this->L2_control_enums.VS_control_strategy == NA)
+    if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::NA && this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::NA)
     {
         // When creating charge_profile_library the charging must be uncontrolled.
         this->charge_profile = NULL;
@@ -785,7 +785,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
         //   Voltage Support
         //----------------------
                 
-        if(this->L2_control_enums.VS_control_strategy == VS100)
+        if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS100)
         {
             const VS100_L2_parameters& X = this->manage_L2_control->get_VS100();            
             this->VS100_obj.update_parameters_for_CE(SE_load.get_PEV_SE_combo_max_nominal_S3kVA());
@@ -794,7 +794,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             if(X.voltage_LPF.is_active)
                 LPF_params = this->manage_L2_control->VS100_get_LPF_parameters();
         }
-        else if(this->L2_control_enums.VS_control_strategy == VS200_A)
+        else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_A)
         {
             const VS200_L2_parameters& X = this->manage_L2_control->get_VS200_A();
             this->VS200A_obj.update_parameters_for_CE(SE_load.get_PEV_SE_combo_max_nominal_S3kVA());
@@ -803,7 +803,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             if(X.voltage_LPF.is_active)
                 LPF_params = this->manage_L2_control->VS200A_get_LPF_parameters();
         }
-        else if(this->L2_control_enums.VS_control_strategy == VS200_B)
+        else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_B)
         {
             const VS200_L2_parameters& X = this->manage_L2_control->get_VS200_B();
             this->VS200B_obj.update_parameters_for_CE(SE_load.get_PEV_SE_combo_max_nominal_S3kVA());
@@ -812,7 +812,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             if(X.voltage_LPF.is_active)
                 LPF_params = this->manage_L2_control->VS200B_get_LPF_parameters();
         }
-        else if(this->L2_control_enums.VS_control_strategy == VS200_C)
+        else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_C)
         {
             const VS200_L2_parameters& X = this->manage_L2_control->get_VS200_C();
             this->VS200C_obj.update_parameters_for_CE(SE_load.get_PEV_SE_combo_max_nominal_S3kVA());
@@ -821,7 +821,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             if(X.voltage_LPF.is_active)
                 LPF_params = this->manage_L2_control->VS200C_get_LPF_parameters();
         }
-        else if(this->L2_control_enums.VS_control_strategy == VS300)
+        else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS300)
         {
             const VS300_L2_parameters& X = this->manage_L2_control->get_VS300();
             this->VS300_obj.update_parameters_for_CE(SE_load.get_PEV_SE_combo_max_nominal_S3kVA());
@@ -835,22 +835,22 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
         //    Energy Shifting
         //----------------------
         
-        if(this->L2_control_enums.ES_control_strategy == ES100_A)
+        if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_A)
             this->ES100A_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
         
-        if(this->L2_control_enums.ES_control_strategy == ES100_B)
+        if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_B)
             this->ES100B_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
         
-        else if(this->L2_control_enums.ES_control_strategy == ES110)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES110)
             this->ES110_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
         
-        else if(this->L2_control_enums.ES_control_strategy == ES200)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
             this->ES200_obj.update_parameters_for_CE(this->target_P3kW);
         
-        else if(this->L2_control_enums.ES_control_strategy == ES300)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
             this->ES300_obj.update_parameters_for_CE(this->target_P3kW);
         
-        else if(this->L2_control_enums.ES_control_strategy == ES500)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
             this->ES500_obj.update_parameters_for_CE(this->target_P3kW);
     }
     
@@ -880,7 +880,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //--------------------------------------
     //  Return if Charging is Uncontrolled
     //--------------------------------------
-    if(this->L2_control_enums.ES_control_strategy == NA && this->L2_control_enums.VS_control_strategy == NA && this->L2_control_enums.ext_control_strategy == "NA")
+    if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::NA && this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::NA && this->L2_control_enums.ext_control_strategy == "NA")
     {
         return;
     }
@@ -951,27 +951,27 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     }
     else
     {
-        if(this->L2_control_enums.ES_control_strategy == ES100_A)
+        if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_A)
         {
             P3kW_setpoint = this->ES100A_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
-        else if(this->L2_control_enums.ES_control_strategy == ES100_B)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_B)
         {
             P3kW_setpoint = this->ES100B_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
-        else if(this->L2_control_enums.ES_control_strategy == ES110)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES110)
         {
             P3kW_setpoint = this->ES110_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
-        else if(this->L2_control_enums.ES_control_strategy == ES200)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
         {
             P3kW_setpoint = this->ES200_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
-        else if(this->L2_control_enums.ES_control_strategy == ES300)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
         {
             P3kW_setpoint = this->ES300_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
-        else if(this->L2_control_enums.ES_control_strategy == ES500)
+        else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
         {
             P3kW_setpoint = this->ES500_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
@@ -997,7 +997,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //  Voltage Supporting via PkW 
     //------------------------------
         
-    if( this->L2_control_enums.VS_control_strategy == VS100 )
+    if( this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS100 )
     {
         P3kW_setpoint = this->VS100_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
     }
@@ -1018,22 +1018,22 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     
     double Q3kVAR_setpoint = 0;
     
-    if(this->L2_control_enums.VS_control_strategy == VS200_A)
+    if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_A)
     {
         Q3kVAR_setpoint = this->VS200A_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
     }
     
-    else if(this->L2_control_enums.VS_control_strategy == VS200_B)
+    else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_B)
     {
         Q3kVAR_setpoint = this->VS200B_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
     }
     
-    else if(this->L2_control_enums.VS_control_strategy == VS200_C)
+    else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS200_C)
     {
         Q3kVAR_setpoint = this->VS200C_obj.get_Q3kVAR_setpoint(prev_unix_time, now_unix_time, pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
     }
     
-    else if(this->L2_control_enums.VS_control_strategy == VS300)
+    else if(this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::VS300)
     {
         Q3kVAR_setpoint = this->VS300_obj.get_Q3kVAR_setpoint(pu_Vrms, pu_Vrms_SS, P3kW_setpoint);
     }

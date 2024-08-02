@@ -51,7 +51,7 @@ const std::vector<pev_SE_pair> EV_EVSE_inventory::load_compatible_EV_EVSE_pair()
     {
         for (const auto& EVSEs : this->get_EVSE_inventory())
         {
-            if (EVSEs.second.get_level() == DCFC)
+            if (EVSEs.second.get_level() == EVSE_level::DCFC)
             {
                 if (EVs.second.get_DCFC_capable() == true)
                 {

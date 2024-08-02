@@ -123,7 +123,7 @@ void vehicle_charge_model::get_next( const double prev_unix_time,
 			charge_needs_met_soc = (this->depart_soc <= soc_t1);
 
 			if(!charge_needs_met_soc)
-				charge_needs_met_soc = (bat_state.reached_target_status == can_reach_energy_target_this_timestep && (bat_state.E1_energy_to_target_soc_kWh < bat_state.P1_kW * bat_state.time_step_duration_hrs));
+				charge_needs_met_soc = (bat_state.reached_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep && (bat_state.E1_energy_to_target_soc_kWh < bat_state.P1_kW * bat_state.time_step_duration_hrs));
 		}
 		else if(this->soc_mode == block_charging)
 		{		

@@ -123,7 +123,7 @@ template <typename ARR_DATA_TYPE> class time_series_v2
 //                Low Pass Filter Parameters
 //==================================================================
 
-enum LPF_window_enum
+enum class LPF_window_enum
 {
 	Hanning=0,
 	Blackman=1,
@@ -159,7 +159,7 @@ std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val);
 //                  L2_control_strategy_parameters
 //==================================================================
 
-enum L2_control_strategies_enum
+enum class L2_control_strategies_enum
 {
     NA = 0,
     ES100_A = 1,

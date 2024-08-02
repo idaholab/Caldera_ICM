@@ -196,7 +196,7 @@ void interface_to_SE_groups::set_PQ_setpoints(double now_unix_time, std::vector<
             if(SE_ptr->pev_is_connected_to_SE(now_unix_time) == false)
                 continue;
             
-            if(Z.ES_control_strategy == NA && Z.VS_control_strategy == NA && Z.ext_control_strategy != NA_string)
+            if(Z.ES_control_strategy == L2_control_strategies_enum::NA && Z.VS_control_strategy == L2_control_strategies_enum::NA && Z.ext_control_strategy != NA_string)
             {
                 SE_ptr->set_target_acP3_kW(X.PkW);
                 
@@ -552,7 +552,7 @@ ES500_aggregator_charging_needs interface_to_SE_groups::ES500_get_charging_needs
     
     for(supply_equipment* SE_ptr : this->SE_ptr_vector)
     {
-        if(SE_ptr->current_CE_is_using_control_strategy(unix_time_begining_of_next_agg_step, ES500))
+        if(SE_ptr->current_CE_is_using_control_strategy(unix_time_begining_of_next_agg_step, L2_control_strategies_enum::ES500))
         {
             SE_ptr->ES500_get_charging_needs(unix_time_now, unix_time_begining_of_next_agg_step, obj);
 

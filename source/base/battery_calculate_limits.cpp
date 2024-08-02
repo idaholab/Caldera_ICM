@@ -17,15 +17,15 @@ std::ostream& operator<<(std::ostream& out,
 std::ostream& operator<<(std::ostream& out, 
                          energy_target_reached_status& x)
 {
-	if(x == 0)
+	if(x == energy_target_reached_status::can_not_reach_energy_target_this_timestep)
 		out << "can_not_reach_energy_target_this_timestep";
-	else if(x == 1)
+	else if(x == energy_target_reached_status::can_reach_energy_target_this_timestep)
 		out << "can_reach_energy_target_this_timestep";
-	else if(x == 2)
+	else if(x == energy_target_reached_status::have_passed_energy_target)
 		out << "have_passed_energy_target";
-	else if(x == 3)
+	else if(x == energy_target_reached_status::unknown)
 		out << "unknown";
-	else if(x == 4)
+	else if(x == energy_target_reached_status::target_P2_is_zero)
 		out << "target_P2_is_zero";
 	
 	return out;
@@ -357,7 +357,7 @@ calc_E1_energy_limit::calc_E1_energy_limit(const battery_charge_mode& mode,
 
 calc_E1_energy_limit_charging::calc_E1_energy_limit_charging(const bool& are_battery_losses, 
                                                              const vehicle_charge_model_inputs& inputs)
-    : calc_E1_energy_limit{ charging, are_battery_losses, inputs }
+    : calc_E1_energy_limit{ battery_charge_mode::charging, are_battery_losses, inputs }
 {
 }
 
@@ -376,7 +376,7 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
     
     if(line_segment_not_found)
     {
-        E1_limit = {100, 0, 0, unknown, 0, -1}; // {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
+        E1_limit = {100, 0, 0, energy_target_reached_status::unknown, 0, -1}; // {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
     	return;
     }
     
@@ -386,10 +386,10 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
     
     target_soc = (100 < target_soc) ? 100 : target_soc;
     
-    energy_target_reached_status energy_target_status = unknown;
+    energy_target_reached_status energy_target_status = energy_target_reached_status::unknown;
     if(target_soc <= init_soc)
     {
-        energy_target_status = have_passed_energy_target;
+        energy_target_status = energy_target_reached_status::have_passed_energy_target;
     	target_soc = 100;
     }
     
@@ -418,9 +418,9 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
         else
             break_now = true;
 
-        if(energy_target_status == unknown && soc_t0 <= target_soc && target_soc <= soc_t1)
+        if(energy_target_status == energy_target_reached_status::unknown && soc_t0 <= target_soc && target_soc <= soc_t1)
         {
-            energy_target_status = can_reach_energy_target_this_timestep;
+            energy_target_status = energy_target_reached_status::can_reach_energy_target_this_timestep;
             tmp_hrs = this->P2_vs_soc_algorithm->get_time_to_soc_t1_hrs(soc_t0, target_soc);
             min_time_to_target_hrs = max_energy_charge_time_hrs + tmp_hrs;
         }
@@ -444,8 +444,8 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
         }
     }
         
-    if(energy_target_status == unknown)
-        energy_target_status = can_not_reach_energy_target_this_timestep;
+    if(energy_target_status == energy_target_reached_status::unknown)
+        energy_target_status = energy_target_reached_status::can_not_reach_energy_target_this_timestep;
     
     //--------------------------------------------
     
@@ -455,8 +455,8 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
     E1_limit.max_E1_energy_charge_time_hrs = max_energy_charge_time_hrs;
     E1_limit.max_E1_energy_kWh = (soc_t1 - init_soc)*soc_to_energy;
     E1_limit.reached_target_status = energy_target_status;
-    E1_limit.E1_energy_to_target_soc_kWh = (energy_target_status == can_reach_energy_target_this_timestep) ? (target_soc - init_soc)*soc_to_energy : 0;
-    E1_limit.min_time_to_target_soc_hrs = (energy_target_status == can_reach_energy_target_this_timestep) ? min_time_to_target_hrs : -1;
+    E1_limit.E1_energy_to_target_soc_kWh = (energy_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep) ? (target_soc - init_soc)*soc_to_energy : 0;
+    E1_limit.min_time_to_target_soc_hrs = (energy_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep) ? min_time_to_target_hrs : -1;
 }
 
 
@@ -466,7 +466,7 @@ void calc_E1_energy_limit_charging::get_E1_limit(double time_step_sec,
 
 calc_E1_energy_limit_discharging::calc_E1_energy_limit_discharging(const bool& are_battery_losses, 
                                                                    const vehicle_charge_model_inputs& inputs)
-    :calc_E1_energy_limit{ discharging, are_battery_losses, inputs }
+    :calc_E1_energy_limit{ battery_charge_mode::discharging, are_battery_losses, inputs }
 {
 }
 
@@ -485,7 +485,7 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec,
 	
     if(line_segment_not_found)
     {
-        E1_limit = {0, 0, 0, unknown, 0, -1}; // {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
+        E1_limit = {0, 0, 0, energy_target_reached_status::unknown, 0, -1}; // {target_soc, max_energy_kWh, max_energy_charge_time_hrs, reached_target_status, energy_to_target_soc_kWh, min_time_to_target_soc_hrs}
         return;
     }
 	
@@ -495,10 +495,10 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec,
     
     target_soc = (target_soc < 0) ? 0 : target_soc;
     
-    energy_target_reached_status energy_target_status = unknown;
+    energy_target_reached_status energy_target_status = energy_target_reached_status::unknown;
     if(init_soc <= target_soc)
     {
-        energy_target_status = have_passed_energy_target;
+        energy_target_status = energy_target_reached_status::have_passed_energy_target;
     	target_soc = 0;
     }
     
@@ -527,9 +527,9 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec,
         else
             break_now = true;
 
-        if(energy_target_status == unknown && soc_t1 <= target_soc && target_soc <= soc_t0)
+        if(energy_target_status == energy_target_reached_status::unknown && soc_t1 <= target_soc && target_soc <= soc_t0)
         {
-            energy_target_status = can_reach_energy_target_this_timestep;
+            energy_target_status = energy_target_reached_status::can_reach_energy_target_this_timestep;
             tmp_hrs = this->P2_vs_soc_algorithm->get_time_to_soc_t1_hrs(soc_t0, target_soc);
             min_time_to_target_hrs = max_energy_charge_time_hrs + tmp_hrs;
         }
@@ -553,8 +553,8 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec,
         }
     }
     
-    if(energy_target_status == unknown)
-        energy_target_status = can_not_reach_energy_target_this_timestep;
+    if(energy_target_status == energy_target_reached_status::unknown)
+        energy_target_status = energy_target_reached_status::can_not_reach_energy_target_this_timestep;
     
     //--------------------------------------------
     
@@ -564,8 +564,8 @@ void calc_E1_energy_limit_discharging::get_E1_limit(double time_step_sec,
     E1_limit.max_E1_energy_charge_time_hrs = max_energy_charge_time_hrs;
     E1_limit.max_E1_energy_kWh = (soc_t1 - init_soc)*soc_to_energy;
     E1_limit.reached_target_status = energy_target_status;
-    E1_limit.E1_energy_to_target_soc_kWh = (energy_target_status == can_reach_energy_target_this_timestep) ? (target_soc - init_soc)*soc_to_energy : 0;
-    E1_limit.min_time_to_target_soc_hrs = (energy_target_status == can_reach_energy_target_this_timestep) ? min_time_to_target_hrs : -1;
+    E1_limit.E1_energy_to_target_soc_kWh = (energy_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep) ? (target_soc - init_soc)*soc_to_energy : 0;
+    E1_limit.min_time_to_target_soc_hrs = (energy_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep) ? min_time_to_target_hrs : -1;
 }
 
 
@@ -581,7 +581,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(const battery_charge_mode& 
     orig_P2_vs_soc_segments{ inputs.SOCP_factory.get_SOC_vs_P2_curves(inputs.EV, inputs.EVSE).curve }
 {
     bool are_battery_losses = true;
-    if (this->mode == charging)
+    if (this->mode == battery_charge_mode::charging)
     {
         this->calc_E1_limit = std::make_shared<calc_E1_energy_limit_charging>(are_battery_losses, inputs);
     }
@@ -611,7 +611,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(const battery_charge_mode& 
 
     this->prev_P2_limit_binding = true;
 
-    if (this->mode == charging)
+    if (this->mode == battery_charge_mode::charging)
         this->prev_P2_limit = -1000000000;
     else
         this->prev_P2_limit = 1000000000;
@@ -627,7 +627,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit(const battery_charge_mode& 
         val_0 = seg.a * seg.x_LB + seg.b;
         val_1 = seg.a * seg.x_UB + seg.b;
 
-        if (this->mode == charging)
+        if (this->mode == battery_charge_mode::charging)
         {	// max(val_0, val_1, this->max_abs_P2_in_P2_vs_soc_segments)
             val_tmp = val_0 < val_1 ? val_1 : val_0;
             this->max_abs_P2_in_P2_vs_soc_segments = val_tmp < this->max_abs_P2_in_P2_vs_soc_segments ? this->max_abs_P2_in_P2_vs_soc_segments : val_tmp;
@@ -661,7 +661,7 @@ void calculate_E1_energy_limit::apply_P2_limit_to_P2_vs_soc_segments(double P2_l
         P_0 = m * soc_0 + c;        // y = mx + c;
         P_1 = m * soc_1 + c;
         
-        if(this->mode == charging)
+        if(this->mode == battery_charge_mode::charging)
         {
 		    if(P2_limit <= P_0 && P2_limit <= P_1)
 		    {
@@ -724,7 +724,7 @@ void calculate_E1_energy_limit::get_E1_limit(double time_step_sec,
 	
 	P2_limit = this->P2_vs_puVrms.get_val(pu_Vrms);
 	
-	if(this->mode == charging)
+	if(this->mode == battery_charge_mode::charging)
 	{
 		P2_limit_binding = (P2_limit < this->max_abs_P2_in_P2_vs_soc_segments);
 	}

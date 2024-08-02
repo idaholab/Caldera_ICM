@@ -12,14 +12,14 @@ typedef double c_rate;
 typedef double SOC;
 typedef double power;
 
-enum point_type
+enum class point_type
 {
     interpolate,
     extend,
     use_directly
 };
 
-enum battery_charge_mode
+enum class battery_charge_mode
 {
     charging = 0,
     discharging = 1

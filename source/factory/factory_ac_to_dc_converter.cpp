@@ -18,7 +18,7 @@ ac_to_dc_converter* factory_ac_to_dc_converter::alloc_get_ac_to_dc_converter(ac_
 	const EVSE_level level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 	const double power_limit = this->inventory.get_EVSE_inventory().at(EVSE).get_power_limit_kW();
 
-	if (level == L1)
+	if (level == EVSE_level::L1)
 	{
 		// {x_LB, x_UB, degree, a, b, c, d, e}     degree = {first, second, third, fourth}
 		inv_eff_from_P2_vec.clear();
@@ -31,7 +31,7 @@ ac_to_dc_converter* factory_ac_to_dc_converter::alloc_get_ac_to_dc_converter(ac_
 		inv_pf_from_P3_vec.push_back({ 0, 1.3, first, -0.0138, -0.9793, 0, 0, 0 });
 		inv_pf_from_P3_vec.push_back({ 1.3, 20, first, 0, -0.99724, 0, 0, 0 });
 	}
-	else if (level == L2)
+	else if (level == EVSE_level::L2)
 	{
 		// {x_LB, x_UB, degree, a, b, c, d, e}     degree = {first, second, third, fourth}
 		inv_eff_from_P2_vec.clear();
@@ -44,7 +44,7 @@ ac_to_dc_converter* factory_ac_to_dc_converter::alloc_get_ac_to_dc_converter(ac_
 		inv_pf_from_P3_vec.push_back({ 0, 6, third, -0.00038737, 0.00591216, -0.03029164, -0.9462841, 0 });
 		inv_pf_from_P3_vec.push_back({ 6, 20, first, 0, -0.9988681, 0, 0, 0 });
 	}
-	else if (level == DCFC)  // Copied data from L2 Charger
+	else if (level == EVSE_level::DCFC)  // Copied data from L2 Charger
 	{
 		if(power_limit <= 20)
 		{
