@@ -11,7 +11,7 @@
 //#############################################################################
 
 
-enum transition_criteria_type
+enum class transition_criteria_type
 {
     time_delay_sec = 0,
     delta_X = 1,
@@ -19,7 +19,7 @@ enum transition_criteria_type
 };
 
 
-enum transition_status
+enum class transition_status
 {
 	transition_reached_target_not_nowTime = 0,
 	transition_reached_nowTime_not_target = 1,
@@ -29,7 +29,7 @@ enum transition_status
 };
 
 
-enum transition_interruption_state
+enum class transition_interruption_state
 {
 	not_interupted = 0,
 	new_transition_in_same_direction = 1,
@@ -37,7 +37,7 @@ enum transition_interruption_state
 };
 
 
-enum transition_state
+enum class transition_state
 {
     off = 0,
     on_steady_state = 1,
