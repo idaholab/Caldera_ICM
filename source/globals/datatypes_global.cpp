@@ -519,11 +519,11 @@ SE_group_configuration::SE_group_configuration(int SE_group_id_, std::vector<SE_
 
 std::ostream& operator<<(std::ostream& out, const SE_charging_status& x)
 {
-	     if(x == no_ev_plugged_in) 				out << "no_ev_plugged_in";
-	else if(x == ev_plugged_in_not_charging) 	out << "ev_plugged_in_not_charging";
-	else if(x == ev_charging) 					out << "ev_charging";
-	else if(x == ev_charge_complete) 			out << "ev_charge_complete";
-    else if(x == ev_charge_ended_early) 		out << "ev_charge_ended_early";
+	     if(x == SE_charging_status::no_ev_plugged_in)              out << "no_ev_plugged_in";
+	else if(x == SE_charging_status::ev_plugged_in_not_charging)    out << "ev_plugged_in_not_charging";
+	else if(x == SE_charging_status::ev_charging)                   out << "ev_charging";
+	else if(x == SE_charging_status::ev_charge_complete)            out << "ev_charge_complete";
+    else if(x == SE_charging_status::ev_charge_ended_early)         out << "ev_charge_ended_early";
     
 	return out;
 }

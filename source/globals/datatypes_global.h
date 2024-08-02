@@ -593,7 +593,7 @@ struct SE_group_configuration
 //                   Status of Charging 
 //==================================================================
 
-enum SE_charging_status
+enum class SE_charging_status
 {
 	no_ev_plugged_in = 0,
 	ev_plugged_in_not_charging = 1,
@@ -719,7 +719,7 @@ struct SE_power
 };
 
 
-enum ac_to_dc_converter_enum
+enum class ac_to_dc_converter_enum
 {
 	pf=0,
 	Q_setpoint=1

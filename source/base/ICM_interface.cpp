@@ -517,7 +517,7 @@ SE_power interface_to_SE_groups::get_SE_power(SupplyEquipmentId SE_id, double pr
         return_val.P3_kW = 0;
         return_val.Q3_kVAR = 0;
         return_val.soc = 0;
-        return_val.SE_status_val = no_ev_plugged_in;
+        return_val.SE_status_val = SE_charging_status::no_ev_plugged_in;
     }
     else
     {

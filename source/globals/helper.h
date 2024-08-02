@@ -96,7 +96,7 @@ std::ostream& operator<<(std::ostream& out, line_segment& x);
 //                          poly_function_of_x
 //#############################################################################
 
-enum poly_degree
+enum class poly_degree
 {
     first,
     second,
