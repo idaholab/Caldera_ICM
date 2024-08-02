@@ -675,7 +675,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //----------------------------------------
                 //          Set P3, Q3 Targets 
                 //----------------------------------------
-                if(this->control_enums.ES_control_strategy == NA && control_enums.ext_control_strategy == "NA")
+                if(this->control_enums.ES_control_strategy == L2_control_strategies_enum::NA && control_enums.ext_control_strategy == "NA")
                 {
                     set_target_acP3_kW(1.3*this->P2_limit_kW);      // Uncontrolled Charging - (Nominal Power May increase with Vrms)
                 }

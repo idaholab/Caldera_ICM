@@ -339,7 +339,7 @@ LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
     
     LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
-    LPF_params.window_type = Rectangular;
+    LPF_params.window_type = LPF_window_enum::Rectangular;
     update_LPF(LPF_params);
 }
 
@@ -355,13 +355,13 @@ void LPF_kernel::update_LPF(LPF_parameters& LPF_params)
     if(this->window_size > this->raw_data.size())
         std::cout << "ERROR.  Low pass filter window size can not be greater than raw data size." << std::endl;
     
-    if(this->window_type == Rectangular && this->window_size < 1)
+    if(this->window_type == LPF_window_enum::Rectangular && this->window_size < 1)
     {
         this->window_size = 1;
         std::cout << "ERROR.  For a Rectangular Filter window size can not be less than 1." << std::endl;
     }
     
-    if(this->window_size < 2 && (this->window_type == Hanning || this->window_type == Blackman))
+    if(this->window_size < 2 && (this->window_type == LPF_window_enum::Hanning || this->window_type == LPF_window_enum::Blackman))
     {    
         this->window_size = 2;
         std::cout << "ERROR.  For a Hanning and Blackman Filter window size can not be less than 2." << std::endl;
@@ -369,7 +369,7 @@ void LPF_kernel::update_LPF(LPF_parameters& LPF_params)
     
 	//----------------------
     
-    if(this->window_type == Rectangular)
+    if(this->window_type == LPF_window_enum::Rectangular)
     {
         this->window.resize(this->window_size, 1.0);
         this->window_area = this->window_size;
@@ -408,9 +408,9 @@ void LPF_kernel::update_LPF(LPF_parameters& LPF_params)
         {
             if(n==0 || n==N_minus_1)
                 window_val = 0;
-            else if(this->window_type == Hanning)
+            else if(this->window_type == LPF_window_enum::Hanning)
                 window_val = 0.5*(1 - std::cos(2*pi*n/N_minus_1));
-            else if(this->window_type == Blackman)
+            else if(this->window_type == LPF_window_enum::Blackman)
                 window_val = a0 - a1*std::cos(2*pi*n/N_minus_1) + a2*std::cos(4*pi*n/N_minus_1);
             
             this->window_area += window_val;

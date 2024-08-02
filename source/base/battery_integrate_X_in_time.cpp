@@ -11,37 +11,37 @@
 //#############################################################################
 
 // Input Data Rules
-//		1. If segment_slope_X_per_sec == 0 then criteria_type must be time_delay_sec
-//		2. If criteria_type in(delta_X, from_final_X) then segment_slope_X_per_sec != 0
+//		1. If segment_slope_X_per_sec == 0 then criteria_type must be transition_criteria_type::time_delay_sec
+//		2. If criteria_type in(transition_criteria_type::delta_X, transition_criteria_type::from_final_X) then segment_slope_X_per_sec != 0
 
 
 std::ostream& operator << (std::ostream& os, const transition_state& trans_state)
 {
 	std::string val = "";
 	
-	if(trans_state == off)
+	if(trans_state == transition_state::off)
 		val = "off";
-	else if(trans_state == on_steady_state)
+	else if(trans_state == transition_state::on_steady_state)
 		val = "on_steady_state";
-	else if(trans_state == pos_to_off)
+	else if(trans_state == transition_state::pos_to_off)
 		val = "pos_to_off";
-	else if(trans_state == neg_to_off)
+	else if(trans_state == transition_state::neg_to_off)
 		val = "neg_to_off";
-	else if(trans_state == off_to_pos)
+	else if(trans_state == transition_state::off_to_pos)
 		val = "off_to_pos";
-	else if(trans_state == off_to_neg)
+	else if(trans_state == transition_state::off_to_neg)
 		val = "off_to_neg";
-	else if(trans_state == moving_toward_pos_inf)
+	else if(trans_state == transition_state::moving_toward_pos_inf)
 		val = "moving_toward_pos_inf";
-	else if(trans_state == moving_toward_neg_inf)
+	else if(trans_state == transition_state::moving_toward_neg_inf)
 		val = "moving_toward_neg_inf";
-	else if(trans_state == pos_moving_toward_pos_inf)
+	else if(trans_state == transition_state::pos_moving_toward_pos_inf)
 		val = "pos_moving_toward_pos_inf";
-	else if(trans_state == pos_moving_toward_neg_inf)
+	else if(trans_state == transition_state::pos_moving_toward_neg_inf)
 		val = "pos_moving_toward_neg_inf";
-	else if(trans_state == neg_moving_toward_pos_inf)
+	else if(trans_state == transition_state::neg_moving_toward_pos_inf)
 		val = "neg_moving_toward_pos_inf";
-	else if(trans_state == neg_moving_toward_neg_inf)
+	else if(trans_state == transition_state::neg_moving_toward_neg_inf)
 		val = "neg_moving_toward_neg_inf";
    
 	os << val;
@@ -52,7 +52,7 @@ std::ostream& operator << (std::ostream& os, const transition_state& trans_state
 transition_of_X_through_time::transition_of_X_through_time(transition_state trans_state_, double X_deadband_,
                                  						   const std::vector<transition_goto_next_segment_criteria> &goto_next_segment_criteria_)
 {
-	if(trans_state_ == off || trans_state_ == on_steady_state)
+	if(trans_state_ == transition_state::off || trans_state_ == transition_state::on_steady_state)
 	{
 		std::string error_msg = "PROBLEM: transition_of_X_through_time object defined for trans_state off or on_steady_state.  Look in class transition_of_X_through_time.";
 		std::cout << error_msg << std::endl;
@@ -72,15 +72,15 @@ transition_of_X_through_time::transition_of_X_through_time(transition_state tran
 	
 	this->transition_moving_toward_pos_inf = false; // pos_to_off, off_to_neg, moving_toward_neg_inf, pos_moving_toward_neg_inf, neg_moving_toward_neg_inf
 	
-	if(trans_state_ == neg_to_off)
+	if(trans_state_ == transition_state::neg_to_off)
 		this->transition_moving_toward_pos_inf = true;
-	else if(trans_state_ == off_to_pos)
+	else if(trans_state_ == transition_state::off_to_pos)
 		this->transition_moving_toward_pos_inf = true;
-	else if(trans_state_ == moving_toward_pos_inf)
+	else if(trans_state_ == transition_state::moving_toward_pos_inf)
 		this->transition_moving_toward_pos_inf = true;
-	else if(trans_state_ == pos_moving_toward_pos_inf)
+	else if(trans_state_ == transition_state::pos_moving_toward_pos_inf)
 		this->transition_moving_toward_pos_inf = true;
-	else if(trans_state_ == neg_moving_toward_pos_inf)
+	else if(trans_state_ == transition_state::neg_moving_toward_pos_inf)
 		this->transition_moving_toward_pos_inf = true;
 }
 
@@ -100,9 +100,9 @@ void transition_of_X_through_time::init_transition(double start_of_transition_un
 	
 	if(transition_just_crossed_zero)
 		this->segment_index = (int)this->goto_next_segment_criteria.size() - 1;
-	else if(trans_interruption_state == new_transition_in_opposite_direction)
+	else if(trans_interruption_state == transition_interruption_state::new_transition_in_opposite_direction)
 		this->segment_index = 1;
-	else if(trans_interruption_state == new_transition_in_same_direction)
+	else if(trans_interruption_state == transition_interruption_state::new_transition_in_same_direction)
 		this->segment_index = 2;
 	else
 		this->segment_index = 0;
@@ -153,7 +153,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 	{
 		interval_area_Xsec = 0;
 		interval_duration_sec = 0;
-		transition_status tmp_trans_status = current_X_passed_target_cuz_target_X_moved ? transition_interupted_opposite_direction : transition_interupted_same_direction;
+		transition_status tmp_trans_status = current_X_passed_target_cuz_target_X_moved ? transition_status::transition_interupted_opposite_direction : transition_status::transition_interupted_same_direction;
 		
 		transition_integral_of_X return_val = {interval_area_Xsec, interval_duration_sec, start_of_interval_unix_time, start_of_interval_X_val, tmp_trans_status};
 		return return_val;
@@ -171,7 +171,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 	{
 		interval_area_Xsec = 0;
 		interval_duration_sec = 0;
-		transition_integral_of_X return_val = {interval_area_Xsec, interval_duration_sec, start_of_interval_unix_time, start_of_interval_X_val, transition_reached_target_not_nowTime};
+		transition_integral_of_X return_val = {interval_area_Xsec, interval_duration_sec, start_of_interval_unix_time, start_of_interval_X_val, transition_status::transition_reached_target_not_nowTime};
 		return return_val;
 	}
 	
@@ -206,17 +206,17 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 		criteria_value = this->goto_next_segment_criteria[this->segment_index].criteria_value;
 		from_final_complete_cuz_target_X_moved = false;
 		
-		if(criteria_type == time_delay_sec)
+		if(criteria_type == transition_criteria_type::time_delay_sec)
 		{
 			end_of_segment_unix_time = this->start_of_segment_unix_time + criteria_value;
 			end_of_segment_X_val = this->start_of_segment_X_val + segment_slope_*criteria_value;
 		}	
-		else if(criteria_type == delta_X)
+		else if(criteria_type == transition_criteria_type::delta_X)
 		{
 			end_of_segment_unix_time = this->start_of_segment_unix_time + std::abs(criteria_value/segment_slope_);
 			end_of_segment_X_val = this->transition_moving_toward_pos_inf ? this->start_of_segment_X_val + criteria_value : this->start_of_segment_X_val - criteria_value;
 		}
-		else if(criteria_type == from_final_X)
+		else if(criteria_type == transition_criteria_type::from_final_X)
 		{
 			// (from_final_complete_cuz_target_X_moved = true)  WILL NEVER HAPPEN DURING THE LAST SEGMENT because either
 			// current_X_passed_target_cuz_target_X_moved = true or transition_complete_cuz_target_X_moved = true
@@ -237,7 +237,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 		}
 		
 		//========================================================================		
-																							// 0.000001 is needed because of (criteria_type = from_final_X, criteria_value = 0)
+																							// 0.000001 is needed because of (criteria_type = transition_criteria_type::from_final_X, criteria_value = 0)
 		in_this_segment_will_reach_target = this->transition_moving_toward_pos_inf ? (end_of_segment_X_val > target_X - 0.000001) : (end_of_segment_X_val < target_X + 0.000001);
 		in_this_segment_will_reach_now_unix_time = (integrate_to_unix_time < end_of_segment_unix_time + 0.00001);
 
@@ -252,7 +252,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 			
 			if(will_reach_target_before_now_time)
 			{
-				trans_status_val = transition_will_cross_zero ? transition_crossing_zero_now : transition_reached_target_not_nowTime;
+				trans_status_val = transition_will_cross_zero ? transition_status::transition_crossing_zero_now : transition_status::transition_reached_target_not_nowTime;
 				end_of_interval_X_val = target_X;
 				
 				if(0.00001 < std::abs(segment_slope_))
@@ -262,7 +262,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 			}
 			else
 			{
-				trans_status_val = transition_reached_nowTime_not_target;
+				trans_status_val = transition_status::transition_reached_nowTime_not_target;
 				end_of_interval_X_val = now_X_val;
 				end_of_interval_unix_time_aux = integrate_to_unix_time;
 			}
@@ -297,7 +297,7 @@ transition_integral_of_X transition_of_X_through_time::get_integral(double targe
 			
 			if(this->goto_next_segment_criteria.size() <= this->segment_index)
 			{
-				std::string error_msg = "Caldera PEV transitions must be terminated by a segment where (criteria_type = from_final_X, criteria_value = 0).  Look in class transition_of_X_through_time.";
+				std::string error_msg = "Caldera PEV transitions must be terminated by a segment where (criteria_type = transition_criteria_type::from_final_X, criteria_value = 0).  Look in class transition_of_X_through_time.";
 				std::cout << error_msg << std::endl;
 				throw(std::invalid_argument(error_msg));
 			}
@@ -334,7 +334,7 @@ integrate_X_through_time::integrate_X_through_time(double target_deadband_, doub
 
 	this->X = 0;
 	this->target_ref_X = 0;        
-	this->trans_state = off;
+	this->trans_state = transition_state::off;
 	this->X_has_been_set = false;
 	this->target_set_while_turning_off = false;
     
@@ -370,25 +370,25 @@ integrate_X_through_time::integrate_X_through_time(const integrate_X_through_tim
     
     this->cur_trans_obj = NULL;
     
-    if(this->trans_state == pos_to_off)
+    if(this->trans_state == transition_state::pos_to_off)
         this->cur_trans_obj = &this->trans_obj_pos_to_off;
-    else if(this->trans_state == neg_to_off)
+    else if(this->trans_state == transition_state::neg_to_off)
         this->cur_trans_obj = &this->trans_obj_neg_to_off;
-    else if(this->trans_state == off_to_pos)
+    else if(this->trans_state == transition_state::off_to_pos)
         this->cur_trans_obj = &this->trans_obj_off_to_pos;
-    else if(this->trans_state == off_to_neg)
+    else if(this->trans_state == transition_state::off_to_neg)
         this->cur_trans_obj = &this->trans_obj_off_to_neg;        
-    else if(this->trans_state == moving_toward_pos_inf)
+    else if(this->trans_state == transition_state::moving_toward_pos_inf)
         this->cur_trans_obj = &this->trans_obj_moving_toward_pos_inf;
-    else if(this->trans_state == moving_toward_neg_inf)
+    else if(this->trans_state == transition_state::moving_toward_neg_inf)
         this->cur_trans_obj = &this->trans_obj_moving_toward_neg_inf;        
-    else if(this->trans_state == pos_moving_toward_pos_inf)
+    else if(this->trans_state == transition_state::pos_moving_toward_pos_inf)
         this->cur_trans_obj = &this->trans_obj_pos_moving_toward_pos_inf;
-    else if(this->trans_state == pos_moving_toward_neg_inf)
+    else if(this->trans_state == transition_state::pos_moving_toward_neg_inf)
         this->cur_trans_obj = &this->trans_obj_pos_moving_toward_neg_inf;
-    else if(this->trans_state == neg_moving_toward_pos_inf)
+    else if(this->trans_state == transition_state::neg_moving_toward_pos_inf)
         this->cur_trans_obj = &this->trans_obj_neg_moving_toward_pos_inf;
-    else if(this->trans_state == neg_moving_toward_neg_inf)
+    else if(this->trans_state == transition_state::neg_moving_toward_neg_inf)
         this->cur_trans_obj = &this->trans_obj_neg_moving_toward_neg_inf;
 }
 
@@ -397,25 +397,25 @@ bool integrate_X_through_time::transition_moving_toward_pos_inf(transition_state
 {
 	bool return_val = false;
 
-	if(trans_state_ == pos_to_off)
+	if(trans_state_ == transition_state::pos_to_off)
         return_val = this->trans_obj_pos_to_off.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == neg_to_off)
+    else if(trans_state_ == transition_state::neg_to_off)
         return_val = this->trans_obj_neg_to_off.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == off_to_pos)
+    else if(trans_state_ == transition_state::off_to_pos)
         return_val = this->trans_obj_off_to_pos.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == off_to_neg)
+    else if(trans_state_ == transition_state::off_to_neg)
         return_val = this->trans_obj_off_to_neg.transition_is_moving_toward_pos_inf();        
-    else if(trans_state_ == moving_toward_pos_inf)
+    else if(trans_state_ == transition_state::moving_toward_pos_inf)
         return_val = this->trans_obj_moving_toward_pos_inf.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == moving_toward_neg_inf)
+    else if(trans_state_ == transition_state::moving_toward_neg_inf)
         return_val = this->trans_obj_moving_toward_neg_inf.transition_is_moving_toward_pos_inf();        
-    else if(trans_state_ == pos_moving_toward_pos_inf)
+    else if(trans_state_ == transition_state::pos_moving_toward_pos_inf)
         return_val = this->trans_obj_pos_moving_toward_pos_inf.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == pos_moving_toward_neg_inf)
+    else if(trans_state_ == transition_state::pos_moving_toward_neg_inf)
         return_val = this->trans_obj_pos_moving_toward_neg_inf.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == neg_moving_toward_pos_inf)
+    else if(trans_state_ == transition_state::neg_moving_toward_pos_inf)
         return_val = this->trans_obj_neg_moving_toward_pos_inf.transition_is_moving_toward_pos_inf();
-    else if(trans_state_ == neg_moving_toward_neg_inf)
+    else if(trans_state_ == transition_state::neg_moving_toward_neg_inf)
         return_val = this->trans_obj_neg_moving_toward_neg_inf.transition_is_moving_toward_pos_inf();
         
     return return_val;
@@ -439,7 +439,7 @@ void integrate_X_through_time::set_init_state(double X_)
         this->target_set_while_turning_off = false;
         this->X = X_;
         this->target_ref_X = X_;        
-        this->trans_state = on_steady_state;
+        this->trans_state = transition_state::on_steady_state;
     }
 }
 
@@ -468,7 +468,7 @@ integral_of_X integrate_X_through_time::get_next(double target_X, double integra
     //			neg_moving_toward_pos_inf
     //
     // 		The limitations are as follows:
-    //			1. The criteria value from_final_X can only be used on the last segment
+    //			1. The criteria value transition_criteria_type::from_final_X can only be used on the last segment
     //			2. As always the criteria_value must be 0 on the last segment
     //			3. The abs(slope) of the segments must be increasing.
     //				- The last segment should have the largest abs(slope)
@@ -497,7 +497,7 @@ integral_of_X integrate_X_through_time::get_next(double target_X, double integra
         this->target_ref_X = target_X;
     }
     
-    if(this->trans_state == off && this->target_set_while_turning_off)
+    if(this->trans_state == transition_state::off && this->target_set_while_turning_off)
     {
         this->target_set_while_turning_off = false;
         target_has_changed = true;
@@ -517,7 +517,7 @@ if(this->print_debug_info)
     transition_state new_trans_state;
     bool transition_state_has_changed = false;
     
-    if(this->trans_state == pos_to_off || this->trans_state == neg_to_off)
+    if(this->trans_state == transition_state::pos_to_off || this->trans_state == transition_state::neg_to_off)
     {
         if(this->off_deadband < std::abs(target_X))
             this->target_set_while_turning_off = true;
@@ -528,17 +528,17 @@ if(this->print_debug_info)
     }
     else if(target_has_changed)
     {
-        if(this->trans_state == off)
+        if(this->trans_state == transition_state::off)
         {
             if(this->off_deadband < target_X)
             {
                 transition_state_has_changed = true;
-                new_trans_state = off_to_pos;
+                new_trans_state = transition_state::off_to_pos;
             }
             else if(target_X < -this->off_deadband)
             {
                 transition_state_has_changed = true;
-                new_trans_state = off_to_neg;
+                new_trans_state = transition_state::off_to_neg;
             }
         }
         else if(std::abs(target_X) < this->off_deadband)
@@ -547,95 +547,96 @@ if(this->print_debug_info)
             transition_state_has_changed = true;
             
             if(0 <= this->X)
-                new_trans_state = pos_to_off;
+                new_trans_state = transition_state::pos_to_off;
             else
-                new_trans_state = neg_to_off;
+                new_trans_state = transition_state::neg_to_off;
         }
         else
         {
-            if(this->trans_state == on_steady_state)
+            if(this->trans_state == transition_state::on_steady_state)
             {
                 transition_state_has_changed = true;
                 
                 if(0 <= this->X)
                 {
                     if(bool_moving_toward_pos_inf)
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? pos_moving_toward_pos_inf : moving_toward_pos_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::pos_moving_toward_pos_inf : transition_state::moving_toward_pos_inf;
                     else
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? pos_moving_toward_neg_inf : moving_toward_neg_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::pos_moving_toward_neg_inf : transition_state::moving_toward_neg_inf;
                 }
                 else
                 {
                     if(bool_moving_toward_pos_inf)
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? neg_moving_toward_pos_inf : moving_toward_pos_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::neg_moving_toward_pos_inf : transition_state::moving_toward_pos_inf;
                     else
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? neg_moving_toward_neg_inf : moving_toward_neg_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::neg_moving_toward_neg_inf : transition_state::moving_toward_neg_inf;
                 }
             }
             else
             {
-            	if(this->trans_state == off_to_pos)
+            	if(this->trans_state == 
+                    transition_state::off_to_pos)
                 {
                     if(!bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? pos_moving_toward_neg_inf : moving_toward_neg_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::pos_moving_toward_neg_inf : transition_state::moving_toward_neg_inf;
                     }
                 }
-                else if(this->trans_state == off_to_neg)
+                else if(this->trans_state == transition_state::off_to_neg)
                 {
                     if(bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = this->pos_and_neg_transitions_are_unique ? neg_moving_toward_pos_inf : moving_toward_pos_inf;
+                        new_trans_state = this->pos_and_neg_transitions_are_unique ? transition_state::neg_moving_toward_pos_inf : transition_state::moving_toward_pos_inf;
                     }
                 }
-            	else if(this->trans_state == moving_toward_neg_inf)
+            	else if(this->trans_state == transition_state::moving_toward_neg_inf)
             	{
             		if(bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = moving_toward_pos_inf;
+                        new_trans_state = transition_state::moving_toward_pos_inf;
                     }
             	}
-            	else if(this->trans_state == moving_toward_pos_inf)
+            	else if(this->trans_state == transition_state::moving_toward_pos_inf)
             	{
             		if(!bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = moving_toward_neg_inf;
+                        new_trans_state = transition_state::moving_toward_neg_inf;
                     }
             	}
-                else if(this->trans_state == pos_moving_toward_neg_inf)
+                else if(this->trans_state == transition_state::pos_moving_toward_neg_inf)
                 {
                     if(bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = pos_moving_toward_pos_inf;
+                        new_trans_state = transition_state::pos_moving_toward_pos_inf;
                     }
                 }
-                else if(this->trans_state == neg_moving_toward_pos_inf)
+                else if(this->trans_state == transition_state::neg_moving_toward_pos_inf)
                 {
                     if(!bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = neg_moving_toward_neg_inf;
+                        new_trans_state = transition_state::neg_moving_toward_neg_inf;
                     }
                 }
-                else if(this->trans_state == pos_moving_toward_pos_inf)
+                else if(this->trans_state == transition_state::pos_moving_toward_pos_inf)
                 {
                     if(!bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = pos_moving_toward_neg_inf;
+                        new_trans_state = transition_state::pos_moving_toward_neg_inf;
                     }
                 }
-                else if(this->trans_state == neg_moving_toward_neg_inf)
+                else if(this->trans_state == transition_state::neg_moving_toward_neg_inf)
                 {
                     if(bool_moving_toward_pos_inf)
                     {
                         transition_state_has_changed = true;
-                        new_trans_state = neg_moving_toward_pos_inf;
+                        new_trans_state = transition_state::neg_moving_toward_pos_inf;
                     }
                 }
             }
@@ -648,18 +649,18 @@ if(this->print_debug_info)
 	
 	transition_interruption_state trans_interruption_state;
 	
-	if(transition_state_has_changed && !(this->trans_state == off || this->trans_state == on_steady_state))
+	if(transition_state_has_changed && !(this->trans_state == transition_state::off || this->trans_state == transition_state::on_steady_state))
 	{	
 		bool previous_trans_moving_toward_pos_inf = this->transition_moving_toward_pos_inf(this->trans_state);
 		bool current_trans_moving_toward_pos_inf = this->transition_moving_toward_pos_inf(new_trans_state);
 	
 		if(previous_trans_moving_toward_pos_inf != current_trans_moving_toward_pos_inf)
-			trans_interruption_state = new_transition_in_opposite_direction;
+			trans_interruption_state = transition_interruption_state::new_transition_in_opposite_direction;
 		else
-			trans_interruption_state = new_transition_in_same_direction;
+			trans_interruption_state = transition_interruption_state::new_transition_in_same_direction;
 	}
 	else
-		trans_interruption_state = not_interupted;
+		trans_interruption_state = transition_interruption_state::not_interupted;
 	
 	//---------------------
 
@@ -690,26 +691,26 @@ if(this->print_debug_info)
 		
 		if(this->pos_and_neg_transitions_are_unique)
 		{
-			if(this->trans_state == pos_moving_toward_neg_inf)
+			if(this->trans_state == transition_state::pos_moving_toward_neg_inf)
 			{
 				if(X0 < this->off_deadband)
 				{
 					transition_state_has_changed = true;				
-					trans_interruption_state = not_interupted;
+					trans_interruption_state = transition_interruption_state::not_interupted;
 					transition_just_crossed_zero = true;
-					this->trans_state = neg_moving_toward_neg_inf;
+					this->trans_state = transition_state::neg_moving_toward_neg_inf;
 				}
 				else
 					transition_will_cross_zero = (target_X < 0);
 			}
-			else if(this->trans_state == neg_moving_toward_pos_inf)
+			else if(this->trans_state == transition_state::neg_moving_toward_pos_inf)
 			{
 				if(-this->off_deadband < X0)
 				{
 					transition_state_has_changed = true;
-					trans_interruption_state = not_interupted;
+					trans_interruption_state = transition_interruption_state::not_interupted;
 					transition_just_crossed_zero = true;
-					this->trans_state = pos_moving_toward_pos_inf;
+					this->trans_state = transition_state::pos_moving_toward_pos_inf;
 				}
 				else
 					transition_will_cross_zero = (target_X > 0);
@@ -722,33 +723,33 @@ if(this->print_debug_info)
     	
     	if(transition_state_has_changed)
 		{
-		    if(this->trans_state == off || this->trans_state == on_steady_state)
+		    if(this->trans_state == transition_state::off || this->trans_state == transition_state::on_steady_state)
 		        cur_trans_obj = NULL;
 		    else
 		    {
-		        if(this->trans_state == pos_to_off)
+		        if(this->trans_state == transition_state::pos_to_off)
 		            cur_trans_obj = &this->trans_obj_pos_to_off;
-		        else if(this->trans_state == neg_to_off)
+		        else if(this->trans_state == transition_state::neg_to_off)
 		            cur_trans_obj = &this->trans_obj_neg_to_off;
-		        else if(this->trans_state == off_to_pos)
+		        else if(this->trans_state == transition_state::off_to_pos)
 		            cur_trans_obj = &this->trans_obj_off_to_pos;
-		        else if(this->trans_state == off_to_neg)
+		        else if(this->trans_state == transition_state::off_to_neg)
 		            cur_trans_obj = &this->trans_obj_off_to_neg;
-		        else if(this->trans_state == moving_toward_pos_inf)
+		        else if(this->trans_state == transition_state::moving_toward_pos_inf)
 					this->cur_trans_obj = &this->trans_obj_moving_toward_pos_inf;
-				else if(this->trans_state == moving_toward_neg_inf)
+				else if(this->trans_state == transition_state::moving_toward_neg_inf)
 					this->cur_trans_obj = &this->trans_obj_moving_toward_neg_inf;
-		        else if(this->trans_state == pos_moving_toward_pos_inf)
+		        else if(this->trans_state == transition_state::pos_moving_toward_pos_inf)
 		            cur_trans_obj = &this->trans_obj_pos_moving_toward_pos_inf;
-		        else if(this->trans_state == pos_moving_toward_neg_inf)
+		        else if(this->trans_state == transition_state::pos_moving_toward_neg_inf)
 		            cur_trans_obj = &this->trans_obj_pos_moving_toward_neg_inf;
-		        else if(this->trans_state == neg_moving_toward_pos_inf)
+		        else if(this->trans_state == transition_state::neg_moving_toward_pos_inf)
 		            cur_trans_obj = &this->trans_obj_neg_moving_toward_pos_inf;
-		        else if(this->trans_state == neg_moving_toward_neg_inf)
+		        else if(this->trans_state == transition_state::neg_moving_toward_neg_inf)
 		            cur_trans_obj = &this->trans_obj_neg_moving_toward_neg_inf;
 	        
 		        cur_trans_obj->init_transition(t0_unix_time, X0, this->target_ref_X, trans_interruption_state, transition_just_crossed_zero);
-		        trans_interruption_state = not_interupted;
+		        trans_interruption_state = transition_interruption_state::not_interupted;
 		    }
 		}
    		
@@ -759,7 +760,7 @@ if(this->print_debug_info)
     	transition_state_has_changed = false;
     	exit_loop = true;
     	
-    	if(this->trans_state == off)
+    	if(this->trans_state == transition_state::off)
 	    {	        
 	    	duration_sec += integrate_to_unix_time - t0_unix_time;
 	    	//area_Xsec += 0;
@@ -767,7 +768,7 @@ if(this->print_debug_info)
 	        t0_unix_time = integrate_to_unix_time;
 			X0 = 0;
 	    }
-	    else if(this->trans_state == on_steady_state)
+	    else if(this->trans_state == transition_state::on_steady_state)
 	    {
 	    	duration_sec += integrate_to_unix_time - t0_unix_time;
 	    	area_Xsec += X0*(integrate_to_unix_time - t0_unix_time);
@@ -784,19 +785,19 @@ if(this->print_debug_info)
 	    	area_Xsec += integral.interval_area_Xsec;
 	    	this->debug_trans_status_vec.push_back(integral.status_val);
 	    	
-	    	if(integral.status_val == transition_reached_nowTime_not_target)
+	    	if(integral.status_val == transition_status::transition_reached_nowTime_not_target)
 	    	{
 	    		// Do Nothing
 	    	}
-	    	else if(integral.status_val == transition_reached_target_not_nowTime)
+	    	else if(integral.status_val == transition_status::transition_reached_target_not_nowTime)
 	    	{
 	    		duration_sec += integrate_to_unix_time - integral.end_of_interval_unix_time;
 	    		area_Xsec += integral.end_of_interval_X_val * (integrate_to_unix_time - integral.end_of_interval_unix_time);
 	    		transition_to_onSteadyState_or_off = true;
 	    	}	    	
-	    	else if(integral.status_val == transition_interupted_opposite_direction || integral.status_val == transition_interupted_same_direction)
+	    	else if(integral.status_val == transition_status::transition_interupted_opposite_direction || integral.status_val == transition_status::transition_interupted_same_direction)
 	    	{
-	    		trans_interruption_state = (integral.status_val == transition_interupted_opposite_direction) ? new_transition_in_opposite_direction : new_transition_in_same_direction;
+	    		trans_interruption_state = (integral.status_val == transition_status::transition_interupted_opposite_direction) ? transition_interruption_state::new_transition_in_opposite_direction : transition_interruption_state::new_transition_in_same_direction;
 	    		transition_state_has_changed = true;
 	    		exit_loop = false;
 	    		
@@ -805,14 +806,14 @@ if(this->print_debug_info)
 	    		if(this->pos_and_neg_transitions_are_unique)
 	    		{
 	    			if(0 < integral.end_of_interval_X_val)
-	    				this->trans_state = bool_moving_toward_pos_inf ? pos_moving_toward_pos_inf : pos_moving_toward_neg_inf;
+	    				this->trans_state = bool_moving_toward_pos_inf ? transition_state::pos_moving_toward_pos_inf : transition_state::pos_moving_toward_neg_inf;
 	    			else
-	    				this->trans_state = bool_moving_toward_pos_inf ? neg_moving_toward_pos_inf : neg_moving_toward_neg_inf;
+	    				this->trans_state = bool_moving_toward_pos_inf ? transition_state::neg_moving_toward_pos_inf : transition_state::neg_moving_toward_neg_inf;
 	    		}
 	    		else
-	    			this->trans_state = bool_moving_toward_pos_inf ? moving_toward_pos_inf : moving_toward_neg_inf;
+	    			this->trans_state = bool_moving_toward_pos_inf ? transition_state::moving_toward_pos_inf : transition_state::moving_toward_neg_inf;
 	    	}
-	    	else if(integral.status_val == transition_crossing_zero_now)
+	    	else if(integral.status_val == transition_status::transition_crossing_zero_now)
 	    	{
 	    		exit_loop = false;
 	    	}
@@ -824,10 +825,10 @@ if(this->print_debug_info)
 		    {
 		        cur_trans_obj = NULL;
 		        
-		        if(this->trans_state == pos_to_off || this->trans_state == neg_to_off)                
-		            this->trans_state = off;
+		        if(this->trans_state == transition_state::pos_to_off || this->trans_state == transition_state::neg_to_off)                
+		            this->trans_state = transition_state::off;
 		        else
-		            this->trans_state = on_steady_state;
+		            this->trans_state = transition_state::on_steady_state;
 		    }
 	    }
 	    

@@ -19,7 +19,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
 
     std::unordered_map<EVSE_level, std::map<puVrms, P2> > data;
 
-    data.emplace(L1, []() {
+    data.emplace(EVSE_level::L1, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.69, 0.7, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.00, 0.7, 2.0 };
 
@@ -32,7 +32,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
         return curve;
     }());
 
-    data.emplace(L2, []() {
+    data.emplace(EVSE_level::L2, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.34, 0.35, 0.94, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.0, 0.373, 1.0, 1.0 };
 
@@ -45,7 +45,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
         return curve;
     }());
 
-    data.emplace(DCFC, []() {
+    data.emplace(EVSE_level::DCFC, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.79, 0.80, 1.20, 1.21, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 };
 

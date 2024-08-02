@@ -17,9 +17,9 @@ const EV_inventory& load_EV_inventory::get_EV_inventory() const
 battery_chemistry load_EV_inventory::string_to_battery_chemistry(const std::string& str)
 {
 	const std::unordered_map<std::string, battery_chemistry> map = {
-		{"LTO", LTO},
-		{"LMO", LMO},
-		{"NMC", NMC}
+		{"LTO", battery_chemistry::LTO},
+		{"LMO", battery_chemistry::LMO},
+		{"NMC", battery_chemistry::NMC}
 	};
 
 	auto it = map.find(str);
