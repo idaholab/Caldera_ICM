@@ -97,7 +97,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 
 	py::class_<charge_event_data>(m, "charge_event_data")
 		.def(py::init<>())
-		.def(py::init<int, int, SE_id_type, vehicle_id_type, EV_type, double, double, double, double, stop_charging_criteria, control_strategy_enums>())
+		.def(py::init<int, int, SupplyEquipmentId, vehicle_id_type, EV_type, double, double, double, double, stop_charging_criteria, control_strategy_enums>())
 		.def_readwrite("charge_event_id", &charge_event_data::charge_event_id)
 		.def_readwrite("SE_group_id", &charge_event_data::SE_group_id)
 		.def_readwrite("SE_id", &charge_event_data::SE_id)
@@ -120,7 +120,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 				charge_event_data obj;
 				obj.charge_event_id = t[0].cast<int>();
 				obj.SE_group_id = t[1].cast<int>();
-				obj.SE_id = t[2].cast<SE_id_type>();
+				obj.SE_id = t[2].cast<SupplyEquipmentId>();
 				obj.vehicle_id = t[3].cast<vehicle_id_type>();
 				obj.vehicle_type = t[4].cast<EV_type>();
 				obj.arrival_unix_time = t[5].cast<double>();
@@ -185,7 +185,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 	//---------------------------------
 	py::class_<SE_configuration>(m, "SE_configuration")
 		.def(py::init<>())
-		.def(py::init<int, SE_id_type, EVSE_type, double, double, grid_node_id_type, std::string>())
+		.def(py::init<int, SupplyEquipmentId, EVSE_type, double, double, grid_node_id_type, std::string>())
 		.def_readwrite("SE_group_id", &SE_configuration::SE_group_id)
 		.def_readwrite("SE_id", &SE_configuration::SE_id)
 		.def_readwrite("supply_equipment_type", &SE_configuration::supply_equipment_type)
@@ -202,7 +202,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			{  // __setstate__
 				SE_configuration obj;
 				obj.SE_group_id = t[0].cast<int>();
-				obj.SE_id = t[1].cast<SE_id_type>();
+				obj.SE_id = t[1].cast<SupplyEquipmentId>();
 				obj.supply_equipment_type = t[2].cast<EVSE_type>();
 				obj.lattitude = t[3].cast<double>();
 				obj.longitude = t[4].cast<double>();
@@ -277,7 +277,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			[](py::tuple t)
 			{  // __setstate__
 				CE_FICE obj;
-				obj.SE_id = t[0].cast<SE_id_type>();
+				obj.SE_id = t[0].cast<SupplyEquipmentId>();
 				obj.charge_event_id = t[1].cast<int>();
 				obj.charge_energy_ackWh = t[2].cast<double>();
 				obj.interval_duration_hrs = t[3].cast<double>();
@@ -340,7 +340,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			[](py::tuple t)
 			{  // __setstate_
 				active_CE obj;
-				obj.SE_id = t[0].cast<SE_id_type>();
+				obj.SE_id = t[0].cast<SupplyEquipmentId>();
 				obj.supply_equipment_type = t[1].cast<EVSE_type>();
 				obj.charge_event_id = t[2].cast<int>();
 				obj.vehicle_id = t[3].cast<vehicle_id_type>();
@@ -378,7 +378,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			[](py::tuple t)
 			{  // __setstate__
 				SE_setpoint obj;
-				obj.SE_id = t[0].cast<SE_id_type>();
+				obj.SE_id = t[0].cast<SupplyEquipmentId>();
 				obj.PkW = t[1].cast<double>();
 				obj.QkVAR = t[2].cast<double>();
 
@@ -399,7 +399,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			[](py::tuple t)
 			{  // __setstate__
 				completed_CE obj;
-				obj.SE_id = t[0].cast<SE_id_type>();
+				obj.SE_id = t[0].cast<SupplyEquipmentId>();
 				obj.charge_event_id = t[1].cast<int>();
 				obj.final_soc = t[2].cast<double>();
 
@@ -984,7 +984,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 			[](py::tuple t)
 			{  // __setstate__    
 				ES500_aggregator_pev_charge_needs obj;
-				obj.SE_id = t[0].cast<SE_id_type>();
+				obj.SE_id = t[0].cast<SupplyEquipmentId>();
 				obj.departure_unix_time = t[1].cast<double>();
 				obj.e3_charge_remain_kWh = t[2].cast<double>();
 				obj.e3_step_max_kWh = t[3].cast<double>();
@@ -1022,7 +1022,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 
 	py::class_<ES500_aggregator_e_step_setpoints>(m, "ES500_aggregator_e_step_setpoints")
 		.def(py::init<>())
-		.def(py::init<double, std::vector<SE_id_type>, std::vector<double>, std::vector<double> >())
+		.def(py::init<double, std::vector<SupplyEquipmentId>, std::vector<double>, std::vector<double> >())
 		.def("is_empty", &ES500_aggregator_e_step_setpoints::is_empty)
 		.def_readwrite("next_aggregator_timestep_start_time", &ES500_aggregator_e_step_setpoints::next_aggregator_timestep_start_time)
 		.def_readwrite("SE_id", &ES500_aggregator_e_step_setpoints::SE_id)
@@ -1039,7 +1039,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 				obj.next_aggregator_timestep_start_time = t[0].cast<double>();
 
 				for (auto x : t[1])
-					obj.SE_id.push_back(x.cast<SE_id_type>());
+					obj.SE_id.push_back(x.cast<SupplyEquipmentId>());
 
 				for (auto x : t[2])
 					obj.e3_step_kWh.push_back(x.cast<double>());

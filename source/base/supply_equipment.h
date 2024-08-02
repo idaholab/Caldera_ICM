@@ -34,7 +34,7 @@ public:
                                   factory_ac_to_dc_converter* ac_to_dc_converter_factory,
                                   pev_charge_profile_library* charge_profile_library );
     
-    bool is_SE_with_id( const SE_id_type SE_id );
+    bool is_SE_with_id( const SupplyEquipmentId SE_id );
 
     SE_configuration get_SE_configuration();
 
