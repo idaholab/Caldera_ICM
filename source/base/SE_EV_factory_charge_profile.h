@@ -30,18 +30,39 @@ private:
 
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
     
-    void create_charge_fragments_vector(int charge_event_Id, double time_step_sec, double target_acP3_kW, pev_SE_pair pev_SE, double& max_P3kW, std::vector<pev_charge_fragment>& charge_fragments);
-    double get_max_P3kW(double time_step_sec, pev_SE_pair pev_SE);
-    double get_min_P3kW(double max_P3kW, pev_SE_pair pev_SE);
-    void get_charge_profile_aux_parameters(double max_P3kW, pev_SE_pair pev_SE, std::vector<double>& time_step_sec, std::vector<double>& target_acP3_kW, std::vector<pev_charge_fragment_removal_criteria>& fragment_removal_criteria);
-    pev_charge_profile_aux get_pev_charge_profile_aux(int charge_event_Id, bool save_validation_data, double time_step_sec, double target_acP3_kW, pev_SE_pair pev_SE, pev_charge_fragment_removal_criteria fragment_removal_criteria, double& max_P3kW);
+    void create_charge_fragments_vector( const int charge_event_Id,
+                                         const double time_step_sec,
+                                         const double target_acP3_kW,
+                                         const pev_SE_pair pev_SE,
+                                         double& max_P3kW,
+                                         std::vector<pev_charge_fragment>& charge_fragments );
+    double get_max_P3kW( const double time_step_sec,
+                         const pev_SE_pair pev_SE );
+    double get_min_P3kW( const double max_P3kW,
+                         const pev_SE_pair pev_SE );
+    void get_charge_profile_aux_parameters( const double max_P3kW,
+                                            const pev_SE_pair pev_SE,
+                                            std::vector<double>& time_step_sec,
+                                            std::vector<double>& target_acP3_kW,
+                                            std::vector<pev_charge_fragment_removal_criteria>& fragment_removal_criteria );
+    pev_charge_profile_aux get_pev_charge_profile_aux( const int charge_event_Id,
+                                                       const bool save_validation_data,
+                                                       const double time_step_sec,
+                                                       const double target_acP3_kW,
+                                                       const pev_SE_pair pev_SE,
+                                                       const pev_charge_fragment_removal_criteria fragment_removal_criteria,
+                                                       double& max_P3kW );
     
 public:
     factory_charge_profile_library(const EV_EVSE_inventory& inventory) : inventory{ inventory } {};
-    pev_charge_profile_library  get_charge_profile_library(bool save_validation_data, bool create_charge_profile_library);
+    pev_charge_profile_library  get_charge_profile_library( const bool save_validation_data,
+                                                            const bool create_charge_profile_library );
     
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > get_validation_data();
-    std::vector<pev_charge_fragment> USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile(double time_step_sec, double target_acP3_kW, EV_type pev_type, EVSE_type SE_type);
+    std::vector<pev_charge_fragment> USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( const double time_step_sec,
+                                                                                         const double target_acP3_kW,
+                                                                                         const EV_type pev_type,
+                                                                                         const EVSE_type SE_type );
 };
 
 
@@ -57,19 +78,29 @@ private:
     
 public:
 
-    factory_charge_profile_library_v2(const EV_EVSE_inventory& inventory,
-                                      const EV_ramping_map& ramping_by_pevType_only,
-                                      const EV_EVSE_ramping_map& ramping_by_pevType_seType)
+    factory_charge_profile_library_v2( const EV_EVSE_inventory& inventory,
+                                       const EV_ramping_map& ramping_by_pevType_only,
+                                       const EV_EVSE_ramping_map& ramping_by_pevType_seType )
         : inventory{ inventory },
         ramping_by_pevType_only{ ramping_by_pevType_only },
         ramping_by_pevType_seType{ ramping_by_pevType_seType }
     {
     }
     
-    void create_charge_profile(double time_step_sec, pev_SE_pair pev_SE, double start_soc, double end_soc, double target_acP3_kW, std::vector<double>& soc, std::vector<ac_power_metrics>& charge_profile);
-    //void initialize_custome_parameters(std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only_, std::map< std::tuple<EV_type, EVSE_type>, pev_charge_ramping> ramping_by_pevType_seType_);
+    void create_charge_profile( const double time_step_sec,
+                                const pev_SE_pair pev_SE,
+                                const double start_soc,
+                                const double end_soc,
+                                const double target_acP3_kW,
+                                std::vector<double>& soc,
+                                std::vector<ac_power_metrics>& charge_profile );
     
-    pev_charge_profile_library_v2 get_charge_profile_library(double L1_timestep_sec, double L2_timestep_sec, double HPC_timestep_sec);
+    // void initialize_custome_parameters( std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only_,
+    //                                     std::map< std::tuple<EV_type, EVSE_type>, pev_charge_ramping> ramping_by_pevType_seType_ );
+    
+    pev_charge_profile_library_v2 get_charge_profile_library( const double L1_timestep_sec,
+                                                              const double L2_timestep_sec,
+                                                              const double HPC_timestep_sec );
 };
 
 #endif

@@ -54,15 +54,15 @@ protected:
 
 public:
 
-    algorithm_P2_vs_soc(const vehicle_charge_model_inputs& inputs);
+    algorithm_P2_vs_soc( const vehicle_charge_model_inputs& inputs );
     
-    void find_line_segment_index(double init_soc, 
-                                 bool &line_segment_not_found);    
+    void find_line_segment_index( const double init_soc, 
+                                  bool &line_segment_not_found );    
     double get_soc_UB() const;
     double get_soc_LB() const;
     double get_soc_to_energy() const;
-    void get_next_line_segment(bool is_charging_not_discharging, 
-                               bool &next_line_segment_exists);
+    void get_next_line_segment( const bool is_charging_not_discharging, 
+                                bool &next_line_segment_exists );
     void set_P2_vs_soc(std::shared_ptr<std::vector<line_segment> > P2_vs_soc);
     virtual double get_soc_t1(double t1_minus_t0_hrs, 
                               double soc_t0) = 0;
