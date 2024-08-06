@@ -7,18 +7,17 @@
 #include <unordered_set>
 
 
-downsample_charge_fragment_vector::downsample_charge_fragment_vector(pev_charge_fragment_removal_criteria fragment_removal_criteria_)
+downsample_charge_fragment_vector::downsample_charge_fragment_vector( const pev_charge_fragment_removal_criteria fragment_removal_criteria_ )
 {
     this->fragment_removal_criteria = fragment_removal_criteria_;
     this->change_metric_multiplier = std::pow(10, 12);  // 10^12
-/*    
-std::cout << "    max_percent_of_fragments_that_can_be_removed: " << this->fragment_removal_criteria.max_percent_of_fragments_that_can_be_removed << std::endl;
-std::cout << "    perc_change_threshold: " << this->fragment_removal_criteria.perc_change_threshold << std::endl;
-std::cout << "    kW_change_threshold: " << this->fragment_removal_criteria.kW_change_threshold << std::endl;
-std::cout << "    threshold_to_determine_not_removable_fragments_on_flat_peak_kW: " << this->fragment_removal_criteria.threshold_to_determine_not_removable_fragments_on_flat_peak_kW << std::endl;
-std::cout << "    perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow: " << this->fragment_removal_criteria.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow << std::endl;
-std::cout << std::endl;    
-*/
+
+    // std::cout << "    max_percent_of_fragments_that_can_be_removed: " << this->fragment_removal_criteria.max_percent_of_fragments_that_can_be_removed << std::endl;
+    // std::cout << "    perc_change_threshold: " << this->fragment_removal_criteria.perc_change_threshold << std::endl;
+    // std::cout << "    kW_change_threshold: " << this->fragment_removal_criteria.kW_change_threshold << std::endl;
+    // std::cout << "    threshold_to_determine_not_removable_fragments_on_flat_peak_kW: " << this->fragment_removal_criteria.threshold_to_determine_not_removable_fragments_on_flat_peak_kW << std::endl;
+    // std::cout << "    perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow: " << this->fragment_removal_criteria.perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow << std::endl;
+    // std::cout << std::endl;    
 }
 
 
@@ -34,7 +33,9 @@ std::vector<pev_charge_fragment_variation> downsample_charge_fragment_vector::ge
 }
 
 
-int64_t downsample_charge_fragment_vector::calculate_variation_rank(std::list<pev_charge_fragment_variation>::iterator it, std::mt19937& gen, std::uniform_int_distribution<>& dis)
+int64_t downsample_charge_fragment_vector::calculate_variation_rank( const std::list<pev_charge_fragment_variation>::iterator it,
+                                                                     std::mt19937& gen,
+                                                                     std::uniform_int_distribution<>& dis )
 {
     std::list<pev_charge_fragment_variation>::iterator it_next, it_prev;
     
@@ -69,9 +70,11 @@ int64_t downsample_charge_fragment_vector::calculate_variation_rank(std::list<pe
 }
 
 
-int downsample_charge_fragment_vector::get_index_of_elbow(int start_index, int end_index, std::list<pev_charge_fragment_variation>& fragment_variations)
+int downsample_charge_fragment_vector::get_index_of_elbow( const int start_index,
+                                                           const int end_index,
+                                                           const std::list<pev_charge_fragment_variation>& fragment_variations )
 {
-    std::list<pev_charge_fragment_variation>::iterator it;
+    std::list<pev_charge_fragment_variation>::const_iterator it;
     
     it = fragment_variations.begin();
     it = std::next(it, start_index);
@@ -109,7 +112,8 @@ int downsample_charge_fragment_vector::get_index_of_elbow(int start_index, int e
 }
 
 
-void downsample_charge_fragment_vector::downsample(std::vector<pev_charge_fragment>& original_charge_fragments, std::vector<pev_charge_fragment>& downsampled_charge_fragments)
+void downsample_charge_fragment_vector::downsample( std::vector<pev_charge_fragment>& original_charge_fragments,
+                                                    std::vector<pev_charge_fragment>& downsampled_charge_fragments )
 {
     downsampled_charge_fragments.clear();
     this->variationRank_to_fragmentVariationIt_map.clear();
@@ -128,11 +132,11 @@ void downsample_charge_fragment_vector::downsample(std::vector<pev_charge_fragme
     std::sort(original_charge_fragments.begin(), original_charge_fragments.end());
     int num_original_fragments = original_charge_fragments.size();
     
-    pev_charge_fragment* fragment_ptr;
+    const pev_charge_fragment* fragment_ptr;
     double P3_kW;    
     int i = 0;
 
-    fragment_ptr = &original_charge_fragments[i];
+    fragment_ptr = &original_charge_fragments.at(i);
     
     if(std::abs(fragment_ptr->time_since_charge_began_hrs) < 0.000001)
     {
@@ -147,8 +151,8 @@ void downsample_charge_fragment_vector::downsample(std::vector<pev_charge_fragme
 
     for(i=1; i<num_original_fragments; i++)
     {
-        fragment_ptr = &original_charge_fragments[i];
-        P3_kW = (original_charge_fragments[i].E3_kWh - original_charge_fragments[i-1].E3_kWh) / (original_charge_fragments[i].time_since_charge_began_hrs - original_charge_fragments[i-1].time_since_charge_began_hrs);
+        fragment_ptr = &original_charge_fragments.at(i);
+        P3_kW = (original_charge_fragments.at(i).E3_kWh - original_charge_fragments.at(i-1).E3_kWh) / (original_charge_fragments.at(i).time_since_charge_began_hrs - original_charge_fragments.at(i-1).time_since_charge_began_hrs);
         this->charge_fragment_variations.emplace_back(i, fragment_ptr->time_since_charge_began_hrs, fragment_ptr->soc, P3_kW);
     }
     
@@ -316,7 +320,7 @@ void downsample_charge_fragment_vector::downsample(std::vector<pev_charge_fragme
     for(int i=0; i<num_original_fragments; i++)
     {
         if(indexes_to_remove.count(i) == 0)
-            downsampled_charge_fragments.push_back(original_charge_fragments[i]);
+            downsampled_charge_fragments.push_back(original_charge_fragments.at(i));
     }
 }
 
