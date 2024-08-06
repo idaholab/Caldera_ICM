@@ -4,8 +4,8 @@
 
 #include "supply_equipment_load.h"
 #include "supply_equipment_control.h"
-#include "battery_integrate_X_in_time.h"	// integrate_X_through_time
-#include "helper.h"					        // rand_val, line_segment
+#include "battery_integrate_X_in_time.h"    // integrate_X_through_time
+#include "helper.h"                            // rand_val, line_segment
 #include "charge_profile_library.h"
 #include "charge_profile_downsample_fragments.h"
 
@@ -15,8 +15,8 @@
 
 #include <cmath>
 #include <vector>
-#include <algorithm>						// sort
-#include <iostream>							// cout
+#include <algorithm>                        // sort
+#include <iostream>                            // cout
 
 
 

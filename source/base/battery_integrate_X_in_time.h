@@ -21,19 +21,19 @@ enum class transition_criteria_type
 
 enum class transition_status
 {
-	transition_reached_target_not_nowTime = 0,
-	transition_reached_nowTime_not_target = 1,
-	transition_interupted_same_direction = 2,
-	transition_interupted_opposite_direction = 3,
-	transition_crossing_zero_now = 4
+    transition_reached_target_not_nowTime = 0,
+    transition_reached_nowTime_not_target = 1,
+    transition_interupted_same_direction = 2,
+    transition_interupted_opposite_direction = 3,
+    transition_crossing_zero_now = 4
 };
 
 
 enum class transition_interruption_state
 {
-	not_interupted = 0,
-	new_transition_in_same_direction = 1,
-	new_transition_in_opposite_direction = 2
+    not_interupted = 0,
+    new_transition_in_same_direction = 1,
+    new_transition_in_opposite_direction = 2
 };
 
 
@@ -99,7 +99,7 @@ private:
     
     std::vector<transition_goto_next_segment_criteria> goto_next_segment_criteria;
     
-    	// Dealing with inturrupting transitions
+        // Dealing with inturrupting transitions
     int start_segment_index_when_this_transition_interupts_another_transition;
     double target_X_deviation_limit_to_interupt_this_transition;
 
@@ -134,9 +134,9 @@ struct integral_of_X
 
 struct debug_data
 {
-	transition_state trans_state;
-	double end_of_interval_X;
-	std::vector<transition_status> trans_status_vec;
+    transition_state trans_state;
+    double end_of_interval_X;
+    std::vector<transition_status> trans_status_vec;
 };
 
 
@@ -166,7 +166,7 @@ private:
 public:
     bool print_debug_info;
 
-	integrate_X_through_time() {};
+    integrate_X_through_time() {};
     integrate_X_through_time( const double target_deadband_,
                               const double off_deadband_,
                               const bool pos_and_neg_transitions_are_unique_,

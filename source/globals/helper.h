@@ -5,7 +5,7 @@
 
 #include <vector>
 #include <string>
-#include <iostream>   	// Stream to consol (may be needed for files too???)
+#include <iostream>       // Stream to consol (may be needed for files too???)
 #include <cmath>        // floor, abs
 #include <random>
 
@@ -67,24 +67,24 @@ public:
 struct line_segment
 {
     // y = a*x + b
-	double x_LB;
+    double x_LB;
     double x_UB;
     double a;
     double b;
    
-   	const double y_UB() const {return this->a*this->x_UB + this->b;}
+       const double y_UB() const {return this->a*this->x_UB + this->b;}
     const double y_LB() const {return this->a*this->x_LB + this->b;}
     const double y(const double x) const {return this->a*x + this->b;}
     
-   	bool operator<(const line_segment& rhs) const
-   	{
-   		return this->x_LB < rhs.x_LB;
-   	}
+       bool operator<(const line_segment& rhs) const
+       {
+           return this->x_LB < rhs.x_LB;
+       }
 
     bool operator<(line_segment& rhs) const
-   	{
-   		return this->x_LB < rhs.x_LB;
-   	}
+       {
+           return this->x_LB < rhs.x_LB;
+       }
 
     line_segment(const double x_LB, const double x_UB, const double a, const double b)
         : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
@@ -175,8 +175,8 @@ std::vector<std::string> split(const std::string& line, char delim);
 class rand_val
 {
 public:
-	static double rand_range(double min, double max);
-	static double rand_zero_to_one();
+    static double rand_range(double min, double max);
+    static double rand_zero_to_one();
                                
 private:
     static bool rand_is_initialized;        
@@ -193,20 +193,20 @@ class LPF_kernel
 {
 private:
     std::vector<double> raw_data;
-	int cur_raw_data_index;
+    int cur_raw_data_index;
     
     LPF_window_enum window_type;
-   	int window_size;
+       int window_size;
     
-	std::vector<double> window;
-	double window_area;
-	
+    std::vector<double> window;
+    double window_area;
+    
 public:
     LPF_kernel() {};
-	LPF_kernel(int max_window_size, double initial_raw_data_value);
+    LPF_kernel(int max_window_size, double initial_raw_data_value);
     void update_LPF(LPF_parameters& LPF_params);
     void add_raw_data_value(double next_input_value);
-	double get_filtered_value();
+    double get_filtered_value();
 };
 
 
@@ -327,24 +327,24 @@ public:
 
 enum dcfc_enum
 {
-	dcfc_50kW_125A_LV_ABB_Terra53CJ = 0,
-	dcfc_320kW_500A_HV_ABB_TerraHP_SAE = 1,
-	dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo = 2,
-	dcfc_200kW_300A_HV = 3,
-	dcfc_500kW_600A_HV = 4
+    dcfc_50kW_125A_LV_ABB_Terra53CJ = 0,
+    dcfc_320kW_500A_HV_ABB_TerraHP_SAE = 1,
+    dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo = 2,
+    dcfc_200kW_300A_HV = 3,
+    dcfc_500kW_600A_HV = 4
 };
 
 
 enum pev_enum
 {
-	pev_52pkW_22kWh_2c_132A_LMO_LV = 0,
-	pev_68pkW_54kWh_1c_176A_NMC_LV = 1,
-	pev_203pkW_54kWh_3c_390A_NMC_LV = 2,
-	pev_368pkW_98kWh_3c_360A_NMC_HV = 3,
-	pev_431pkW_115kWh_3c_399A_NMC_HV = 4,
-	pev_214pkW_38kWh_5c_200A_LTO_HV = 5,
-	pev_188pkW_150kWh_1c_385A_NMC_LV = 6,
-	pev_363pkW_150kWh_2c_385A_NMC_HV = 7
+    pev_52pkW_22kWh_2c_132A_LMO_LV = 0,
+    pev_68pkW_54kWh_1c_176A_NMC_LV = 1,
+    pev_203pkW_54kWh_3c_390A_NMC_LV = 2,
+    pev_368pkW_98kWh_3c_360A_NMC_HV = 3,
+    pev_431pkW_115kWh_3c_399A_NMC_HV = 4,
+    pev_214pkW_38kWh_5c_200A_LTO_HV = 5,
+    pev_188pkW_150kWh_1c_385A_NMC_LV = 6,
+    pev_363pkW_150kWh_2c_385A_NMC_HV = 7
 };
 
 
@@ -378,15 +378,15 @@ struct dcfc_charge_event
     double departure_SOC;
     bool stop_charging_at_target_soc_even_if_not_depart_time;
     
-	bool operator<(const dcfc_charge_event& x) const
-	{
-		return arrival_unix_time < x.arrival_unix_time;
-	}
+    bool operator<(const dcfc_charge_event& x) const
+    {
+        return arrival_unix_time < x.arrival_unix_time;
+    }
 
     bool operator<(dcfc_charge_event& x) const
-	{
-		return arrival_unix_time < x.arrival_unix_time;
-	}
+    {
+        return arrival_unix_time < x.arrival_unix_time;
+    }
 };
 
 
@@ -422,7 +422,7 @@ struct site_bat_info
     int site_bat_id;
     site_battery* site_bat_ptr;
     site_bat_enum site_bat_type;
-	bool use_charge_rate_transitions;
+    bool use_charge_rate_transitions;
 };
         
 
@@ -482,7 +482,7 @@ struct power_struct
 
 struct acPQ_struct
 {
-	double acP_kW;
+    double acP_kW;
     double acQ_kVAR;
 };
 
@@ -495,22 +495,22 @@ std::ostream& operator<<(std::ostream& out, power_struct& x);
 
 enum LPF_window
 {
-	Hanning=0,
-	Blackman=1
+    Hanning=0,
+    Blackman=1
 };
 
 class LPF_kernel
 {
 private:
-	std::vector<double> window;
-	double window_area;
-	
-	std::vector<double> data;
-	double cur_data_index;
+    std::vector<double> window;
+    double window_area;
+    
+    std::vector<double> data;
+    double cur_data_index;
 
 public:
-	LPF_kernel(int window_size, LPF_window window_type);
-	double get_filtered_value(double next_input_value);
+    LPF_kernel(int window_size, LPF_window window_type);
+    double get_filtered_value(double next_input_value);
 };
 
 
@@ -521,14 +521,14 @@ public:
 class log_warnings_and_errors
 {
 private:
-	static bool log_streams_have_been_initialized;
-	static std::ofstream warnings_log;
-	static std::ofstream errors_log;
-	static void init_log_streams();
-	
+    static bool log_streams_have_been_initialized;
+    static std::ofstream warnings_log;
+    static std::ofstream errors_log;
+    static void init_log_streams();
+    
 public:
-	static std::ofstream& get_warnings_ofstream();
-	static std::ofstream& get_errors_ofstream();
+    static std::ofstream& get_warnings_ofstream();
+    static std::ofstream& get_errors_ofstream();
 };
 
 
