@@ -27,7 +27,7 @@ private:
     const bool model_stochastic_battery_degregation;
 
 public:
-	factory_EV_charge_model(const EV_EVSE_inventory& inventory,
+    factory_EV_charge_model(const EV_EVSE_inventory& inventory,
                             const EV_ramping_map& EV_ramping,
                             const EV_EVSE_ramping_map& EV_EVSE_ramping,
                             const bool model_stochastic_battery_degregation);

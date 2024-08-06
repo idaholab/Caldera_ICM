@@ -76,29 +76,29 @@ class factory_SOC_vs_P2
 {
 private:
 
-	const EV_EVSE_inventory& inventory;
+    const EV_EVSE_inventory& inventory;
 
     const create_dcPkW_from_soc LMO_charge;
     const create_dcPkW_from_soc NMC_charge;
     const create_dcPkW_from_soc LTO_charge;
 
-	std::vector<bat_objfun_constraints> constraints;
+    std::vector<bat_objfun_constraints> constraints;
 
-	const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
-	const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
+    const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
     const SOC_vs_P2 error_case_curve; // <-- empty data structure the reference to which is returned in error cases.
 
     const create_dcPkW_from_soc load_LMO_charge();
     const create_dcPkW_from_soc load_NMC_charge();
     const create_dcPkW_from_soc load_LTO_charge();
 
-	const std::unordered_map<EV_type, SOC_vs_P2 > load_L1_L2_curves();
-	const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves();
+    const std::unordered_map<EV_type, SOC_vs_P2 > load_L1_L2_curves();
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves();
 
 public:
     factory_SOC_vs_P2(const EV_EVSE_inventory& inventory);
 
-	const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, 
+    const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, 
                                           const EVSE_type& EVSE) const;
 
     void write_charge_profile(const std::string& output_path) const;

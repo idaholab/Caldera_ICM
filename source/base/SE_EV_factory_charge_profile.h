@@ -5,8 +5,8 @@
 
 #include "datatypes_global.h"                       // SE_configuration, pev_charge_fragment, pev_charge_fragment_removal_criteria
 #include "datatypes_module.h"                       // charge_event_P3kW_limits, SE_status, CE_Status
-#include "vehicle_charge_model.h"	                // vehicle_charge_model, charge_event_data
-#include "supply_equipment_load.h"		            // supply_equipment_load
+#include "vehicle_charge_model.h"                    // vehicle_charge_model, charge_event_data
+#include "supply_equipment_load.h"                    // supply_equipment_load
 #include "supply_equipment_control.h"               // supply_equipment_control
 #include "supply_equipment.h"                       // supply_equipment
 #include "ac_to_dc_converter.h"                     // ac_to_dc_converter

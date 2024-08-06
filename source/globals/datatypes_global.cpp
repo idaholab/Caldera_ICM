@@ -1,7 +1,7 @@
 
 #include "datatypes_global.h"
 #include <cmath>
-#include <stdexcept>	// invalid_argument
+#include <stdexcept>    // invalid_argument
 
 //==================================================================
 //                timeseries
@@ -99,8 +99,8 @@ ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_time_with_error_check(
     if( index >= this->data.size() || index < 0 )
     {
         std::string error_msg = "Error: 'time_sec' is out of scope of the array. [1]";
-		std::cout << error_msg << std::endl;
-		throw(std::invalid_argument(error_msg));
+        std::cout << error_msg << std::endl;
+        throw(std::invalid_argument(error_msg));
     }
     return this->data.at(index);
 }
@@ -149,8 +149,8 @@ ARR_DATA_TYPE time_series_v2<ARR_DATA_TYPE>::get_val_from_index( const int index
     if( index >= this->data.size() || index < 0 )
     {
         std::string error_msg = "Error: 'time_sec' is out of scope of the array. [2]";
-		std::cout << error_msg << std::endl;
-		throw(std::invalid_argument(error_msg));
+        std::cout << error_msg << std::endl;
+        throw(std::invalid_argument(error_msg));
     }
     return this->data.at(index);
 }
@@ -194,18 +194,18 @@ std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val)
     bool conversion_successfull = true;
     LPF_window_enum enum_val;
     
-	std::string tmp_str = "";
-	
-	// ignores whitespace
-	for (int i = 0; i < str_val.length(); i++)
-		if (!std::isspace(str_val[i]))
-			tmp_str += str_val[i];
+    std::string tmp_str = "";
+    
+    // ignores whitespace
+    for (int i = 0; i < str_val.length(); i++)
+        if (!std::isspace(str_val[i]))
+            tmp_str += str_val[i];
 
-	     if	(tmp_str == "Hanning") 	    enum_val = LPF_window_enum::Hanning;
-	else if	(tmp_str == "Blackman") 	enum_val = LPF_window_enum::Blackman;
-    else if	(tmp_str == "Rectangular") 	enum_val = LPF_window_enum::Rectangular;
-	else
-	{
+         if    (tmp_str == "Hanning")         enum_val = LPF_window_enum::Hanning;
+    else if    (tmp_str == "Blackman")     enum_val = LPF_window_enum::Blackman;
+    else if    (tmp_str == "Rectangular")     enum_val = LPF_window_enum::Rectangular;
+    else
+    {
         conversion_successfull = false;
         enum_val = LPF_window_enum::Rectangular;
     }
@@ -272,31 +272,31 @@ bool L2_control_strategy_supports_Vrms_using_QkVAR(L2_control_strategies_enum  c
 
 std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const std::string str_val)
 {
-	bool conversion_successfull = true;
+    bool conversion_successfull = true;
     L2_control_strategies_enum enum_val;
     
-	std::string tmp_str = "";
-	
-	// ignores whitespace
-	for (int i = 0; i < str_val.length(); i++)
-		if (!std::isspace(str_val[i]))
-			tmp_str += str_val[i];
-
-	if 		(tmp_str == "NA") 	    enum_val = L2_control_strategies_enum::NA;
-	else if	(tmp_str == "ES100-A") 	enum_val = L2_control_strategies_enum::ES100_A;
-    else if	(tmp_str == "ES100-B") 	enum_val = L2_control_strategies_enum::ES100_B;
-    else if	(tmp_str == "ES110") 	enum_val = L2_control_strategies_enum::ES110;
-	else if (tmp_str == "ES200") 	enum_val = L2_control_strategies_enum::ES200;
-	else if (tmp_str == "ES300") 	enum_val = L2_control_strategies_enum::ES300;
-	else if (tmp_str == "ES500") 	enum_val = L2_control_strategies_enum::ES500;
+    std::string tmp_str = "";
     
-	else if (tmp_str == "VS100") 	enum_val = L2_control_strategies_enum::VS100;
-	else if (tmp_str == "VS200-A") 	enum_val = L2_control_strategies_enum::VS200_A;
-    else if (tmp_str == "VS200-B") 	enum_val = L2_control_strategies_enum::VS200_B;
-    else if (tmp_str == "VS200-C") 	enum_val = L2_control_strategies_enum::VS200_C;
-    else if (tmp_str == "VS300") 	enum_val = L2_control_strategies_enum::VS300;
-	else
-	{
+    // ignores whitespace
+    for (int i = 0; i < str_val.length(); i++)
+        if (!std::isspace(str_val[i]))
+            tmp_str += str_val[i];
+
+    if         (tmp_str == "NA")         enum_val = L2_control_strategies_enum::NA;
+    else if    (tmp_str == "ES100-A")     enum_val = L2_control_strategies_enum::ES100_A;
+    else if    (tmp_str == "ES100-B")     enum_val = L2_control_strategies_enum::ES100_B;
+    else if    (tmp_str == "ES110")     enum_val = L2_control_strategies_enum::ES110;
+    else if (tmp_str == "ES200")     enum_val = L2_control_strategies_enum::ES200;
+    else if (tmp_str == "ES300")     enum_val = L2_control_strategies_enum::ES300;
+    else if (tmp_str == "ES500")     enum_val = L2_control_strategies_enum::ES500;
+    
+    else if (tmp_str == "VS100")     enum_val = L2_control_strategies_enum::VS100;
+    else if (tmp_str == "VS200-A")     enum_val = L2_control_strategies_enum::VS200_A;
+    else if (tmp_str == "VS200-B")     enum_val = L2_control_strategies_enum::VS200_B;
+    else if (tmp_str == "VS200-C")     enum_val = L2_control_strategies_enum::VS200_C;
+    else if (tmp_str == "VS300")     enum_val = L2_control_strategies_enum::VS300;
+    else
+    {
         conversion_successfull = false;
         enum_val = L2_control_strategies_enum::NA;
     }
@@ -392,8 +392,8 @@ ES500_aggregator_e_step_setpoints::ES500_aggregator_e_step_setpoints(double next
 
 ES500_charge_cycling_control_boundary_point::ES500_charge_cycling_control_boundary_point(double cycling_magnitude_, double cycling_vs_ramping_)
 {
-	this->cycling_magnitude = cycling_magnitude_;
-	this->cycling_vs_ramping = cycling_vs_ramping_;
+    this->cycling_magnitude = cycling_magnitude_;
+    this->cycling_vs_ramping = cycling_vs_ramping_;
 }
 
 
@@ -403,45 +403,45 @@ ES500_charge_cycling_control_boundary_point::ES500_charge_cycling_control_bounda
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_decision_metric& x)
 {
-    if(x == stop_charging_decision_metric::stop_charging_using_target_soc) 				        out << "stop_charging_using_target_soc";
-	else if(x == stop_charging_decision_metric::stop_charging_using_depart_time)  				out << "stop_charging_using_depart_time";
-	else if(x == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)  	out << "stop_charging_using_whatever_happens_first";
-		
-	return out;
+    if(x == stop_charging_decision_metric::stop_charging_using_target_soc)                         out << "stop_charging_using_target_soc";
+    else if(x == stop_charging_decision_metric::stop_charging_using_depart_time)                  out << "stop_charging_using_depart_time";
+    else if(x == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)      out << "stop_charging_using_whatever_happens_first";
+        
+    return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_mode& x)
 {
-	     if(x == stop_charging_mode::target_charging) 	out << "target_charging";
-	else if(x == stop_charging_mode::block_charging) 	out << "block_charging";
-	
-	return out;
+         if(x == stop_charging_mode::target_charging)     out << "target_charging";
+    else if(x == stop_charging_mode::block_charging)     out << "block_charging";
+    
+    return out;
 }
 
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_criteria& x)
 {
-	out << x.decision_metric << "," << x.soc_mode << "," << x.depart_time_mode << "," << x.soc_block_charging_max_undershoot_percent << "," << x.depart_time_block_charging_max_undershoot_percent;
-	return out;
+    out << x.decision_metric << "," << x.soc_mode << "," << x.depart_time_mode << "," << x.soc_block_charging_max_undershoot_percent << "," << x.depart_time_block_charging_max_undershoot_percent;
+    return out;
 }
 
 
 std::string stop_charging_criteria::get_file_header()
 {
-	return "decision_metric,soc_mode,depart_time_mode,soc_block_charging_max_undershoot_percent,depart_time_block_charging_max_undershoot_percent";
+    return "decision_metric,soc_mode,depart_time_mode,soc_block_charging_max_undershoot_percent,depart_time_block_charging_max_undershoot_percent";
 }
 
 
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x)
 {
-	out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
-	return out;
+    out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
+    return out;
 }
 
 
 std::string charge_event_data::get_file_header()
 {
-	return "charge_event_id,SE_group_id,SE_id,vehicle_id,vehicle_type,arrival_unix_time,departure_unix_time,arrival_SOC,departure_SOC," + stop_charging_criteria::get_file_header();
+    return "charge_event_id,SE_group_id,SE_id,vehicle_id,vehicle_type,arrival_unix_time,departure_unix_time,arrival_SOC,departure_SOC," + stop_charging_criteria::get_file_header();
 }
 
     
@@ -519,13 +519,13 @@ SE_group_configuration::SE_group_configuration(int SE_group_id_, std::vector<SE_
 
 std::ostream& operator<<(std::ostream& out, const SE_charging_status& x)
 {
-	     if(x == SE_charging_status::no_ev_plugged_in)              out << "no_ev_plugged_in";
-	else if(x == SE_charging_status::ev_plugged_in_not_charging)    out << "ev_plugged_in_not_charging";
-	else if(x == SE_charging_status::ev_charging)                   out << "ev_charging";
-	else if(x == SE_charging_status::ev_charge_complete)            out << "ev_charge_complete";
+         if(x == SE_charging_status::no_ev_plugged_in)              out << "no_ev_plugged_in";
+    else if(x == SE_charging_status::ev_plugged_in_not_charging)    out << "ev_plugged_in_not_charging";
+    else if(x == SE_charging_status::ev_charging)                   out << "ev_charging";
+    else if(x == SE_charging_status::ev_charge_complete)            out << "ev_charge_complete";
     else if(x == SE_charging_status::ev_charge_ended_early)         out << "ev_charge_ended_early";
     
-	return out;
+    return out;
 }
 
 //==================================================================

@@ -37,7 +37,7 @@ double ac_to_dc_converter::get_max_nominal_S3kVA()
 
 double ac_to_dc_converter::get_P3_from_P2( const double P2 )
 {
-	return P2 / this->inv_eff_from_P2.get_val(P2);
+    return P2 / this->inv_eff_from_P2.get_val(P2);
 }
 
 
@@ -98,7 +98,7 @@ double ac_to_dc_converter::get_approxamate_P2_from_P3( const double P3 )
         }
     }
     
-	return approx_P2;
+    return approx_P2;
 }
 
 
@@ -125,7 +125,7 @@ ac_to_dc_converter_pf::ac_to_dc_converter_pf( const charge_event_P3kW_limits& CE
                                               const poly_function_of_x& inv_pf_from_P3_ )
                          : ac_to_dc_converter(false, CE_P3kW_limits_, S3kVA_from_max_nominal_P3kW_multiplier, inv_eff_from_P2_)
 {
-	this->inv_pf_from_P3 = inv_pf_from_P3_;
+    this->inv_pf_from_P3 = inv_pf_from_P3_;
 }
 
 
@@ -140,8 +140,8 @@ void ac_to_dc_converter_pf::get_next( const double time_step_duration_hrs,
                                       const double P2_kW,
                                       ac_power_metrics& return_val )
 {
-	const double P3_kW = this->get_P3_from_P2(P2_kW);	
-	
+    const double P3_kW = this->get_P3_from_P2(P2_kW);    
+    
     const double pf = this->inv_pf_from_P3.get_val(P3_kW);
     
     const double Q3_kVAR = [&] () {
@@ -152,12 +152,12 @@ void ac_to_dc_converter_pf::get_next( const double time_step_duration_hrs,
         }
         return Q3_kVAR;
     }();
-	
-	return_val.time_step_duration_hrs = time_step_duration_hrs;
-	return_val.P1_kW = P1_kW;
-	return_val.P2_kW = P2_kW;
-	return_val.P3_kW = P3_kW;
-	return_val.Q3_kVAR = Q3_kVAR;
+    
+    return_val.time_step_duration_hrs = time_step_duration_hrs;
+    return_val.P1_kW = P1_kW;
+    return_val.P2_kW = P2_kW;
+    return_val.P3_kW = P3_kW;
+    return_val.Q3_kVAR = Q3_kVAR;
 }
 
 
@@ -188,8 +188,8 @@ void ac_to_dc_converter_Q_setpoint::get_next( const double time_step_duration_hr
     // ac_kVA_limit should not be used when creating charge_profile_library.
     // this->target_Q3_kVAR = 0 when creating charge_profile_library.
     
-	const double P3_kW = this->get_P3_from_P2(P2_kW);
-	
+    const double P3_kW = this->get_P3_from_P2(P2_kW);
+    
     const double Q3_kVAR = [&] () {
         double Q3_kVAR;
         const double ac_kVA_limit = get_max_nominal_S3kVA();
@@ -211,11 +211,11 @@ void ac_to_dc_converter_Q_setpoint::get_next( const double time_step_duration_hr
         }
         return Q3_kVAR;
     }();
-	
-	return_val.time_step_duration_hrs = time_step_duration_hrs;
-	return_val.P1_kW = P1_kW;
-	return_val.P2_kW = P2_kW;
-	return_val.P3_kW = P3_kW;
-	return_val.Q3_kVAR = Q3_kVAR;
+    
+    return_val.time_step_duration_hrs = time_step_duration_hrs;
+    return_val.P1_kW = P1_kW;
+    return_val.P2_kW = P2_kW;
+    return_val.P3_kW = P3_kW;
+    return_val.Q3_kVAR = Q3_kVAR;
 }
 

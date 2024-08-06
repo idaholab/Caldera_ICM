@@ -15,7 +15,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
 {
     // The points on the P2_vs_pu_Vrms plot are all multiplied by SE_P2_limit_atNominalV_kW
     // The P2_vs_pu_Vrms plot must pass through the point (1, 1)
-    //		At nominal voltage Vrms = 1 the final curve is 1*SE_P2_limit_atNominalV_kW or the limit at nominal voltage
+    //        At nominal voltage Vrms = 1 the final curve is 1*SE_P2_limit_atNominalV_kW or the limit at nominal voltage
 
     std::unordered_map<EVSE_level, std::map<puVrms, P2> > data;
 

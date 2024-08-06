@@ -68,13 +68,13 @@ public:
                                                  std::vector<double>& charge_profile );
     
     void add_charge_event( const charge_event_data& charge_event );
-	
+    
     void set_target_acP3_kW( const double target_acP3_kW );
     
     void set_target_acQ3_kVAR( const double target_acQ3_kVAR );
     
     bool pev_is_connected_to_SE( const double now_unix_time );
-	
+    
     void get_next( const double prev_unix_time,
                    const double now_unix_time,
                    const double pu_Vrms,
