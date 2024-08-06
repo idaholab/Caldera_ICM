@@ -94,10 +94,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 
         // When a battery is approaching 0 soc or 100 soc there is a chance that energy continues to go into the battery while
         // the soc is not changing (fixed at 0 or 100 soc)
-        // 	- This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
-        // 	- This problem (for small time steps) can be mitigated by the following:
-        //		- Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
-        //		- Make sure the ramp rate is large when a battery stops charging/discharging
+        //     - This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
+        //     - This problem (for small time steps) can be mitigated by the following:
+        //        - Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
+        //        - Make sure the ramp rate is large when a battery stops charging/discharging
         //      - Make sure the delay is small when battery stops charging/discharging
 
         std::vector<line_segment> charge_profile;

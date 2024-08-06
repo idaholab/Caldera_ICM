@@ -8,12 +8,12 @@
 class load_EV_EVSE_inventory
 {
 private:
-	const EV_EVSE_inventory inventory;
+    const EV_EVSE_inventory inventory;
 
 public:
-	load_EV_EVSE_inventory(const std::string& inputs_dir);
+    load_EV_EVSE_inventory(const std::string& inputs_dir);
 
-	const EV_EVSE_inventory& get_EV_EVSE_inventory() const;
+    const EV_EVSE_inventory& get_EV_EVSE_inventory() const;
 };
 
 #endif //LOAD_EV_EVSE_INVENTORY_H

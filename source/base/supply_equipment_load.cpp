@@ -1,6 +1,6 @@
 
 #include "supply_equipment_load.h"
-//#include "SE_EV_factory.h"  		// factory_EV_charge_model, factory_ac_to_dc_converter
+//#include "SE_EV_factory.h"          // factory_EV_charge_model, factory_ac_to_dc_converter
 
 #include <cmath>
 #include <algorithm>                // sort
@@ -101,13 +101,13 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
     }
     
     for(std::set<charge_event_data>::iterator it : its_to_remove)
-	{
+    {
         std::stringstream str_ss;
         str_ss << "Warning : Charge Event removed since charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
         // Erasing the item after we create the Warning string so that the iterator is still valid.
         this->charge_events.erase(it);
-		std::cout << str_ss.str() << std::endl;
-	}
+        std::cout << str_ss.str() << std::endl;
+    }
 }
 
 
@@ -147,10 +147,10 @@ charge_event_data charge_event_handler::get_next_charge_event( const double now_
 
 supply_equipment_load::supply_equipment_load()
 {
-	this->ac_to_dc_converter_obj = NULL;
+    this->ac_to_dc_converter_obj = NULL;
     this->ev_charge_model = NULL;
     
-	this->PEV_charge_factory = NULL;
+    this->PEV_charge_factory = NULL;
     this->charge_profile_library = NULL;
     this->cur_charge_profile = NULL;
 }
@@ -158,14 +158,14 @@ supply_equipment_load::supply_equipment_load()
 
 supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
 {
-	this->P2_limit_kW = P2_limit_kW_;
-	this->standby_acP_kW = standby_acP_kW_;
-	this->standby_acQ_kVAR = standby_acQ_kVAR_;
-	this->SE_config = SE_config_;
+    this->P2_limit_kW = P2_limit_kW_;
+    this->standby_acP_kW = standby_acP_kW_;
+    this->standby_acQ_kVAR = standby_acQ_kVAR_;
+    this->SE_config = SE_config_;
     
     charge_event_handler X(CE_queuing_inputs);
     this->event_handler = X;
-	
+    
     this->SE_stat.SE_config = SE_config_;
     this->SE_stat.now_unix_time = -1;
     this->SE_stat.SE_charging_status_val = SE_charging_status::no_ev_plugged_in;
@@ -174,25 +174,25 @@ supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby
     this->ac_to_dc_converter_obj = NULL;
     this->ev_charge_model = NULL;
     
-	this->PEV_charge_factory = NULL;
+    this->PEV_charge_factory = NULL;
     this->charge_profile_library = NULL;
     this->cur_charge_profile = NULL;    
 }
 
 
 supply_equipment_load::~supply_equipment_load()
-{	
-	if(this->ac_to_dc_converter_obj != NULL)
-	{
-		delete this->ac_to_dc_converter_obj;
-		this->ac_to_dc_converter_obj = NULL;
-	}
-	
-	if(this->ev_charge_model != NULL)
-	{
-		delete this->ev_charge_model;
-		this->ev_charge_model = NULL;
-	}
+{    
+    if(this->ac_to_dc_converter_obj != NULL)
+    {
+        delete this->ac_to_dc_converter_obj;
+        this->ac_to_dc_converter_obj = NULL;
+    }
+    
+    if(this->ev_charge_model != NULL)
+    {
+        delete this->ev_charge_model;
+        this->ev_charge_model = NULL;
+    }
 }
 
 
@@ -207,48 +207,48 @@ void supply_equipment_load::set_pointers(factory_EV_charge_model* PEV_charge_fac
 /*
 supply_equipment_load::supply_equipment_load(const supply_equipment_load& obj)
 {
-	*this = obj;
+    *this = obj;
 }
 
 
 supply_equipment_load& supply_equipment_load::operator=(const supply_equipment_load& obj)
-{	
-	this->P2_limit_kW = obj.P2_limit_kW;
-	this->standby_acP_kW = obj.standby_acP_kW;
-	this->standby_acQ_kVAR = obj.standby_acQ_kVAR;
-	this->SE_config = obj.SE_config;
+{    
+    this->P2_limit_kW = obj.P2_limit_kW;
+    this->standby_acP_kW = obj.standby_acP_kW;
+    this->standby_acQ_kVAR = obj.standby_acQ_kVAR;
+    this->SE_config = obj.SE_config;
     this->SE_stat = obj.SE_stat;
-	this->event_handler = obj.event_handler;
-	
-	this->PEV_charge_factory = obj.PEV_charge_factory;
-	
-	
-	if(obj.ac_to_dc_converter_obj != NULL)
-		this->ac_to_dc_converter_obj = obj.ac_to_dc_converter_obj->clone();
-	else
-		this->ac_to_dc_converter_obj = NULL;
-	
-	
-	if(obj.ev_charge_model != NULL)
-		this->ev_charge_model = new vehicle_charge_model(*obj.ev_charge_model);
-	else
-		this->ev_charge_model = NULL;
-		
-	return *this;
+    this->event_handler = obj.event_handler;
+    
+    this->PEV_charge_factory = obj.PEV_charge_factory;
+    
+    
+    if(obj.ac_to_dc_converter_obj != NULL)
+        this->ac_to_dc_converter_obj = obj.ac_to_dc_converter_obj->clone();
+    else
+        this->ac_to_dc_converter_obj = NULL;
+    
+    
+    if(obj.ev_charge_model != NULL)
+        this->ev_charge_model = new vehicle_charge_model(*obj.ev_charge_model);
+    else
+        this->ev_charge_model = NULL;
+        
+    return *this;
 }
 */
 
 
 void supply_equipment_load::set_target_acP3_kW(double target_acP3_kW_)
 {
-	if(this->ev_charge_model != NULL)
+    if(this->ev_charge_model != NULL)
     {
         double approx_P2_kW = this->ac_to_dc_converter_obj->get_approxamate_P2_from_P3(target_acP3_kW_);
         
         if(this->P2_limit_kW < approx_P2_kW)
-    		approx_P2_kW = this->P2_limit_kW;
+            approx_P2_kW = this->P2_limit_kW;
         
-      	this->ev_charge_model->set_target_P2_kW(approx_P2_kW);
+          this->ev_charge_model->set_target_P2_kW(approx_P2_kW);
     }
 }
 
@@ -590,7 +590,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 {
     bool is_new_CE__update_control_strategies = false;
 
-	if(this->ev_charge_model == NULL)
+    if(this->ev_charge_model == NULL)
     {
         this->SE_stat.pev_is_connected_to_SE = false;
 
@@ -601,14 +601,14 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         // If there is another event available, process it.
         if( this->event_handler.charge_event_is_available(now_unix_time) )
         {
-        	charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
-        	EVSE_type SE_type = this->SE_config.supply_equipment_type;
+            charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
+            EVSE_type SE_type = this->SE_config.supply_equipment_type;
 
-        	this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
+            this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
 
-        	// ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
-        	if(this->ev_charge_model != NULL)
-        	{
+            // ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
+            if(this->ev_charge_model != NULL)
+            {
                 this->SE_stat.current_charge.charge_event_id = charge_event.charge_event_id;
                 this->SE_stat.current_charge.vehicle_id = charge_event.vehicle_id;
                 this->SE_stat.current_charge.vehicle_type = charge_event.vehicle_type;
@@ -671,7 +671,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 }
                 
                 this->ac_to_dc_converter_obj = this->ac_to_dc_converter_factory->alloc_get_ac_to_dc_converter(converter_type, SE_type, pev_type, P3kW_limits);                
-        	
+            
                 //----------------------------------------
                 //          Set P3, Q3 Targets 
                 //----------------------------------------
@@ -689,18 +689,18 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         }
     }
     
-	bool return_default_ac_power = true;
+    bool return_default_ac_power = true;
     SE_charging_status SE_charge_status;
     double Q3_kVAR = this->standby_acQ_kVAR;
     soc = -1;
     
-	//if(this->ev_charge_model != NULL && this->ev_charge_model->pev_is_connected_to_SE(now_unix_time))
+    //if(this->ev_charge_model != NULL && this->ev_charge_model->pev_is_connected_to_SE(now_unix_time))
     if(this->ev_charge_model != NULL && this->ev_charge_model->pev_has_arrived_at_SE(now_unix_time))
-	{
+    {
         battery_state bat_state;
-		bool charge_has_completed;
+        bool charge_has_completed;
 
-		this->ev_charge_model->get_next(prev_unix_time, now_unix_time, pu_Vrms, charge_has_completed, bat_state);
+        this->ev_charge_model->get_next(prev_unix_time, now_unix_time, pu_Vrms, charge_has_completed, bat_state);
         
 //std::cout << "Simulation Time: " << now_unix_time/3600 << "    target_P2_kW: " << this->ev_charge_model->get_target_P2_kW() << "    P2_kW: " << bat_state.P2_kW << "    now-prev: " << now_unix_time-prev_unix_time << std::endl;
         
@@ -710,7 +710,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         this->SE_stat.current_charge.now_dcPkW = bat_state.P2_kW;
 
         soc = bat_state.soc_t1;
-		this->ac_to_dc_converter_obj->get_next(bat_state.time_step_duration_hrs, bat_state.P1_kW, bat_state.P2_kW, ac_power);
+        this->ac_to_dc_converter_obj->get_next(bat_state.time_step_duration_hrs, bat_state.P1_kW, bat_state.P2_kW, ac_power);
         
         this->SE_stat.current_charge.now_acPkW = ac_power.P3_kW;
         this->SE_stat.current_charge.now_acQkVAR = ac_power.Q3_kVAR;
@@ -718,23 +718,23 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         if(this->ac_to_dc_converter_obj->get_can_provide_reactive_power_control())
             Q3_kVAR = ac_power.Q3_kVAR;
         
-		//--------------
+        //--------------
         
-		if(ac_power.P3_kW > this->standby_acP_kW)
+        if(ac_power.P3_kW > this->standby_acP_kW)
         {
-        	return_default_ac_power = false;
+            return_default_ac_power = false;
             this->SE_stat.current_charge.now_charge_energy_E3kWh += ac_power.P3_kW * ac_power.time_step_duration_hrs;
         }
         
-		if(charge_has_completed)
-		{
+        if(charge_has_completed)
+        {
 //################
 //if(this->SE_stat.current_charge.charge_event_id < 1000) 
 //    std::cout << "Charge Completed!  now_time_hrs: " << now_unix_time/3600.0 << "  charge_event_id: " << this->SE_stat.current_charge.charge_event_id << "  soc: " << bat_state.soc_t1 << "  SE_type: " << this->SE_config.supply_equipment_type << "  EV_type: " << this->SE_stat.current_charge.vehicle_type << std::endl;
 //################
 
-			SE_charge_status = SE_charging_status::ev_charge_complete;
-			
+            SE_charge_status = SE_charging_status::ev_charge_complete;
+            
             delete this->ev_charge_model;
             this->ev_charge_model = NULL;
             
@@ -746,31 +746,31 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         }
         else
         {
-        	if(std::abs(bat_state.P1_kW) < 0.0001)
-        		SE_charge_status = SE_charging_status::ev_plugged_in_not_charging;
-        	else
-        		SE_charge_status = SE_charging_status::ev_charging;
+            if(std::abs(bat_state.P1_kW) < 0.0001)
+                SE_charge_status = SE_charging_status::ev_plugged_in_not_charging;
+            else
+                SE_charge_status = SE_charging_status::ev_charging;
         }
-	}
-	else
-	{
-		SE_charge_status = SE_charging_status::no_ev_plugged_in;
+    }
+    else
+    {
+        SE_charge_status = SE_charging_status::no_ev_plugged_in;
         this->SE_stat.pev_is_connected_to_SE = false;
-	}
+    }
     
     this->SE_stat.SE_charging_status_val = SE_charge_status;
     this->SE_stat.now_unix_time = now_unix_time;
     
-	//--------------------------------------
-	
-	if(return_default_ac_power)
-	{
-		ac_power.time_step_duration_hrs = (now_unix_time - prev_unix_time)/3600;
-		ac_power.P1_kW = 0;
-		ac_power.P2_kW = 0;
-		ac_power.P3_kW = this->standby_acP_kW;
-		ac_power.Q3_kVAR = Q3_kVAR;
-	}
+    //--------------------------------------
+    
+    if(return_default_ac_power)
+    {
+        ac_power.time_step_duration_hrs = (now_unix_time - prev_unix_time)/3600;
+        ac_power.P1_kW = 0;
+        ac_power.P2_kW = 0;
+        ac_power.P3_kW = this->standby_acP_kW;
+        ac_power.Q3_kVAR = Q3_kVAR;
+    }
     
     return is_new_CE__update_control_strategies;
 }
@@ -779,7 +779,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 void supply_equipment_load::stop_active_CE()
 {
     if(this->ev_charge_model != NULL)
-	{
+    {
         this->SE_stat.SE_charging_status_val = SE_charging_status::ev_charge_ended_early;
         
         delete this->ev_charge_model;

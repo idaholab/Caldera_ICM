@@ -77,14 +77,14 @@ public:
                                                             std::vector<pev_charge_profile_result>& charge_profile ) const;
     
     bool operator<(const pev_charge_profile_aux& x) const
-	{
-		return this->setpoint_P3kW < x.setpoint_P3kW;
-	}
+    {
+        return this->setpoint_P3kW < x.setpoint_P3kW;
+    }
 
-	bool operator<(pev_charge_profile_aux& x) const
-	{
-		return this->setpoint_P3kW < x.setpoint_P3kW;
-	}
+    bool operator<(pev_charge_profile_aux& x) const
+    {
+        return this->setpoint_P3kW < x.setpoint_P3kW;
+    }
 };
 
 
