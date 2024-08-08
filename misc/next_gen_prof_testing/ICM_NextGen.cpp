@@ -2,39 +2,37 @@
 #include <filesystem>
 #include <sstream>
 
-double find_c_rate_input_given_power(const double actual_bat_size_kWh, const double max_power_kW, const std::string& bat_chem)
+double find_c_rate_input_given_power(const double actual_bat_size_kWh, const double max_power_kW, const std::string &bat_chem)
 {
 
-    std::vector<double> crate_vec = { 0, 1, 2, 3, 4, 5, 6 };
-    std::vector<double> LMO_power_vec = { 0, 1.27, 2.42, 3.63, 3.63, 3.63, 3.63 };
-    std::vector<double> NMC_power_vec = { 0, 1.25, 2.42, 3.75, 3.75, 3.75, 3.75 };
-    std::vector<double> LTO_power_vec = { 0, 1.13, 2.23, 3.36, 4.52, 5.63, 5.63 };
+    std::vector<double> crate_vec = {0, 1, 2, 3, 4, 5, 6};
+    std::vector<double> LMO_power_vec = {0, 1.27, 2.42, 3.63, 3.63, 3.63, 3.63};
+    std::vector<double> NMC_power_vec = {0, 1.25, 2.42, 3.75, 3.75, 3.75, 3.75};
+    std::vector<double> LTO_power_vec = {0, 1.13, 2.23, 3.36, 4.52, 5.63, 5.63};
 
-
-    const std::pair<std::vector<double>, std::vector<double> > crate_vs_pu_power = [&]()
+    const std::pair<std::vector<double>, std::vector<double>> crate_vs_pu_power = [&]()
+    {
+        if (bat_chem == "LMO")
         {
-            if (bat_chem == "LMO")
-            {
-                return std::make_pair(crate_vec, LMO_power_vec);
-            }
-            else if (bat_chem == "NMC")
-            {
-                return std::make_pair(crate_vec, NMC_power_vec);
-            }
-            else if (bat_chem == "LTO")
-            {
-                return std::make_pair(crate_vec, LTO_power_vec);
-            }
-            else
-            {
-                std::cout << "!!!!!!!!!!!!!!!!ERROR : bat_chem npt supported" << std::endl;
-                return std::make_pair(std::vector<double>{}, std::vector<double>{});
-            }
-        }();
+            return std::make_pair(crate_vec, LMO_power_vec);
+        }
+        else if (bat_chem == "NMC")
+        {
+            return std::make_pair(crate_vec, NMC_power_vec);
+        }
+        else if (bat_chem == "LTO")
+        {
+            return std::make_pair(crate_vec, LTO_power_vec);
+        }
+        else
+        {
+            std::cout << "!!!!!!!!!!!!!!!!ERROR : bat_chem npt supported" << std::endl;
+            return std::make_pair(std::vector<double>{}, std::vector<double>{});
+        }
+    }();
 
     double max_charge_time_hrs = actual_bat_size_kWh / max_power_kW;
     double max_c_rate = 1 / max_charge_time_hrs;
-
 
     std::vector<crate> c_rate_arr = crate_vs_pu_power.first;
     std::vector<power> power_arr = crate_vs_pu_power.second;
@@ -55,7 +53,6 @@ double find_c_rate_input_given_power(const double actual_bat_size_kWh, const dou
     std::cout << "Error: max_c_rate is out-of-bounds." << std::endl;
     return 0.0;
 }
-
 
 int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE_type, double &start_soc, double &end_soc)
 {
@@ -82,8 +79,6 @@ int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE
         ramping_by_pevType_only,
         ramping_by_pevType_seType};
 
-
-
     // Generate the charge profile data
     all_charge_profile_data all_profile_data = ICM_v2.get_all_charge_profile_data(start_soc, end_soc, pev_type, SE_type);
 
@@ -91,7 +86,7 @@ int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE
 
     // Write output
     // build the files header
-    std::string header = "time | hrs,SOC | ,P1 | kW,P2 | kW,P3 | kW,Q3 | kVAR\n";
+    std::string header = "time | hrs,SOC | ,P1 | kW,P2 | kW,P3 | kW,Q3 | kVAR,temperature | ºC\n";
 
     std::string data = "";
 
@@ -112,7 +107,7 @@ int build_entire_charge_profile_using_ICM(std::string &pev_type, std::string &SE
 
     oss.str("");
     oss.clear();
-    oss << "./outputs/" << "pevtype_" << pev_type << "__setype_" << SE_type << ".csv";
+    oss << "./outputs/" << pev_type << " " << SE_type << ".csv";
 
     std::string filepath = oss.str();
     std::cout << "Data saved to: " << filepath << std::endl;
@@ -133,19 +128,38 @@ int main()
     double start_soc = 10;
     double end_soc = 100;
 
+    // std::vector<std::string> supply_equipment =
+    //     {
+    //         "dcfc_50",
+    //         "xfc_150",
+    //         "xfc_350",
+    //     };
+
+    // std::vector<std::string> vehicles =
+    //     {
+    //         "ngp_audi_etron_55_quattro",
+    //         "ngp_hyundai_ioniq_5_longrange_awd",
+    //         "ngp_genesis_gv60",
+    //         "ngp_porsche_taycan_plus",
+    //     };
+
     std::vector<std::string> supply_equipment =
         {
-            "dcfc_50",
-            "xfc_150",
             "xfc_350",
         };
 
     std::vector<std::string> vehicles =
         {
-            "ngp_audi_etron_55_quattro",
-            "ngp_hyundai_ioniq_5_longrange_awd",
-            "ngp_genesis_gv60",
-            "ngp_porsche_taycan_plus",
+            "ngp_hyundai_ioniq_5_longrange_awd_100",
+            "ngp_hyundai_ioniq_5_longrange_awd_90",
+            "ngp_hyundai_ioniq_5_longrange_awd_80",
+            "ngp_hyundai_ioniq_5_longrange_awd_70",
+            "ngp_hyundai_ioniq_5_longrange_awd_60",
+            "ngp_hyundai_ioniq_5_longrange_awd_50",
+            "ngp_hyundai_ioniq_5_longrange_awd_40",
+            "ngp_hyundai_ioniq_5_longrange_awd_30",
+            "ngp_hyundai_ioniq_5_longrange_awd_20",
+            "ngp_hyundai_ioniq_5_longrange_awd_10"
         };
 
     for (std::string ev : vehicles)
@@ -156,14 +170,13 @@ int main()
         }
     }
 
-
     // An example to find the average c-rate to input in EV_inputs.csv file.
-    // The EV_input file actually takes average c-rate and not max c-rate.
-    double usable_bat_size_kWh = 95.0;                                    
-    double actual_bat_size_kWh = usable_bat_size_kWh / 0.95;                    // This is currently hardcoded in Caldera ICM. 
-    double max_power_kW = 200;
-    std::string bat_chem = "NMC";
-    double crate = find_c_rate_input_given_power(actual_bat_size_kWh, max_power_kW, bat_chem);
+    // // The EV_input file actually takes average c-rate and not max c-rate.
+    // double usable_bat_size_kWh = 74.0;
+    // double actual_bat_size_kWh = 77.4;
+    // double max_power_kW = 233;
+    // std::string bat_chem = "NMC";
+    // double crate = find_c_rate_input_given_power(actual_bat_size_kWh, max_power_kW, bat_chem);
 
-    std::cout << "c_rate : " << crate << std::endl;
+    // std::cout << "Hyunda IONIQ 5 c_rate : " << crate << std::endl;
 }

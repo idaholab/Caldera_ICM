@@ -872,6 +872,19 @@ struct all_charge_profile_data
     all_charge_profile_data() : timestep_sec(0.0) {}
 };
 
+struct ngp_charge_profile_data
+{
+    double timestep_sec;
+    std::vector<double> P1_kW;
+    std::vector<double> P2_kW;
+    std::vector<double> P3_kW;
+    std::vector<double> Q3_kVAR;
+    std::vector<double> soc;
+    std::vector<double> temp;
+    
+    ngp_charge_profile_data() : timestep_sec(0.0) {}
+};
+
 
 //==================================================================
 //                     PEV Ramping Parameters

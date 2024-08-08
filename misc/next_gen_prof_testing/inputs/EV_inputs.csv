@@ -17,3 +17,13 @@ ngp_audi_etron_55_quattro,NMC,95.0,274,237,11.0,TRUE,1.25,500
 ngp_hyundai_ioniq_5_longrange_awd,NMC,74.0,282,192,11.0,TRUE,2.00,800
 ngp_genesis_gv60,NMC,74.0,312,308,11.0,TRUE,2.00,800
 ngp_porsche_taycan_plus,NMC,83.7,225,176,11.0,TRUE,2.00,800
+ngp_hyundai_ioniq_5_longrange_awd_100,NMC,74.0,282,192,11.0,TRUE,2.44,800
+ngp_hyundai_ioniq_5_longrange_awd_90,NMC,74.0,282,192,11.0,TRUE,2.196,800
+ngp_hyundai_ioniq_5_longrange_awd_80,NMC,74.0,282,192,11.0,TRUE,1.952,800
+ngp_hyundai_ioniq_5_longrange_awd_70,NMC,74.0,282,192,11.0,TRUE,1.708,800
+ngp_hyundai_ioniq_5_longrange_awd_60,NMC,74.0,282,192,11.0,TRUE,1.464,800
+ngp_hyundai_ioniq_5_longrange_awd_50,NMC,74.0,282,192,11.0,TRUE,1.220,800
+ngp_hyundai_ioniq_5_longrange_awd_40,NMC,74.0,282,192,11.0,TRUE,0.976,800
+ngp_hyundai_ioniq_5_longrange_awd_30,NMC,74.0,282,192,11.0,TRUE,0.732,800
+ngp_hyundai_ioniq_5_longrange_awd_20,NMC,74.0,282,192,11.0,TRUE,0.488,800
+ngp_hyundai_ioniq_5_longrange_awd_10,NMC,74.0,282,192,11.0,TRUE,0.244,800
