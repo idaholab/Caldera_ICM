@@ -20,7 +20,7 @@ std::vector<SE_group_configuration> create_SE_group_config(int num_stations_to_c
         std::vector<SE_configuration> SE_configs_under_station{};
         for (const std::string& evse : EVSEs)
         {
-            SE_id_type SE_id = SE_id_counter;
+            SupplyEquipmentId SE_id = SE_id_counter;
             EVSE_type evse_type = evse;
             double latitude = 0.0;                  //dummy
             double longitude = 0.0;                 //dummy
@@ -116,7 +116,7 @@ void create_charge_events(const std::vector<std::string>& EVs, const std::vector
      
     int charge_event_id = 1;    // is updated down below
     int SE_group_id = 1;
-    SE_id_type SE_id = 1;   // is updated down below
+    SupplyEquipmentId SE_id = 1;   // is updated down below
     vehicle_id_type vehicle_id = 1; // is updated down below
     EV_type vehicle_type = "";
     double arrival_unix_time = 1.0 * 3600;
@@ -181,7 +181,7 @@ int main()
         charge_event_data charge_event{
                 1,                                                      // int charge_event_id;
                 se_group_id,                                            // int SE_group_id;
-                1,                                                      // SE_id_type SE_id;
+                1,                                                      // SupplyEquipmentId SE_id;
                 1,                                                      // vehicle_id_type vehicle_id;
                 "bev150_150kW",                                         // EV_type vehicle_type;
                 1.0 * 3600,                                             // double arrival_unix_time;    // in seconds
@@ -201,7 +201,7 @@ int main()
         charge_event_data charge_event{
             2,                                                      // int charge_event_id;
             se_group_id,                                            // int SE_group_id;
-            10,                                                     // SE_id_type SE_id;
+            10,                                                     // SupplyEquipmentId SE_id;
             2,                                                      // vehicle_id_type vehicle_id;
             "bev250_350kW",                                         // EV_type vehicle_type;
             3.0 * 3600,                                             // double arrival_unix_time;    // in seconds
