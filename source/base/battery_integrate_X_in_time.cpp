@@ -4,7 +4,6 @@
 #include <cmath>        // abs, exp, sqrt
 #include <fstream>        // Stream to files
 #include <stdexcept>    // invalid_argument
-#include <assert.h>
 
 
 //#############################################################################
@@ -46,8 +45,8 @@ std::ostream& operator << (std::ostream& os, const transition_state& trans_state
         val = "neg_moving_toward_neg_inf";
     else
     {
-        std::cout << "Error: This shouldn't happen." << std::endl;
-        assert(false);
+        std::cout << "Error: This shouldn't happen. [3]" << std::endl;
+        exit(0);
     }
    
     os << val;
@@ -76,33 +75,34 @@ transition_of_X_through_time::transition_of_X_through_time( const transition_sta
     this->trans_state = trans_state_;
     this->X_deadband = X_deadband_;
     this->goto_next_segment_criteria = goto_next_segment_criteria_;
-    
-    this->transition_moving_toward_pos_inf = false; // pos_to_off, off_to_neg, moving_toward_neg_inf, pos_moving_toward_neg_inf, neg_moving_toward_neg_inf
-    
-    if( trans_state_ == transition_state::neg_to_off )
+        
+    if(    trans_state_ == transition_state::neg_to_off
+        || trans_state_ == transition_state::off_to_pos
+        || trans_state_ == transition_state::moving_toward_pos_inf
+        || trans_state_ == transition_state::pos_moving_toward_pos_inf
+        || trans_state_ == transition_state::neg_moving_toward_pos_inf )
     {
         this->transition_moving_toward_pos_inf = true;
     }
-    else if( trans_state_ == transition_state::off_to_pos )
+    else if(   trans_state_ == transition_state::on_steady_state
+            || trans_state_ == transition_state::pos_to_off
+            || trans_state_ == transition_state::off_to_neg
+            || trans_state_ == transition_state::moving_toward_neg_inf
+            || trans_state_ == transition_state::pos_moving_toward_neg_inf
+            || trans_state_ == transition_state::neg_moving_toward_neg_inf )
     {
-        this->transition_moving_toward_pos_inf = true;
+        // pos_to_off, off_to_neg, moving_toward_neg_inf, pos_moving_toward_neg_inf, neg_moving_toward_neg_inf
+        this->transition_moving_toward_pos_inf = false;
     }
-    else if( trans_state_ == transition_state::moving_toward_pos_inf )
+    else if( trans_state_ == transition_state::off )
     {
-        this->transition_moving_toward_pos_inf = true;
-    }
-    else if( trans_state_ == transition_state::pos_moving_toward_pos_inf )
-    {
-        this->transition_moving_toward_pos_inf = true;
-    }
-    else if( trans_state_ == transition_state::neg_moving_toward_pos_inf )
-    {
-        this->transition_moving_toward_pos_inf = true;
+        std::cout << "Error: This shouldn't happen. [4.1]" << std::endl;
+        exit(0);
     }
     else
     {
-        std::cout << "Error: This shouldn't happen." << std::endl;
-        assert(false);
+        std::cout << "Error: This shouldn't happen. [4.2]" << std::endl;
+        exit(0);
     }
 }
 
@@ -436,32 +436,55 @@ integrate_X_through_time::integrate_X_through_time( const integrate_X_through_ti
     
     //------------------------------------
     
-    this->cur_trans_obj = NULL;
-    
     if(this->trans_state == transition_state::pos_to_off)
+    {
         this->cur_trans_obj = &this->trans_obj_pos_to_off;
+    }
     else if(this->trans_state == transition_state::neg_to_off)
+    {
         this->cur_trans_obj = &this->trans_obj_neg_to_off;
+    }
     else if(this->trans_state == transition_state::off_to_pos)
+    {
         this->cur_trans_obj = &this->trans_obj_off_to_pos;
+    }
     else if(this->trans_state == transition_state::off_to_neg)
-        this->cur_trans_obj = &this->trans_obj_off_to_neg;        
+    {
+        this->cur_trans_obj = &this->trans_obj_off_to_neg;
+    }     
     else if(this->trans_state == transition_state::moving_toward_pos_inf)
+    {
         this->cur_trans_obj = &this->trans_obj_moving_toward_pos_inf;
+    }
     else if(this->trans_state == transition_state::moving_toward_neg_inf)
-        this->cur_trans_obj = &this->trans_obj_moving_toward_neg_inf;        
+    {
+        this->cur_trans_obj = &this->trans_obj_moving_toward_neg_inf;
+    }     
     else if(this->trans_state == transition_state::pos_moving_toward_pos_inf)
+    {
         this->cur_trans_obj = &this->trans_obj_pos_moving_toward_pos_inf;
+    }
     else if(this->trans_state == transition_state::pos_moving_toward_neg_inf)
+    {
         this->cur_trans_obj = &this->trans_obj_pos_moving_toward_neg_inf;
+    }
     else if(this->trans_state == transition_state::neg_moving_toward_pos_inf)
+    {
         this->cur_trans_obj = &this->trans_obj_neg_moving_toward_pos_inf;
+    }
     else if(this->trans_state == transition_state::neg_moving_toward_neg_inf)
+    {
         this->cur_trans_obj = &this->trans_obj_neg_moving_toward_neg_inf;
+    }
+    else if(    this->trans_state == transition_state::on_steady_state
+             || this->trans_state == transition_state::off )
+    {
+        this->cur_trans_obj = NULL;
+    }
     else
     {
-        std::cout << "Error: This shouldn't happen." << std::endl;
-        assert(false);
+        std::cout << "Error: This shouldn't happen. [5]" << std::endl;
+        exit(0);
     }
 }
 
@@ -492,8 +515,8 @@ bool integrate_X_through_time::transition_moving_toward_pos_inf( const transitio
         return_val = this->trans_obj_neg_moving_toward_neg_inf.transition_is_moving_toward_pos_inf();
     else
     {
-        std::cout << "Error: This shouldn't happen." << std::endl;
-        assert(false);
+        std::cout << "Error: This shouldn't happen. [6]" << std::endl;
+        exit(0);
     }
         
     return return_val;
