@@ -2,7 +2,6 @@
 #include "ac_to_dc_converter.h"
 
 #include <cmath>    // abs, exp, log, sqrt
-#include <assert.h>
 
 //===================================================================
 //                        ac_to_dc_converter   
@@ -75,8 +74,8 @@ double ac_to_dc_converter::get_approxamate_P2_from_P3( const double P3 )
         }
         else
         {
-            std::cout << "Error: This shouldn't happen." << std::endl;
-            assert(false);
+            std::cout << "Error: This shouldn't happen. [1]" << std::endl;
+            exit(0);
         }
         
         if( P2_magLB_valid && P2_magUB_valid )
@@ -93,8 +92,8 @@ double ac_to_dc_converter::get_approxamate_P2_from_P3( const double P3 )
         }
         else
         {
-            std::cout << "Error: This shouldn't happen." << std::endl;
-            assert(false);
+            std::cout << "Error: This shouldn't happen. [2]" << std::endl;
+            exit(0);
         }
     }
     
