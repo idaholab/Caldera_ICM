@@ -71,15 +71,8 @@ public:
 
 class factory_charge_profile_library_v2
 {
-private:
-    const EV_EVSE_inventory& inventory;
     
 public:
-
-    factory_charge_profile_library_v2( const EV_EVSE_inventory& inventory )
-        : inventory{ inventory }
-    {
-    }
     
     static void create_charge_profile( const EV_EVSE_inventory& inventory,
                                        const double time_step_sec,
@@ -90,9 +83,10 @@ public:
                                        std::vector<double>& soc,
                                        std::vector<ac_power_metrics>& charge_profile );
 
-    pev_charge_profile_library_v2 get_charge_profile_library( const double L1_timestep_sec,
-                                                              const double L2_timestep_sec,
-                                                              const double HPC_timestep_sec );
+    static pev_charge_profile_library_v2 get_charge_profile_library( const EV_EVSE_inventory& inventory,
+                                                                     const double L1_timestep_sec,
+                                                                     const double L2_timestep_sec,
+                                                                     const double HPC_timestep_sec );
 };
 
 #endif
