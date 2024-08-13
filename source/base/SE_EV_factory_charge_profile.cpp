@@ -505,12 +505,13 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
 }
 
 
-pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_profile_library( const double L1_timestep_sec,
+pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_profile_library( const EV_EVSE_inventory& inventory,
+                                                                                             const double L1_timestep_sec,
                                                                                              const double L2_timestep_sec,
                                                                                              const double HPC_timestep_sec )
 {
-    pev_charge_profile_library_v2 return_val{ this->inventory };
-    std::vector<pev_SE_pair> all_pev_SE_pairs = this->inventory.get_all_compatible_pev_SE_combinations();
+    pev_charge_profile_library_v2 return_val{ inventory };
+    std::vector<pev_SE_pair> all_pev_SE_pairs = inventory.get_all_compatible_pev_SE_combinations();
     
     std::vector<ac_power_metrics> charge_profile;
     std::vector<double> soc;
@@ -523,11 +524,11 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
     {
         const double time_step_sec = [&] () {
             double time_step_sec;
-            if( this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
+            if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
             {
                 time_step_sec = L1_timestep_sec;
             }
-            else if( this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
+            else if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
             {
                 time_step_sec = L2_timestep_sec;
             }
@@ -539,7 +540,7 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
         }();
         
         // "soc" and "charge_profile" are initialized by calling this function.
-        factory_charge_profile_library_v2::create_charge_profile( this->inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile );
+        factory_charge_profile_library_v2::create_charge_profile( inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile );
         
         // Put the charge profile in the library.
         return_val.add_charge_PkW_profile_to_library( pev_SE.ev_type, pev_SE.se_type, time_step_sec, soc, charge_profile );
