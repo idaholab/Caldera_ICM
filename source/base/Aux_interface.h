@@ -84,9 +84,7 @@ public:
     CP_interface_v2( const std::string& input_path,
                      const double L1_timestep_sec, 
                      const double L2_timestep_sec, 
-                     const double HPC_timestep_sec, 
-                     const EV_ramping_map ramping_by_pevType_only, 
-                     const EV_EVSE_ramping_map ramping_by_pevType_seType );
+                     const double HPC_timestep_sec );
 
     all_charge_profile_data create_charge_profile_from_model( const double time_step_sec, 
                                                               const EV_type pev_type, 

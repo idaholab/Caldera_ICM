@@ -14,16 +14,12 @@ int build_entire_charge_profile_using_ICM()
 	double L1_timestep_sec = 1;								// Timestep for Level 1 charger
 	double L2_timestep_sec = 1;								// Timestep for Level 2 charger
 	double HPC_timestep_sec = 1;							// Timestep for High Power charger
-	EV_ramping_map ramping_by_pevType_only{};				// Custom Ramping
-	EV_EVSE_ramping_map ramping_by_pevType_seType{};		// Custom Ramping
 
 	CP_interface_v2 ICM_v2{ 
 		path_to_inputs, 
 		L1_timestep_sec, 
 		L2_timestep_sec, 
-		HPC_timestep_sec, 
-		ramping_by_pevType_only, 
-		ramping_by_pevType_seType 
+		HPC_timestep_sec
 	};
 
 	std::string pev_type = "bev250_350kW";

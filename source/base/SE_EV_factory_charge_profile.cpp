@@ -405,13 +405,6 @@ std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_P
 //                      Charge Profile Library Factory
 //#############################################################################
 
-/*
-void factory_charge_profile_library_v2::initialize_custome_parameters(std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only_, std::map< std::tuple<EV_type, EVSE_type>, pev_charge_ramping> ramping_by_pevType_seType_)
-{
-    this->ramping_by_pevType_only = ramping_by_pevType_only_;
-    this->ramping_by_pevType_seType = ramping_by_pevType_seType_;
-}
-*/
 
 void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inventory& inventory, 
                                                                const double time_step_sec,
@@ -444,10 +437,6 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     bool model_stochastic_battery_degregation = false;
 
     factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation };
-
-    //factory_EV_charge_model PEV_charge_factory;
-    //PEV_charge_factory.set_bool_model_stochastic_battery_degregation(false);
-    //PEV_charge_factory.initialize_custome_parameters(this->ramping_by_pevType_only, this->ramping_by_pevType_seType);
 
     //------------------------
     //   Create SE Object
