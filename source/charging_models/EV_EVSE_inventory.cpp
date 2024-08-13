@@ -1,6 +1,12 @@
 #include "EV_EVSE_inventory.h"
 #include <algorithm>
 
+std::ostream& operator<<(std::ostream& out, const pev_SE_pair& x)
+{
+    out << "{" << x.ev_type << "," << x.se_type << "}";
+    return out;
+}
+
 EV_EVSE_inventory::EV_EVSE_inventory(const EV_inventory& EV_inv,
                                      const EVSE_inventory& EVSE_inv)
     : EV_inv{ EV_inv },
