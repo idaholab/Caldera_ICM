@@ -83,16 +83,12 @@ all_charge_profile_data build_entire_charge_profile_using_ICM( const std::string
     const double L1_timestep_sec = 1;                      // Timestep for Level 1 charger
     const double L2_timestep_sec = 1;                      // Timestep for Level 2 charger
     const double HPC_timestep_sec = 1;                     // Timestep for High Power charger
-    const EV_ramping_map ramping_by_pevType_only{};        // Custom Ramping
-    const EV_EVSE_ramping_map ramping_by_pevType_seType{}; // Custom Ramping
-
+    
     CP_interface_v2 ICM_v2 {
         path_to_inputs,
         L1_timestep_sec,
         L2_timestep_sec,
-        HPC_timestep_sec,
-        ramping_by_pevType_only,
-        ramping_by_pevType_seType
+        HPC_timestep_sec
     };
 
     // Generate the charge profile data

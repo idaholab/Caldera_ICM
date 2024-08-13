@@ -178,9 +178,6 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const
     
     //---------------------
     
-    // factory_charge_profile_library_v2 CP_Factory_v2{this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType};
-    // //CP_Factory_v2.initialize_custome_parameters(ramping_by_pevType_only, ramping_by_pevType_seType);
-    
     pev_SE_pair pev_SE;
     pev_SE.ev_type = pev_type;
     pev_SE.se_type = SE_type;
@@ -219,13 +216,11 @@ CP_interface_v2::CP_interface_v2( const std::string& input_path )
 CP_interface_v2::CP_interface_v2( const std::string& input_path,
                                   const double L1_timestep_sec, 
                                   const double L2_timestep_sec, 
-                                  const double HPC_timestep_sec, 
-                                  const EV_ramping_map ramping_by_pevType_only, 
-                                  const EV_EVSE_ramping_map ramping_by_pevType_seType )
+                                  const double HPC_timestep_sec )
     : loader{ load_EV_EVSE_inventory{ input_path } },
     inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library_v2{
-        factory_charge_profile_library_v2{ this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType }.get_charge_profile_library( L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec )
+        factory_charge_profile_library_v2{ this->inventory }.get_charge_profile_library( L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec )
     }
 {
 }

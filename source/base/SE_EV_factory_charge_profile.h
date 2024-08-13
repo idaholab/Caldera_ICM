@@ -73,17 +73,11 @@ class factory_charge_profile_library_v2
 {
 private:
     const EV_EVSE_inventory& inventory;
-    EV_ramping_map ramping_by_pevType_only;
-    EV_EVSE_ramping_map ramping_by_pevType_seType;
     
 public:
 
-    factory_charge_profile_library_v2( const EV_EVSE_inventory& inventory,
-                                       const EV_ramping_map& ramping_by_pevType_only,
-                                       const EV_EVSE_ramping_map& ramping_by_pevType_seType )
-        : inventory{ inventory },
-        ramping_by_pevType_only{ ramping_by_pevType_only },
-        ramping_by_pevType_seType{ ramping_by_pevType_seType }
+    factory_charge_profile_library_v2( const EV_EVSE_inventory& inventory )
+        : inventory{ inventory }
     {
     }
     
@@ -95,10 +89,7 @@ public:
                                        const double target_acP3_kW,
                                        std::vector<double>& soc,
                                        std::vector<ac_power_metrics>& charge_profile );
-    
-    // void initialize_custome_parameters( std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only_,
-    //                                     std::map< std::tuple<EV_type, EVSE_type>, pev_charge_ramping> ramping_by_pevType_seType_ );
-    
+
     pev_charge_profile_library_v2 get_charge_profile_library( const double L1_timestep_sec,
                                                               const double L2_timestep_sec,
                                                               const double HPC_timestep_sec );

@@ -28,7 +28,7 @@ PYBIND11_MODULE(Caldera_ICM_Aux, m)
     
     py::class_<CP_interface_v2>(m, "CP_interface_v2")
         .def(py::init<const std::string&>())
-        .def(py::init<const std::string&, double, double, double, EV_ramping_map, EV_EVSE_ramping_map >())
+        .def(py::init<const std::string&, double, double, double >())
         .def("get_P3kW_charge_profile", &CP_interface_v2::get_P3kW_charge_profile)
         .def("get_timestep_of_prev_call_sec", &CP_interface_v2::get_timestep_of_prev_call_sec)
         .def("get_all_charge_profile_data", &CP_interface_v2::get_all_charge_profile_data)
