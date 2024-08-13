@@ -24,7 +24,8 @@
 //                      Charge Profile Library Factory
 //#############################################################################
 
-void factory_charge_profile_library::create_charge_fragments_vector( const int charge_event_Id,
+void factory_charge_profile_library::create_charge_fragments_vector( const EV_EVSE_inventory& inventory,
+                                                                     const int charge_event_Id,
                                                                      const double time_step_sec,
                                                                      const double target_acP3_kW,
                                                                      const pev_SE_pair pev_SE,
@@ -141,7 +142,8 @@ void factory_charge_profile_library::create_charge_fragments_vector( const int c
 }
 
 
-double factory_charge_profile_library::get_max_P3kW( const double time_step_sec,
+double factory_charge_profile_library::get_max_P3kW( const EV_EVSE_inventory& inventory,
+                                                     const double time_step_sec,
                                                      const pev_SE_pair pev_SE )
 {
     std::vector<pev_charge_fragment> charge_fragments;
@@ -149,21 +151,25 @@ double factory_charge_profile_library::get_max_P3kW( const double time_step_sec,
     double target_acP3_kW = 1000000;
     int charge_event_Id = 1000;
     
-    create_charge_fragments_vector(charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, charge_fragments);
+    // Compute 'max_P3kW'.
+    factory_charge_profile_library::create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, charge_fragments);
+    
+    // Return the result.
     return max_P3kW;
 }
 
 
-double factory_charge_profile_library::get_min_P3kW( const double max_P3kW,
+double factory_charge_profile_library::get_min_P3kW( const EV_EVSE_inventory& inventory,
+                                                     const double max_P3kW,
                                                      const pev_SE_pair pev_SE )
 {
     double min_P3kW;
 
-    if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
+    if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
     {
         min_P3kW = 0.8*max_P3kW;    
     }
-    else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
+    else if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
     {
         min_P3kW = 0.5*max_P3kW;
     }
@@ -217,7 +223,9 @@ void factory_charge_profile_library::get_charge_profile_aux_parameters( const do
     }
     
     for(double X : target_acP3_multiplier)
+    {
         target_acP3_kW.push_back(X*max_P3kW);
+    }
     
     //------------------------------------------------------
     //   Populate time_step_sec & fragment_removal_criteria
@@ -244,13 +252,19 @@ void factory_charge_profile_library::get_charge_profile_aux_parameters( const do
         
         double perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow = 50.0;
         if(P3kW < 20)
+        {
             perc_of_max_starting_point_to_determine_not_removable_fragments_on_low_elbow = -1;
+        }
         
         double kW_change_threshold = P3kW/100;
         if(kW_change_threshold > 2)
+        {
             kW_change_threshold = 2;
+        }
         else if(kW_change_threshold < 0.1)
+        {
             kW_change_threshold = 0.1;
+        }
         
         pev_charge_fragment_removal_criteria X;
         X.max_percent_of_fragments_that_can_be_removed = 95;
@@ -262,17 +276,19 @@ void factory_charge_profile_library::get_charge_profile_aux_parameters( const do
 }
 
 
-pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_aux( const int charge_event_Id,
+pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_aux( const EV_EVSE_inventory& inventory,
+                                                                                   const int charge_event_Id,
                                                                                    const bool save_validation_data,
                                                                                    const double time_step_sec,
                                                                                    const double target_acP3_kW,
                                                                                    const pev_SE_pair pev_SE,
                                                                                    const pev_charge_fragment_removal_criteria fragment_removal_criteria,
-                                                                                   double& max_P3kW )
+                                                                                   double& max_P3kW,
+                                                                                   std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data )
 {
     std::vector<pev_charge_fragment> original_charge_fragments, downsampled_charge_fragments;
     
-    create_charge_fragments_vector(charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, original_charge_fragments);
+    factory_charge_profile_library::create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, original_charge_fragments);
 
     downsample_charge_fragment_vector downsample_obj(fragment_removal_criteria);
     downsample_obj.downsample(original_charge_fragments, downsampled_charge_fragments);
@@ -289,7 +305,12 @@ pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_au
         validation_data_struct.retained_fragments = downsample_obj.get_retained_fragments();;
         validation_data_struct.downsampled_charge_fragments = downsampled_charge_fragments;
         validation_data_struct.original_charge_fragments = original_charge_fragments;
-        this->validation_data[std::make_pair(pev_SE.ev_type, pev_SE.se_type)].push_back(validation_data_struct);
+        const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_SE.ev_type, pev_SE.se_type);
+        if( validation_data.find(key) == validation_data.end() )
+        {
+            validation_data[key] = std::vector<charge_profile_validation_data>();
+        }
+        validation_data.at(key).push_back(validation_data_struct);
     }
     
     //-----------------------------
@@ -299,10 +320,15 @@ pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_au
 }
 
 
-pev_charge_profile_library factory_charge_profile_library::get_charge_profile_library( const bool save_validation_data,
-                                                                                       const bool create_charge_profile_library )
+pev_charge_profile_library factory_charge_profile_library::get_charge_profile_library( const EV_EVSE_inventory& inventory,
+                                                                                       const bool save_validation_data,
+                                                                                       const bool create_charge_profile_library,
+                                                                                       std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data )
 {
-    this->validation_data.clear();
+    if( save_validation_data )
+    {
+        validation_data.clear();
+    }
 
     //-----------------------------------
     
@@ -310,18 +336,18 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
 
     if(create_charge_profile_library)
     {
-        const std::vector<pev_SE_pair>& all_pev_SE_pairs = this->inventory.get_all_compatible_pev_SE_combinations();
+        const std::vector<pev_SE_pair>& all_pev_SE_pairs = inventory.get_all_compatible_pev_SE_combinations();
         
         int charge_event_Id = 1000;
         double get_max_time_step_sec;
         
         for(const pev_SE_pair& pev_SE : all_pev_SE_pairs)
         {
-            if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
+            if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
             {
                 get_max_time_step_sec = 60;
             }
-            else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
+            else if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
             {
                 get_max_time_step_sec = 30;
             }
@@ -330,7 +356,7 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
                 get_max_time_step_sec = 1;
             }
             
-            const double max_target_P3kW = get_max_P3kW(get_max_time_step_sec, pev_SE);
+            const double max_target_P3kW = factory_charge_profile_library::get_max_P3kW(inventory, get_max_time_step_sec, pev_SE);
             
             //-----------------------
             
@@ -338,7 +364,7 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
             std::vector<double> target_acP3_kW;
             std::vector<pev_charge_fragment_removal_criteria> fragment_removal_criteria;
             
-            get_charge_profile_aux_parameters( max_target_P3kW, pev_SE, time_step_sec, target_acP3_kW, fragment_removal_criteria );
+            factory_charge_profile_library::get_charge_profile_aux_parameters( max_target_P3kW, pev_SE, time_step_sec, target_acP3_kW, fragment_removal_criteria );
             
             //-----------------------
             
@@ -350,7 +376,17 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
             for( int i = 0; i < time_step_sec.size(); i++ )
             {
                 charge_event_Id += 1;
-                charge_profiles_aux_vector.push_back(get_pev_charge_profile_aux(charge_event_Id, save_validation_data, time_step_sec[i], target_acP3_kW[i], pev_SE, fragment_removal_criteria[i], max_P3kW_tmp));
+                charge_profiles_aux_vector.push_back(
+                    factory_charge_profile_library::get_pev_charge_profile_aux( inventory,
+                                                                                charge_event_Id,
+                                                                                save_validation_data,
+                                                                                time_step_sec.at(i),
+                                                                                target_acP3_kW.at(i),
+                                                                                pev_SE,
+                                                                                fragment_removal_criteria.at(i),
+                                                                                max_P3kW_tmp,
+                                                                                validation_data )
+                );
             
                 if(max_P3kW_tmp > max_P3kW)
                 {
@@ -362,7 +398,7 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
             
             charge_event_P3kW_limits CE_P3kW_limits;
             CE_P3kW_limits.max_P3kW = max_P3kW;
-            CE_P3kW_limits.min_P3kW = get_min_P3kW(max_P3kW, pev_SE);
+            CE_P3kW_limits.min_P3kW = factory_charge_profile_library::get_min_P3kW( inventory, max_P3kW, pev_SE );
             
             //-----------------------
 
@@ -375,13 +411,9 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
 }
 
 
-std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > factory_charge_profile_library::get_validation_data()
-{
-    return this->validation_data;
-}
 
-
-std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( const double time_step_sec,
+std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( const EV_EVSE_inventory& inventory,
+                                                                                                                     const double time_step_sec,
                                                                                                                      const double target_acP3_kW,
                                                                                                                      const EV_type pev_type,
                                                                                                                      const EVSE_type SE_type )
@@ -393,7 +425,7 @@ std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_P
     double max_P3kW;
     int charge_event_Id = 1000;
     std::vector<pev_charge_fragment> return_val;    
-    create_charge_fragments_vector(charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, return_val);
+    create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, return_val);
     
     return return_val;
 }
@@ -481,7 +513,10 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     
     while(true)
     {
+        // Get the next value of 'soc_val' and 'ac_power'.
         SE_obj.get_next(now_unix_time-time_step_sec, now_unix_time, pu_Vrms, soc_val, ac_power);
+        
+        // Get the status.
         status_obj = SE_obj.get_SE_status();
         
         if(!SE_targets_have_been_initialized)
@@ -491,8 +526,10 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
             SE_obj.set_target_acQ3_kVAR(0);
         }
         
-        if((now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == SE_charging_status::ev_charge_complete || status_obj.SE_charging_status_val == SE_charging_status::no_ev_plugged_in))
+        if( (now_unix_time > arrival_unix_time + 5*time_step_sec) && (status_obj.SE_charging_status_val == SE_charging_status::ev_charge_complete || status_obj.SE_charging_status_val == SE_charging_status::no_ev_plugged_in) )
+        {
             break;
+        }
         
         if(status_obj.SE_charging_status_val == SE_charging_status::ev_charging || status_obj.SE_charging_status_val == SE_charging_status::ev_plugged_in_not_charging)
         {

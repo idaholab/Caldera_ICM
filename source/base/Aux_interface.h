@@ -24,10 +24,11 @@ public:
     
     CP_interface( const std::string& input_path );
     CP_interface( const std::string& input_path,
-                  const bool save_validation_data );
+                  std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data );
 
+    pev_charge_profile_library load_CP_library( const EV_EVSE_inventory& inventory ) const;
     pev_charge_profile_library load_CP_library( const EV_EVSE_inventory& inventory,
-                                                const bool save_validation_data ) const;
+                                                std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data ) const;
     
     double get_size_of_CP_library_MB();
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > get_CP_validation_data();

@@ -15,7 +15,7 @@ PYBIND11_MODULE(Caldera_ICM_Aux, m)
     
     py::class_<CP_interface>(m, "CP_interface")
         .def(py::init<const std::string&>())
-        .def(py::init<const std::string&, bool>())
+        .def(py::init<const std::string&, std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& >())
         .def("get_size_of_CP_library_MB", &CP_interface::get_size_of_CP_library_MB)
         .def("get_CP_validation_data", &CP_interface::get_CP_validation_data)
         .def("get_charge_event_P3kW_limits", &CP_interface::get_charge_event_P3kW_limits)

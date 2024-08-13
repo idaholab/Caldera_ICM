@@ -43,25 +43,32 @@ std::vector<pev_batterySize_info> get_pevType_batterySize_map()
 CP_interface::CP_interface( const std::string& input_path )
     : loader{ load_EV_EVSE_inventory{ input_path } },
     inventory{ this->loader.get_EV_EVSE_inventory() },
-    CP_library{ load_CP_library(inventory, false) }
+    CP_library{ load_CP_library( inventory ) }
 {
 }
 
-
 CP_interface::CP_interface( const std::string& input_path,
-                            const bool save_validation_data )
+                            std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data )
     : loader{ load_EV_EVSE_inventory{ input_path } },
     inventory{ this->loader.get_EV_EVSE_inventory() },
-    CP_library{ load_CP_library(inventory, save_validation_data) }
+    CP_library{ load_CP_library(inventory, validation_data) }
 {
+}
+
+pev_charge_profile_library CP_interface::load_CP_library( const EV_EVSE_inventory& inventory ) const
+{
+    const bool create_charge_profile_library = true;
+    const bool save_validation_data = false;
+    std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
+    return factory_charge_profile_library::get_charge_profile_library( inventory, save_validation_data, create_charge_profile_library, validation_data );
 }
 
 pev_charge_profile_library CP_interface::load_CP_library( const EV_EVSE_inventory& inventory,
-                                                          const bool save_validation_data ) const
+                                                          std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data ) const
 {
     const bool create_charge_profile_library = true;
-    factory_charge_profile_library CP_Factory{ inventory };
-    return CP_Factory.get_charge_profile_library( save_validation_data, create_charge_profile_library );
+    const bool save_validation_data = true;
+    return factory_charge_profile_library::get_charge_profile_library( inventory, save_validation_data, create_charge_profile_library, validation_data );
 }
 
 double CP_interface::get_size_of_CP_library_MB()
@@ -149,8 +156,7 @@ std::vector<pev_charge_fragment> CP_interface::USE_FOR_DEBUG_PURPOSES_ONLY_get_r
                                                                                                    const EV_type pev_type,
                                                                                                    const EVSE_type SE_type ) const
 {
-    factory_charge_profile_library CP_Factory{this->inventory};
-    return CP_Factory.USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( time_step_sec, target_acP3_kW, pev_type, SE_type );
+    return factory_charge_profile_library::USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( this->inventory, time_step_sec, target_acP3_kW, pev_type, SE_type );
 }
 
 //#############################################################################

@@ -93,8 +93,9 @@ interface_to_SE_groups::interface_to_SE_groups( const std::string& input_path,
 
 pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library(const interface_to_SE_groups_inputs& inputs)
 {
-    factory_charge_profile_library X{ inventory };
-    return X.get_charge_profile_library(false, inputs.create_charge_profile_library);
+    std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
+    const bool save_validation_data = false;
+    return factory_charge_profile_library::get_charge_profile_library( this->inventory, save_validation_data, inputs.create_charge_profile_library, validation_data);
 }
 
 interface_to_SE_groups::~interface_to_SE_groups()
