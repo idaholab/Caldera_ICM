@@ -93,6 +93,7 @@ all_charge_profile_data build_entire_charge_profile_using_ICM( const std::string
 
     // Generate the charge profile data
     all_charge_profile_data all_profile_data = ICM_v2.get_all_charge_profile_data( start_soc, end_soc, pev_type, se_type );
+    
     return all_profile_data;
 }
 
@@ -103,6 +104,7 @@ all_charge_profile_data build_entire_charge_profile_using_ICM( const std::string
 // at ten different power levels.
 void output_power_profiles( const std::string path_to_inputs,
                             const std::string output_file_path_prefix,
+                            const std::string index_to_power_level_file_path,
                             const EV_type pev_type,
                             const EVSE_type se_type,
                             const double start_soc,
@@ -162,18 +164,27 @@ void output_power_profiles( const std::string path_to_inputs,
         const double start_time_sec = 0.0;
         for (int i = 0; i < all_profile_data.soc.size(); i++)
         {
-            std::string line_of_data = "";
-            line_of_data += std::to_string((start_time_sec + i * all_profile_data.timestep_sec) / 3600.0) + ",";
-            line_of_data += std::to_string(all_profile_data.soc[i]) + ",";
-            line_of_data += std::to_string(all_profile_data.P1_kW[i]) + ",";
-            line_of_data += std::to_string(all_profile_data.P2_kW[i]) + ",";
-            line_of_data += std::to_string(all_profile_data.P3_kW[i]) + ",";
-            line_of_data += std::to_string(all_profile_data.Q3_kVAR[i]) + "\n";
-            f_out << line_of_data;
+            f_out << std::setprecision(12) << ((start_time_sec + i * all_profile_data.timestep_sec) / 3600.0) << ",";
+            f_out << std::setprecision(12) << (all_profile_data.soc[i]) << ",";
+            f_out << std::setprecision(12) << (all_profile_data.P1_kW[i]) << ",";
+            f_out << std::setprecision(12) << (all_profile_data.P2_kW[i]) << ",";
+            f_out << std::setprecision(12) << (all_profile_data.P3_kW[i]) << ",";
+            f_out << std::setprecision(12) << (all_profile_data.Q3_kVAR[i]) << std::endl;
         }
         
         // Close the file.
         f_out.close();
+    }
+    
+    // Write the index-to-power-level lookup file.
+    std::ofstream f_out;
+    f_out.open(index_to_power_level_file_path);
+    std::cout << "index_to_power_level_file_path: " << index_to_power_level_file_path << std::endl;
+    f_out << "index,power_level_scale_factor\n";
+    for( int i = 0; i < power_levels.size(); i++ )
+    {
+        const double power_level = power_levels.at(i);
+        f_out << std::setprecision(12) << i << "," << power_level << std::endl;
     }
 }
 
@@ -192,8 +203,10 @@ int main()
     const std::string path_to_inputs = "./inputs";
     std::stringstream output_file_path_prefix_ss;
     output_file_path_prefix_ss << "./outputs/" << "pevtype_" << pev_type << "__setype_" << se_type;
+    const std::string index_to_power_level_file_path = "./outputs/index_to_power_level_lookup.csv";
     output_power_profiles( path_to_inputs,
                            output_file_path_prefix_ss.str(),
+                           index_to_power_level_file_path,
                            pev_type,
                            se_type,
                            start_soc,
