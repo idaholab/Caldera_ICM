@@ -87,13 +87,14 @@ public:
     {
     }
     
-    void create_charge_profile( const double time_step_sec,
-                                const pev_SE_pair pev_SE,
-                                const double start_soc,
-                                const double end_soc,
-                                const double target_acP3_kW,
-                                std::vector<double>& soc,
-                                std::vector<ac_power_metrics>& charge_profile );
+    static void create_charge_profile( const EV_EVSE_inventory& inventory,
+                                       const double time_step_sec,
+                                       const pev_SE_pair pev_SE,
+                                       const double start_soc,
+                                       const double end_soc,
+                                       const double target_acP3_kW,
+                                       std::vector<double>& soc,
+                                       std::vector<ac_power_metrics>& charge_profile );
     
     // void initialize_custome_parameters( std::map<EV_type, pev_charge_ramping> ramping_by_pevType_only_,
     //                                     std::map< std::tuple<EV_type, EVSE_type>, pev_charge_ramping> ramping_by_pevType_seType_ );

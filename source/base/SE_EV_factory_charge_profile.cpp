@@ -318,13 +318,19 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
         for(const pev_SE_pair& pev_SE : all_pev_SE_pairs)
         {
             if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
+            {
                 get_max_time_step_sec = 60;
+            }
             else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
+            {
                 get_max_time_step_sec = 30;
+            }
             else
+            {
                 get_max_time_step_sec = 1;
+            }
             
-            double max_target_P3kW = get_max_P3kW(get_max_time_step_sec, pev_SE);
+            const double max_target_P3kW = get_max_P3kW(get_max_time_step_sec, pev_SE);
             
             //-----------------------
             
@@ -332,7 +338,7 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
             std::vector<double> target_acP3_kW;
             std::vector<pev_charge_fragment_removal_criteria> fragment_removal_criteria;
             
-            get_charge_profile_aux_parameters(max_target_P3kW, pev_SE, time_step_sec, target_acP3_kW, fragment_removal_criteria);
+            get_charge_profile_aux_parameters( max_target_P3kW, pev_SE, time_step_sec, target_acP3_kW, fragment_removal_criteria );
             
             //-----------------------
             
@@ -341,13 +347,15 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
             double max_P3kW = 0;
             double max_P3kW_tmp;
             
-            for(int i=0; i<time_step_sec.size(); i++)
+            for( int i = 0; i < time_step_sec.size(); i++ )
             {
                 charge_event_Id += 1;
                 charge_profiles_aux_vector.push_back(get_pev_charge_profile_aux(charge_event_Id, save_validation_data, time_step_sec[i], target_acP3_kW[i], pev_SE, fragment_removal_criteria[i], max_P3kW_tmp));
             
                 if(max_P3kW_tmp > max_P3kW)
+                {
                     max_P3kW = max_P3kW_tmp;
+                }
             }
             
             //-----------------------
@@ -405,8 +413,8 @@ void factory_charge_profile_library_v2::initialize_custome_parameters(std::map<E
 }
 */
 
-
-void factory_charge_profile_library_v2::create_charge_profile( const double time_step_sec,
+void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inventory& inventory, 
+                                                               const double time_step_sec,
                                                                const pev_SE_pair pev_SE,
                                                                const double start_soc,
                                                                const double end_soc,
@@ -517,23 +525,35 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
     
     std::vector<ac_power_metrics> charge_profile;
     std::vector<double> soc;
-    double time_step_sec;
     
-    double target_acP3_kW = 1000000;    
-    double start_soc = 0;
-    double end_soc = 100;
+    const double target_acP3_kW = 1000000;    
+    const double start_soc = 0;
+    const double end_soc = 100;
     
-    for(pev_SE_pair pev_SE : all_pev_SE_pairs)
+    for( pev_SE_pair pev_SE : all_pev_SE_pairs )
     {
-        if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1)
-            time_step_sec = L1_timestep_sec;
-        else if(this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2)
-            time_step_sec = L2_timestep_sec;
-        else
-            time_step_sec = HPC_timestep_sec;
+        const double time_step_sec = [&] () {
+            double time_step_sec;
+            if( this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
+            {
+                time_step_sec = L1_timestep_sec;
+            }
+            else if( this->inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
+            {
+                time_step_sec = L2_timestep_sec;
+            }
+            else
+            {
+                time_step_sec = HPC_timestep_sec;
+            }
+            return time_step_sec;
+        }();
         
-        create_charge_profile(time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile);
-        return_val.add_charge_PkW_profile_to_library(pev_SE.ev_type, pev_SE.se_type, time_step_sec, soc, charge_profile);
+        // "soc" and "charge_profile" are initialized by calling this function.
+        factory_charge_profile_library_v2::create_charge_profile( this->inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile );
+        
+        // Put the charge profile in the library.
+        return_val.add_charge_PkW_profile_to_library( pev_SE.ev_type, pev_SE.se_type, time_step_sec, soc, charge_profile );
     }
 
     return return_val;

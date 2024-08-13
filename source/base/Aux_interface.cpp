@@ -178,8 +178,8 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const
     
     //---------------------
     
-    factory_charge_profile_library_v2 CP_Factory_v2{this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType};
-    //CP_Factory_v2.initialize_custome_parameters(ramping_by_pevType_only, ramping_by_pevType_seType);
+    // factory_charge_profile_library_v2 CP_Factory_v2{this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType};
+    // //CP_Factory_v2.initialize_custome_parameters(ramping_by_pevType_only, ramping_by_pevType_seType);
     
     pev_SE_pair pev_SE;
     pev_SE.ev_type = pev_type;
@@ -188,7 +188,8 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const
     std::vector<double> soc;
     std::vector<ac_power_metrics> ac_power_vec;
     
-    CP_Factory_v2.create_charge_profile( time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, ac_power_vec );
+    // "soc" and "ac_power_vec" are initialized by calling this function.
+    factory_charge_profile_library_v2::create_charge_profile( this->inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, ac_power_vec );
 
     //---------------------
     
@@ -223,7 +224,9 @@ CP_interface_v2::CP_interface_v2( const std::string& input_path,
                                   const EV_EVSE_ramping_map ramping_by_pevType_seType )
     : loader{ load_EV_EVSE_inventory{ input_path } },
     inventory{ this->loader.get_EV_EVSE_inventory() },
-    CP_library_v2{ factory_charge_profile_library_v2{this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType}.get_charge_profile_library(L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec)}
+    CP_library_v2{
+        factory_charge_profile_library_v2{ this->inventory, ramping_by_pevType_only, ramping_by_pevType_seType }.get_charge_profile_library( L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec )
+    }
 {
 }
 

@@ -161,7 +161,7 @@ public:
 class pev_charge_profile_library_v2
 {
 private:
-    struct tmp_charge_profile
+    struct charge_profile_lib_data
     {
         std::vector<ac_power_metrics> PkW_profile;
         std::vector<double> soc;
@@ -170,18 +170,7 @@ private:
 
     const EV_EVSE_inventory& inventory;
     
-    std::map<std::pair<EV_type, EVSE_type>, tmp_charge_profile> PkW_profile;
-
-    void find_index_and_weight( const double soc,
-                                const std::vector<double>& soc_vector,
-                                double& index,
-                                double& weight ) const;
-
-    void find_start_end_indexes_from_start_end_soc( const double start_soc,
-                                                    const double end_soc,
-                                                    const std::vector<double>& soc,
-                                                    double& start_index,
-                                                    double& end_index ) const;
+    std::map<std::pair<EV_type, EVSE_type>, charge_profile_lib_data> PkW_profile;
     
 public:  
     pev_charge_profile_library_v2( const EV_EVSE_inventory& inventory );
