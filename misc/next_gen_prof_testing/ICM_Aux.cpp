@@ -59,7 +59,7 @@ int build_entire_charge_profile_using_ICM()
 int estimate_charging_parameters_using_ICM()
 {
 	std::string path_to_inputs = "./inputs";
-	CP_interface ICM_v1{ path_to_inputs, false };
+	CP_interface ICM_v1{ path_to_inputs };
 
 	double setpoint_P3kW = 1000;
 	std::string pev_type = "bev250_350kW";
