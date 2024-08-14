@@ -33,7 +33,8 @@ private:
                                                 const double target_acP3_kW,
                                                 const pev_SE_pair pev_SE,
                                                 double& max_P3kW,
-                                                std::vector<pev_charge_fragment>& charge_fragments );
+                                                std::vector<pev_charge_fragment>& charge_fragments,
+                                                const double c_rate_scale_factor = 1.0 );
     
     static double get_max_P3kW( const EV_EVSE_inventory& inventory,
                                 const double time_step_sec,
@@ -89,12 +90,21 @@ public:
                                        const double end_soc,
                                        const double target_acP3_kW,
                                        std::vector<double>& soc,
-                                       std::vector<ac_power_metrics>& charge_profile );
+                                       std::vector<ac_power_metrics>& charge_profile,
+                                       const double c_rate_scale_factor = 1.0 );
 
     static pev_charge_profile_library_v2 get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                      const double L1_timestep_sec,
                                                                      const double L2_timestep_sec,
                                                                      const double HPC_timestep_sec );
+    
+    static all_charge_profile_data build_all_charge_profile_data_for_specific_pev_SE_pair( const EV_EVSE_inventory& inventory,
+                                                                                           const double timestep_sec,
+                                                                                           pev_SE_pair pev_SE,
+                                                                                           const double start_soc,
+                                                                                           const double end_soc,
+                                                                                           const double target_acP3_kW,
+                                                                                           const double c_rate_scale_factor = 1.0 );
 };
 
 #endif

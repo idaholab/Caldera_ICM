@@ -30,7 +30,8 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
                                                                      const double target_acP3_kW,
                                                                      const pev_SE_pair pev_SE,
                                                                      double& max_P3kW,
-                                                                     std::vector<pev_charge_fragment>& charge_fragments )
+                                                                     std::vector<pev_charge_fragment>& charge_fragments,
+                                                                     const double c_rate_scale_factor )
 {
     //std::cout << "time_step_sec: " << time_step_sec << "  target_acP3_kW: " << target_acP3_kW << " EV_type: " << pev_SE.EV_type << " SE_type: " << pev_SE.SE_type << std::endl;
     
@@ -54,7 +55,7 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
     EV_EVSE_ramping_map EV_EVSE_ramping;
     bool model_stochastic_battery_degregation = false;
 
-    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation };
+    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation, c_rate_scale_factor };
     //PEV_charge_factory.set_bool_model_stochastic_battery_degregation(false);
 
     //------------------------
@@ -445,7 +446,8 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
                                                                const double end_soc,
                                                                const double target_acP3_kW,
                                                                std::vector<double>& soc,
-                                                               std::vector<ac_power_metrics>& charge_profile )
+                                                               std::vector<ac_power_metrics>& charge_profile,
+                                                               const double c_rate_scale_factor )
 {
     charge_profile.clear();
     soc.clear();
@@ -468,7 +470,8 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     EV_EVSE_ramping_map EV_EVSE_ramping;
     bool model_stochastic_battery_degregation = false;
 
-    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation };
+    // This is where a whole bunch of stuff happens.
+    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation, c_rate_scale_factor };
 
     //------------------------
     //   Create SE Object
@@ -584,6 +587,58 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
     }
 
     return return_val;
+}
+
+
+all_charge_profile_data factory_charge_profile_library_v2::build_all_charge_profile_data_for_specific_pev_SE_pair( const EV_EVSE_inventory& inventory,
+                                                                                                                   const double timestep_sec,
+                                                                                                                   pev_SE_pair pev_SE,
+                                                                                                                   const double start_soc,
+                                                                                                                   const double end_soc,
+                                                                                                                   const double target_acP3_kW,
+                                                                                                                   const double c_rate_scale_factor )
+{
+    std::vector<double> soc_vec;
+    std::vector<ac_power_metrics> charge_profile_vec;
+    
+    factory_charge_profile_library_v2::create_charge_profile(
+        inventory,                        // const EV_EVSE_inventory& inventory, 
+        timestep_sec,                     // const double time_step_sec,
+        pev_SE,                           // const pev_SE_pair pev_SE,
+        start_soc,                        // const double start_soc,
+        end_soc,                          // const double end_soc,
+        target_acP3_kW,                   // const double target_acP3_kW,
+        soc_vec,                          // std::vector<double>& soc,
+        charge_profile_vec,               // std::vector<ac_power_metrics>& charge_profile,
+        c_rate_scale_factor               // const double c_rate_scale_factor
+    );
+    
+    // Construct a 'all_charge_profile_data' object.
+    if( soc_vec.size() != charge_profile_vec.size() )
+    {
+        std::cout << "Error: 'soc_vec' and 'charge_profile_vec' not the same length." << std::endl;
+        exit(0);
+    }
+    
+    all_charge_profile_data all_profile_data;
+    all_profile_data.timestep_sec = timestep_sec;
+    for( int i = 0; i < soc_vec.size(); i++ )
+    {
+        all_profile_data.P1_kW.push_back( charge_profile_vec.at(i).P1_kW );
+        all_profile_data.P2_kW.push_back( charge_profile_vec.at(i).P2_kW );
+        all_profile_data.P3_kW.push_back( charge_profile_vec.at(i).P3_kW );
+        all_profile_data.Q3_kVAR.push_back( charge_profile_vec.at(i).Q3_kVAR );
+        all_profile_data.soc.push_back( soc_vec.at(i) );
+        
+        if( fabs(charge_profile_vec.at(i).time_step_duration_hrs*3600.0 - timestep_sec) > 1e-6 )
+        {
+            std::cout << "Error: Is there a problem with the timestep?" << std::endl;
+            exit(0);
+        }
+    }
+    
+    // return the result.
+    return all_profile_data;
 }
 
 
