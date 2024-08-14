@@ -30,20 +30,23 @@ for i in range(0,len(idf)):
     
     time_hrs = ddf["time | hrs"].to_numpy()
     soc = ddf["SOC | "].to_numpy()
-    p1 = ddf["P1 | kW"].to_numpy()
+    
+    #p1 = ddf["P1 | kW"].to_numpy()
     p2 = ddf["P2 | kW"].to_numpy()
-    p3 = ddf["P3 | kW"].to_numpy()
+    #p3 = ddf["P3 | kW"].to_numpy()
     
     k = 0
-    plots_list[k].plot( soc, p3 )
+    #plots_list[k].plot( soc, p1 )
+    plots_list[k].plot( soc, p2 )
+    #plots_list[k].plot( soc, p3 )
     plots_list[k].set_xlabel("SOC")
     plots_list[k].set_ylabel("Power (kW)")
     plots_list[k].set_title("Power vs. SOC")
     
     k = 1
     #plots_list[k].plot( time_hrs, p1 )
-    #plots_list[k].plot( time_hrs, p2 )
-    plots_list[k].plot( time_hrs, p3 )
+    plots_list[k].plot( time_hrs, p2 )
+    #plots_list[k].plot( time_hrs, p3 )
     plots_list[k].set_xlabel("Time (hrs)")
     plots_list[k].set_ylabel("Power (kW)")
     plots_list[k].set_title("Power vs. Time")

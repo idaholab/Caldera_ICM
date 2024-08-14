@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <sstream>
 #include "SE_EV_factory_charge_profile.h"
+#include <algorithm>
 
 double find_c_rate_input_given_power(const double actual_bat_size_kWh, const double max_power_kW, const std::string& bat_chem)
 {
@@ -235,11 +236,164 @@ void output_power_profiles( const std::string path_to_inputs,
 }
 
 
+class temperature_gradient_model_v1
+{
+    private:
+    
+        // The temperature gradient model takes 4 coefficients
+        // and requires 3 inputs to evaluate.
+        // These coefficients are usually determined by analyzing charge
+        // data and using a OLS Regression model using scikit-learn.
+        //
+        //  dT/dt = c0 + c1 * P + c2 * T + c3 * t
+        //
+        const double c0; // Constant
+        const double c1; // Coefficient associated with power.
+        const double c2; // Coefficient associated with temperature
+        const double c3; // Coefficient associated with time.
+
+    public:
+        
+        temperature_gradient_model_v1() : c0(0.0), c1(0.0), c2(0.0), c3(0.0) {}
+        temperature_gradient_model_v1( const double c0,
+                                       const double c1,
+                                       const double c2,
+                                       const double c3 ) : c0(c0), c1(c1), c2(c2), c3(c3) {}
+        
+        double eval( const double power_kW,
+                     const double temperature_C,
+                     const double charge_time_sec ) const
+        {
+            return c0 + c1*power_kW + c2*temperature_C + c3*charge_time_sec;
+        }
+};
+
+
+class TemperatureAwareProfiles
+{
+    static double eval_P2_at_SOC( const double soc, const all_charge_profile_data profile )
+    {
+        double power_kW = 0.0;
+        bool found_it = false;
+        if( soc < profile.soc.at(0) )
+        {
+            power_kW = profile.P2_kW.at(0);
+            found_it = true;
+        }
+        else if( soc >= profile.soc.at(profile.soc.size()-1) )
+        {
+            power_kW = profile.P2_kW.at(profile.soc.size()-1);
+            found_it = true;
+        }
+        else
+        {
+            for( int i = 0; i < profile.soc.size(); i++ )
+            {
+                if( soc >= profile.soc.at(i) && soc < profile.soc.at(i+1) )
+                {
+                    const double soc0 = profile.soc.at(i);
+                    const double soc1 = profile.soc.at(i+1);
+                    const double frac = (soc - soc0)/(soc1 - soc0);
+                    power_kW = (1.0-frac) * profile.P2_kW.at(i) + frac * profile.P2_kW.at(i+1);
+                    found_it = true;
+                    break;
+                }    
+            }
+        }
+        if( !found_it )
+        {
+            std::cout << "ERROR: Couldn't evaluate the power for some reason." << std::endl;
+            exit(0);
+        }
+        return power_kW;
+    }
+    
+    static void generate_temperature_aware_power_profile( const std::vector< all_charge_profile_data > power_profiles_sorted_low_to_high,
+                                                          const temperature_gradient_model_v1 T_model,
+                                                          const double time_step_sec,
+                                                          const double battery_capacity_kWh,
+                                                          const double start_soc,
+                                                          const double start_temperature_C,
+                                                          const double max_temperature_C,
+                                                          const double min_temperature_C,
+                                                          const int start_power_level,
+                                                          const std::string output_file_name )
+    {
+        double time_sec = 0.0;
+        double temperature_C = start_temperature_C;
+        double soc = start_soc;
+        int pwr_level_i = start_power_level;
+        
+        const double end_soc = 98.8;
+        const double time_step_hrs = time_step_sec/3600.0;
+        
+        std::vector<double> time_sec_vec;
+        std::vector<double> soc_vec;
+        std::vector<double> power_kW_vec;
+        std::vector<double> temperature_C_vec;
+        std::vector<double> temperature_gradient_dTdt_vec;
+        
+        while( soc < end_soc )
+        {
+            const double power_kW = TemperatureAwareProfiles::eval_P2_at_SOC( soc, power_profiles_sorted_low_to_high.at(pwr_level_i) );
+            const double temperature_grad = T_model.eval( power_kW, temperature_C, time_sec );
+            
+            // Save the current state into the vectors.
+            time_sec_vec.push_back(time_sec);
+            soc_vec.push_back(soc);
+            power_kW_vec.push_back(power_kW);
+            temperature_C_vec.push_back(temperature_C);
+            temperature_gradient_dTdt_vec.push_back(temperature_grad);
+            
+            // Update the SOC, temperature, and time.
+            soc += ( power_kW * time_step_hrs / battery_capacity_kWh );
+            temperature_C += temperature_grad * time_step_sec;
+            time_sec += time_step_sec;
+            
+            // Update the power level if needed.
+            if( temperature_C >= max_temperature_C )
+            {
+                pwr_level_i = std::max( pwr_level_i-1, 0 );
+            }
+            else if( temperature_C <= min_temperature_C )
+            {
+                pwr_level_i = std::min( pwr_level_i+1, ((int)power_profiles_sorted_low_to_high.size())-1 );
+            }
+            else
+            {
+                std::cout << "Error: This shouldn't happen." << std::endl;
+                exit(0);
+            }    
+        }
+        
+        // -----------------------------------------------
+        // Write the results to disk so we can look at it.
+        // -----------------------------------------------
+        if( output_file_name != std::string("") )
+        {
+            std::ofstream fout(output_file_name);
+            std::string header = "time_sec,soc,power_kW,temperature_C,temperature_grad_dTdt";
+            fout << header << std::endl;
+            for( int i = 0; i < time_sec_vec.size(); i++ )
+            {
+                fout << std::setprecision(12) << time_sec_vec.at(i) << ",";
+                fout << std::setprecision(12) << soc_vec.at(i) << ",";
+                fout << std::setprecision(12) << power_kW_vec.at(i) << ",";
+                fout << std::setprecision(12) << temperature_C_vec.at(i) << ",";
+                fout << std::setprecision(12) << temperature_gradient_dTdt_vec.at(i) << std::endl;
+            }
+            fout.close();
+        }
+    }
+};
+
+
+
 // ----------
-// -- MAIN --
+// -- SIMS --
 // ----------
 
-int main()
+int sim_00()
 {
     const EV_type pev_type = "ngp_hyundai_ioniq_5_longrange_awd_100";
     const EVSE_type se_type = "xfc_350";
@@ -267,5 +421,32 @@ int main()
                            end_soc,
                            c_rate_scale_factor_levels );
     return 0;
+    
 }
+
+
+int sim_01()
+{
+    // Under construction.
+    
+    return 0;
+}
+
+
+
+
+
+// ----------
+// -- MAIN --
+// ----------
+
+int main()
+{
+    int ret_val;
+    ret_val += sim_00();
+    //ret_val += sim_01();
+    return ret_val;
+}
+
+
 
