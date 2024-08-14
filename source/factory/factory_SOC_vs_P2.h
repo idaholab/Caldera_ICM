@@ -56,19 +56,22 @@ private:
     const double compute_min_non_zero_slope(const std::vector<line_segment>& charge_profile) const;
     const double compute_zero_slope_threshold_P2_vs_soc(const std::vector<line_segment>& charge_profile) const;
 
-    const SOC_vs_P2 get_charging_dcfc_charge_profile(const EV_type& EV, 
-                                                     const EVSE_type& EVSE) const;
+    const SOC_vs_P2 get_charging_dcfc_charge_profile( const EV_type& EV, 
+                                                      const EVSE_type& EVSE,
+                                                      const double c_rate_scale_factor = 1.0 ) const;
     const SOC_vs_P2 get_discharging_dcfc_charge_profile(const EV_type& EV, 
-                                                        const EVSE_type& EVSE) const;
+                                                        const EVSE_type& EVSE,
+                                                        const double c_rate_scale_factor = 1.0 ) const;
 
 public:
     create_dcPkW_from_soc(const EV_EVSE_inventory& inventory, 
                           const curves_grouping& curves,
                           const battery_charge_mode& mode);
 
-    const SOC_vs_P2 get_dcfc_charge_profile(const battery_charge_mode& mode, 
-                                            const EV_type& EV, 
-                                            const EVSE_type& EVSE) const;
+    const SOC_vs_P2 get_dcfc_charge_profile( const battery_charge_mode& mode, 
+                                             const EV_type& EV, 
+                                             const EVSE_type& EVSE,
+                                             const double c_rate_scale_factor = 1.0 ) const;
     const SOC_vs_P2 get_L1_or_L2_charge_profile(const EV_type& EV) const;
 };
 
@@ -93,10 +96,11 @@ private:
     const create_dcPkW_from_soc load_LTO_charge();
 
     const std::unordered_map<EV_type, SOC_vs_P2 > load_L1_L2_curves();
-    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves();
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves( const double c_rate_scale_factor = 1.0 );
 
 public:
-    factory_SOC_vs_P2(const EV_EVSE_inventory& inventory);
+    factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
+                       const double c_rate_scale_factor = 1.0 );
 
     const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, 
                                           const EVSE_type& EVSE) const;

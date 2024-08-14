@@ -10,14 +10,15 @@
 //########################################################################
 
 
-factory_EV_charge_model::factory_EV_charge_model(const EV_EVSE_inventory& inventory,
-                                                 const EV_ramping_map& custom_EV_ramping,
-                                                 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping,
-                                                 const bool model_stochastic_battery_degregation)
+factory_EV_charge_model::factory_EV_charge_model( const EV_EVSE_inventory& inventory,
+                                                  const EV_ramping_map& custom_EV_ramping,
+                                                  const EV_EVSE_ramping_map& custom_EV_EVSE_ramping,
+                                                  const bool model_stochastic_battery_degregation,
+                                                  const double c_rate_scale_factor )
     : inventory{ inventory },
     charging_transitions_obj{ inventory, custom_EV_ramping, custom_EV_EVSE_ramping },
     puVrms_vs_P2_obj{ inventory },
-    SOC_vs_P2_obj{ inventory },
+    SOC_vs_P2_obj{ inventory, c_rate_scale_factor },
     P2_vs_battery_eff_obj{ inventory },
     model_stochastic_battery_degregation{ model_stochastic_battery_degregation }
 {

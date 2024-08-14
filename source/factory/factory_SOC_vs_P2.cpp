@@ -122,17 +122,18 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_charge_mode& mode, 
-                                                               const EV_type& EV, 
-                                                               const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile( const battery_charge_mode& mode, 
+                                                                const EV_type& EV, 
+                                                                const EVSE_type& EVSE,
+                                                                const double c_rate_scale_factor ) const
 {
     if (mode == battery_charge_mode::charging)
     {
-        return this->get_charging_dcfc_charge_profile(EV, EVSE);
+        return this->get_charging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
     }
     else if (mode == battery_charge_mode::discharging)
     {
-        return this->get_discharging_dcfc_charge_profile(EV, EVSE);
+        return this->get_discharging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
     }
     else
     {
@@ -142,12 +143,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_cha
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV_type& EV, 
-                                                                        const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const EV_type& EV, 
+                                                                         const EVSE_type& EVSE,
+                                                                         const double c_rate_scale_factor ) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -471,12 +473,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
     return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, 
-                                                                           const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( const EV_type& EV, 
+                                                                            const EVSE_type& EVSE,
+                                                                            const double c_rate_scale_factor ) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -794,13 +797,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 //##########################################################
 
 
-factory_SOC_vs_P2::factory_SOC_vs_P2(const EV_EVSE_inventory& inventory) 
+factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const double c_rate_scale_factor ) 
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
     NMC_charge{ this->load_NMC_charge() },
     LTO_charge{ this->load_LTO_charge() },
     L1_L2_curves{ this->load_L1_L2_curves() },
-    DCFC_curves{ this->load_DCFC_curves() }
+    DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
 {
 }
 
@@ -1118,7 +1121,7 @@ const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curv
 }
 
 
-const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves()
+const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves( const double c_rate_scale_factor )
 {
     std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > return_val;
 
@@ -1142,26 +1145,27 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
                 if (DCFC_capable == true)
                 {
                     const battery_chemistry& chemistry = EV_char.get_chemistry();
-                    const double& battery_size_kWh = EV_char.get_battery_size_kWh();
-                    const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
-                    const double& max_c_rate = EV_char.get_max_c_rate();
-                    const double& power_limit_kW = EVSE_char.get_power_limit_kW();
-                    const double& DC_current_limit = EVSE_char.get_current_limit_A();
+                    // // NOTE: I commentted these out because these are not being used here.
+                    //const double& battery_size_kWh = EV_char.get_battery_size_kWh();
+                    //const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
+                    //const double& max_c_rate = EV_char.get_max_c_rate();
+                    //const double& power_limit_kW = EVSE_char.get_power_limit_kW();
+                    //const double& DC_current_limit = EVSE_char.get_current_limit_A();
 
                     const battery_charge_mode mode = battery_charge_mode::charging;
 
                     // charge profile is not a reference because the data is not stored by the object.
                     if (chemistry == battery_chemistry::LMO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
                     else if (chemistry == battery_chemistry::NMC)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
                     else if (chemistry == battery_chemistry::LTO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
                     else
                     {
