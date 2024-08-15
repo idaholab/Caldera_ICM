@@ -642,3 +642,46 @@ all_charge_profile_data factory_charge_profile_library_v2::build_all_charge_prof
 }
 
 
+// inventory:                     The EV_EVSE_inventory
+// pev_type:                      The EV_type.
+// SE_type:                       The EVSE_type.
+// start_soc:                     The start SOC.
+// end_soc:                       The end SOC.
+// timestep_sec:                  The timestep of the returned power-profiles. Usually 1 second.
+// target_acP3_kW:                This is usually hard-coded to 1000000 as it is in 'factory_charge_profile_library_v2::get_charge_profile_library'
+// c_rate_scale_factor_levels:    The scale factors to apply to the max-C-rate when generating each power curve.
+// all_charge_profile_data_vec:   The return values are put in here.
+void factory_charge_profile_library_v2::collect_power_profiles( const EV_EVSE_inventory& inventory,
+                                                                const double timestep_sec,
+                                                                const pev_SE_pair pev_SE,
+                                                                const double start_soc,
+                                                                const double end_soc,
+                                                                const double target_acP3_kW,
+                                                                const std::vector<double> c_rate_scale_factor_levels,
+                                                                std::vector< all_charge_profile_data >& all_charge_profile_data_vec )
+{
+    // Make sure the vector is empty before we add stuff to it.
+    all_charge_profile_data_vec.clear();
+    
+    // Loop over each power level.
+    for( int i = 0; i < c_rate_scale_factor_levels.size(); i++ )
+    {
+        // Get the power level
+        const double c_rate_scale_factor = c_rate_scale_factor_levels.at(i);
+        
+        // Generate the profile data.
+        const all_charge_profile_data all_profile_data = factory_charge_profile_library_v2::build_all_charge_profile_data_for_specific_pev_SE_pair(
+                                                                                                                        inventory,
+                                                                                                                        timestep_sec,
+                                                                                                                        pev_SE,
+                                                                                                                        start_soc,
+                                                                                                                        end_soc,
+                                                                                                                        target_acP3_kW,
+                                                                                                                        c_rate_scale_factor );
+        // Add the 'all_charge_profile_data' to the vector.
+        all_charge_profile_data_vec.push_back( all_profile_data );
+    }
+}
+
+
+
