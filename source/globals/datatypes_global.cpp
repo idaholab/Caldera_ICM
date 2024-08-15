@@ -3,9 +3,9 @@
 #include <cmath>
 #include <stdexcept>    // invalid_argument
 
-//==================================================================
+//------------------------------------------------------------------
 //                timeseries
-//==================================================================
+//------------------------------------------------------------------
 
 
 timeseries::timeseries(const double data_starttime_sec, const double data_timestep_sec, const std::vector<double>& data)
@@ -65,9 +65,9 @@ int timeseries::get_index_from_time(double time_sec) const
 
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                time_series_v2
-//==================================================================
+//------------------------------------------------------------------
 
 template <typename ARR_DATA_TYPE>
 time_series_v2<ARR_DATA_TYPE>::time_series_v2(
@@ -185,9 +185,9 @@ template int time_series_v2<double>::get_index_from_time( const double time_sec 
 
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                Low Pass Filter Parameters
-//==================================================================
+//------------------------------------------------------------------
 
 std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val)
 {
@@ -216,9 +216,9 @@ std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val)
 }
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                     PEV Charge Profile 
-//==================================================================
+//------------------------------------------------------------------
 
 pev_charge_fragment_variation::pev_charge_fragment_variation(int original_charge_fragment_index_, double time_since_charge_began_hrs_, double soc_, double P3_kW_)
 {
@@ -241,9 +241,9 @@ pev_charge_fragment::pev_charge_fragment(double soc_, double E1_kWh_, double E2_
 } 
 
 
-//==================================================================
+//------------------------------------------------------------------
 //               L2_control_strategy_parameters
-//==================================================================
+//------------------------------------------------------------------
 
 
 bool L2_control_strategy_supports_Vrms_using_QkVAR(L2_control_strategies_enum  control_strategy)
@@ -365,9 +365,9 @@ control_strategy_enums::control_strategy_enums()
 }
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                    ES500 Aggregator Structures
-//==================================================================
+//------------------------------------------------------------------
 
 bool ES500_aggregator_charging_needs::is_empty()
 {
@@ -397,9 +397,9 @@ ES500_charge_cycling_control_boundary_point::ES500_charge_cycling_control_bounda
 }
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                       Charge Event Data
-//==================================================================
+//------------------------------------------------------------------
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_decision_metric& x)
 {
@@ -490,9 +490,9 @@ SE_group_charge_event_data::SE_group_charge_event_data(int SE_group_id_, std::ve
 }
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                       SE_group Configuration
-//==================================================================
+//------------------------------------------------------------------
 
 SE_configuration::SE_configuration(int SE_group_id_, SupplyEquipmentId SE_id_, EVSE_type supply_equipment_type_, double lat_, double long_, grid_node_id_type grid_node_id_, std::string location_type_)
 {
@@ -513,9 +513,9 @@ SE_group_configuration::SE_group_configuration(int SE_group_id_, std::vector<SE_
 }
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                    Status of Charging 
-//==================================================================
+//------------------------------------------------------------------
 
 std::ostream& operator<<(std::ostream& out, const SE_charging_status& x)
 {
@@ -528,9 +528,9 @@ std::ostream& operator<<(std::ostream& out, const SE_charging_status& x)
     return out;
 }
 
-//==================================================================
+//------------------------------------------------------------------
 //                     PEV Ramping Parameters
-//==================================================================
+//------------------------------------------------------------------
 
 
 pev_charge_ramping::pev_charge_ramping(double off_to_on_delay_sec_, double off_to_on_kW_per_sec_, double on_to_off_delay_sec_, double on_to_off_kW_per_sec_,
@@ -544,5 +544,39 @@ pev_charge_ramping::pev_charge_ramping(double off_to_on_delay_sec_, double off_t
    this->ramp_up_kW_per_sec = ramp_up_kW_per_sec_;
    this->ramp_down_delay_sec = ramp_down_delay_sec_;
    this->ramp_down_kW_per_sec = ramp_down_kW_per_sec_;
+}
+
+//------------------------------------------------------------------
+//              operator<< for SE_power::PowerType
+//------------------------------------------------------------------
+
+std::ostream& operator<<(std::ostream& out, const SE_power::PowerType& x)
+{
+    if( x == SE_power::PowerType::P1 )
+    {
+        out << "SE_power::PowerType::P1";
+    }
+    else if( x == SE_power::PowerType::P2 )
+    {
+        out << "SE_power::PowerType::P2";
+    }
+    else if( x == SE_power::PowerType::P3 )
+    {
+        out << "SE_power::PowerType::P3";
+    }
+    else if( x == SE_power::PowerType::Q3 )
+    {
+        out << "SE_power::PowerType::Q3";
+    }
+    else if( x == SE_power::PowerType::undefined )
+    {
+        out << "SE_power::PowerType::undefined";
+    }
+    else
+    {
+        std::cout << "Error: This shouldn't happen [operator<< for SE_power::PowerType]" << std::endl;
+        exit(0);
+    }
+    return out;
 }
 
