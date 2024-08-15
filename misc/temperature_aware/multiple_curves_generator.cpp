@@ -58,109 +58,123 @@ double find_c_rate_input_given_power(const double actual_bat_size_kWh, const dou
 }
 
 
-// path_to_inputs:             The path to the inputs directory which holds the files containing the EV and EVSE input parameters
-// pev_type:                   The EV_type.
-// SE_type:                    The EVSE_type.
-// start_soc:                  The start SOC.
-// end_soc:                    The end SOC.
-// c_rate_scale_factor:        The scale factor to apply to the max-C-rate when generating the power curve.
-all_charge_profile_data build_entire_charge_profile_using_ICM___version_1( const std::string path_to_inputs,
-                                                                           const EV_type pev_type,
-                                                                           const EVSE_type se_type,
-                                                                           const double start_soc,
-                                                                           const double end_soc,
-                                                                           const double c_rate_scale_factor )
+// ------------------------------------------------------------------------
+// Old version that is inefficient, and doesn't support
+// doing all the different power levels (a.ka. c_rate_scale_factor levls).
+// I'm moving away from doing it this way.
+// ------------------------------------------------------------------------
+// // path_to_inputs:             The path to the inputs directory which holds the files containing the EV and EVSE input parameters
+// // pev_type:                   The EV_type.
+// // SE_type:                    The EVSE_type.
+// // start_soc:                  The start SOC.
+// // end_soc:                    The end SOC.
+// // c_rate_scale_factor:        The scale factor to apply to the max-C-rate when generating the power curve.
+// all_charge_profile_data build_entire_charge_profile_using_ICM___version_1( const std::string path_to_inputs,
+//                                                                            const EV_type pev_type,
+//                                                                            const EVSE_type se_type,
+//                                                                            const double start_soc,
+//                                                                            const double end_soc,
+//                                                                            const double c_rate_scale_factor )
+// {
+//     if( fabs( c_rate_scale_factor - 1.0 ) > 1e-5 )
+//     {
+//         std::cout << "Error: UNDER CONSTRUCTION. 'c_rate_scale_factor' cannot be anything but 1.0 right now." << std::endl;
+//         exit(0);
+//     }
+// 
+//     // ######################################################
+//     // # 	Build Charge Profile Given Start and End SOC
+//     // ######################################################
+// 
+//     // Initialize the members of the CP_interface_v2 struct
+//     const double L1_timestep_sec = 1;                      // Timestep for Level 1 charger
+//     const double L2_timestep_sec = 1;                      // Timestep for Level 2 charger
+//     const double HPC_timestep_sec = 1;                     // Timestep for High Power charger
+// 
+//     CP_interface_v2 ICM_v2 {
+//         path_to_inputs,
+//         L1_timestep_sec,
+//         L2_timestep_sec,
+//         HPC_timestep_sec
+//     };
+// 
+//     // Generate the charge profile data
+//     all_charge_profile_data all_profile_data = ICM_v2.get_all_charge_profile_data( start_soc, end_soc, pev_type, se_type );
+// 
+//     return all_profile_data;
+// }
+
+
+
+
+
+
+
+// inventory:                     The EV_EVSE_inventory
+// pev_type:                      The EV_type.
+// SE_type:                       The EVSE_type.
+// start_soc:                     The start SOC.
+// end_soc:                       The end SOC.
+// timestep_sec:                  The timestep of the returned power-profiles. Usually 1 second.
+// target_acP3_kW:                This is usually hard-coded to 1000000 as it is in 'factory_charge_profile_library_v2::get_charge_profile_library'
+// c_rate_scale_factor_levels:    The scale factors to apply to the max-C-rate when generating each power curve.
+// all_charge_profile_data_vec:   The return values are put in here.
+void collect_power_profiles( const EV_EVSE_inventory& inventory,
+                             const double timestep_sec,
+                             const pev_SE_pair pev_SE,
+                             const double start_soc,
+                             const double end_soc,
+                             const double target_acP3_kW,
+                             const std::vector<double> c_rate_scale_factor_levels,
+                             std::vector< all_charge_profile_data >& all_charge_profile_data_vec )
 {
-    if( fabs( c_rate_scale_factor - 1.0 ) > 1e-5 )
+    // Make sure the vector is empty before we add stuff to it.
+    all_charge_profile_data_vec.clear();
+    
+    // Loop over each power level.
+    for( int i = 0; i < c_rate_scale_factor_levels.size(); i++ )
     {
-        std::cout << "Error: UNDER CONSTRUCTION. 'c_rate_scale_factor' cannot be anything but 1.0 right now." << std::endl;
-        exit(0);
+        // Get the power level
+        const double c_rate_scale_factor = c_rate_scale_factor_levels.at(i);
+        
+        // Generate the profile data.
+        const all_charge_profile_data all_profile_data = factory_charge_profile_library_v2::build_all_charge_profile_data_for_specific_pev_SE_pair(
+                                                                                                                        inventory,
+                                                                                                                        timestep_sec,
+                                                                                                                        pev_SE,
+                                                                                                                        start_soc,
+                                                                                                                        end_soc,
+                                                                                                                        target_acP3_kW,
+                                                                                                                        c_rate_scale_factor );
+        // Add the 'all_charge_profile_data' to the vector.
+        all_charge_profile_data_vec.push_back( all_profile_data );
     }
-    
-    // ######################################################
-    // # 	Build Charge Profile Given Start and End SOC
-    // ######################################################
-
-    // Initialize the members of the CP_interface_v2 struct
-    const double L1_timestep_sec = 1;                      // Timestep for Level 1 charger
-    const double L2_timestep_sec = 1;                      // Timestep for Level 2 charger
-    const double HPC_timestep_sec = 1;                     // Timestep for High Power charger
-    
-    CP_interface_v2 ICM_v2 {
-        path_to_inputs,
-        L1_timestep_sec,
-        L2_timestep_sec,
-        HPC_timestep_sec
-    };
-
-    // Generate the charge profile data
-    all_charge_profile_data all_profile_data = ICM_v2.get_all_charge_profile_data( start_soc, end_soc, pev_type, se_type );
-    
-    return all_profile_data;
-}
-
-
-// path_to_inputs:             The path to the inputs directory which holds the files containing the EV and EVSE input parameters
-// pev_type:                   The EV_type.
-// SE_type:                    The EVSE_type.
-// start_soc:                  The start SOC.
-// end_soc:                    The end SOC.
-// c_rate_scale_factor:        The scale factor to apply to the max-C-rate when generating the power curve.
-all_charge_profile_data build_entire_charge_profile_using_ICM___version_2( const std::string path_to_inputs,
-                                                                           const EV_type pev_type,
-                                                                           const EVSE_type se_type,
-                                                                           const double start_soc,
-                                                                           const double end_soc,
-                                                                           const double c_rate_scale_factor )
-{
-    // Build the inventory object.
-    load_EV_EVSE_inventory inventory_loader( path_to_inputs );
-    const EV_EVSE_inventory& inventory = inventory_loader.get_EV_EVSE_inventory();
-    const double timestep_sec = 1.0;
-    
-    // This was hard-coded in 'factory_charge_profile_library_v2::get_charge_profile_library' so I'm doing the same thing here.
-    const double target_acP3_kW = 1000000;
-    
-    const all_charge_profile_data all_profile_data = factory_charge_profile_library_v2::build_all_charge_profile_data_for_specific_pev_SE_pair(
-                                                                                                                      inventory,
-                                                                                                                      timestep_sec,
-                                                                                                                      pev_SE_pair(pev_type, se_type),
-                                                                                                                      start_soc,
-                                                                                                                      end_soc,
-                                                                                                                      target_acP3_kW,
-                                                                                                                      c_rate_scale_factor );
-    
-    // return the result.
-    return all_profile_data;
 }
 
 
 
-
-// Building the curves for Ioniq 5 
+// Building the curves
 // at ten different power levels.
-void output_power_profiles( const std::string path_to_inputs,
+void output_power_profiles( const EV_EVSE_inventory& inventory,
                             const std::string output_file_path_prefix,
                             const std::string index_to_c_rate_scale_factor_lookup_file_path,
                             const EV_type pev_type,
                             const EVSE_type se_type,
                             const double start_soc,
                             const double end_soc,
-                            const std::vector<double> power_levels,
-                            std::vector< all_charge_profile_data >& all_charge_profile_data_vec )
+                            const double timestep_sec,
+                            const double target_acP3_kW,
+                            const std::vector<double> c_rate_scale_factor_levels )
 {
-    // Make sure the vector is empty before we add stuff to it.
-    all_charge_profile_data_vec.clear();
-    
     // The header.
     const std::string header = "time | hrs,SOC | ,P1 | kW,P2 | kW,P3 | kW,Q3 | kVAR\n";
     
     // Loop over each power level.
-    for( int i = 0; i < power_levels.size(); i++ )
+    for( int i = 0; i < c_rate_scale_factor_levels.size(); i++ )
     {
         // Get the power level
-        const double power_level = power_levels.at(i);
-        std::cout << "power_level: " << power_level << std::endl;
+        const double c_rate_scale_factor = c_rate_scale_factor_levels.at(i);
+        std::cout << "c_rate_scale_factor: " << c_rate_scale_factor << std::endl;
         
         // Construct the filename.
         const std::string output_file_name = [&] () {
@@ -193,27 +207,15 @@ void output_power_profiles( const std::string path_to_inputs,
         std::cout << "output_file_name: " << output_file_name << std::endl;
         f_out << header;
         
-        // // Generate the profile data.
-        // all_charge_profile_data all_profile_data = build_entire_charge_profile_using_ICM___version_1(
-        //                                                                                   path_to_inputs,
-        //                                                                                   pev_type,
-        //                                                                                   se_type,
-        //                                                                                   start_soc,
-        //                                                                                   end_soc,
-        //                                                                                   power_level );
-        
         // Generate the profile data.
-        all_charge_profile_data all_profile_data = build_entire_charge_profile_using_ICM___version_2(
-                                                                                          path_to_inputs,
-                                                                                          pev_type,
-                                                                                          se_type,
-                                                                                          start_soc,
-                                                                                          end_soc,
-                                                                                          power_level );
-        
-        // Add the 'all_charge_profile_data' to the vector.
-        all_charge_profile_data_vec.push_back( all_profile_data );
-        
+        const all_charge_profile_data all_profile_data = factory_charge_profile_library_v2::build_all_charge_profile_data_for_specific_pev_SE_pair(
+                                                                                                                        inventory,
+                                                                                                                        timestep_sec,
+                                                                                                                        pev_SE_pair(pev_type, se_type),
+                                                                                                                        start_soc,
+                                                                                                                        end_soc,
+                                                                                                                        target_acP3_kW,
+                                                                                                                        c_rate_scale_factor );
         // Write the data to the file.
         const double start_time_sec = 0.0;
         for (int i = 0; i < all_profile_data.soc.size(); i++)
@@ -235,10 +237,10 @@ void output_power_profiles( const std::string path_to_inputs,
     f_out.open(index_to_c_rate_scale_factor_lookup_file_path);
     std::cout << "index_to_c_rate_scale_factor_lookup_file_path: " << index_to_c_rate_scale_factor_lookup_file_path << std::endl;
     f_out << "index,c_rate_scale_factor\n";
-    for( int i = 0; i < power_levels.size(); i++ )
+    for( int i = 0; i < c_rate_scale_factor_levels.size(); i++ )
     {
-        const double power_level = power_levels.at(i);
-        f_out << std::setprecision(12) << i << "," << power_level << std::endl;
+        const double c_rate_scale_factor = c_rate_scale_factor_levels.at(i);
+        f_out << std::setprecision(12) << i << "," << c_rate_scale_factor << std::endl;
     }
 }
 
@@ -462,6 +464,17 @@ class TemperatureAwareProfiles
 
 int sim_00()
 {
+    // Build the inventory object.
+    const std::string path_to_inputs = "./inputs";
+    load_EV_EVSE_inventory inventory_loader( path_to_inputs );
+    const EV_EVSE_inventory& inventory = inventory_loader.get_EV_EVSE_inventory();
+    const double timestep_sec = 1.0;
+    
+    // This was hard-coded in 'factory_charge_profile_library_v2::get_charge_profile_library' so I'm doing the same thing here.
+    const double target_acP3_kW = 1000000;
+    // Hard coded for collecting the power profiles.
+    const double power_profiles_time_step_sec = 1.0;
+    
     const EV_type pev_type = "ngp_hyundai_ioniq_5_longrange_awd_100";
     const EVSE_type se_type = "xfc_350";
     const double start_soc = 10;
@@ -475,20 +488,20 @@ int sim_00()
         }
         return c_rate_scale_factor_levels;
     }();
-    const std::string path_to_inputs = "./inputs";
+    
     std::stringstream output_file_path_prefix_ss;
     output_file_path_prefix_ss << "./outputs/" << "pevtype_" << pev_type << "__setype_" << se_type;
     const std::string index_to_c_rate_scale_factor_lookup_file_path = "./outputs/index_to_c_rate_scale_factor_lookup.csv";
-    std::vector< all_charge_profile_data > all_charge_profile_data_vec;
-    output_power_profiles( path_to_inputs,
+    output_power_profiles( inventory,
                            output_file_path_prefix_ss.str(),
                            index_to_c_rate_scale_factor_lookup_file_path,
                            pev_type,
                            se_type,
                            start_soc,
                            end_soc,
-                           c_rate_scale_factor_levels,
-                           all_charge_profile_data_vec );
+                           power_profiles_time_step_sec,
+                           target_acP3_kW,
+                           c_rate_scale_factor_levels );
     return 0;
     
 }
@@ -496,6 +509,12 @@ int sim_00()
 
 int sim_01()
 {
+    // Build the inventory object.
+    const std::string path_to_inputs = "./inputs";
+    load_EV_EVSE_inventory inventory_loader( path_to_inputs );
+    const EV_EVSE_inventory& inventory = inventory_loader.get_EV_EVSE_inventory();
+    const double timestep_sec = 1.0;
+    
     // Setting the temperature model variables.
     const temperature_gradient_model_v1 temperature_grad_model_v1(
             // 0.00020231134745501544, //const double c0_int,
@@ -529,6 +548,11 @@ int sim_01()
             0.0
     );
     
+    // This was hard-coded in 'factory_charge_profile_library_v2::get_charge_profile_library' so I'm doing the same thing here.
+    const double target_acP3_kW = 1000000;
+    // Hard coded for collecting the power profiles.
+    const double power_profiles_time_step_sec = 1.0;
+    
     // make the 'power_profiles_sorted_low_to_high'.
     const EV_type pev_type = "ngp_hyundai_ioniq_5_longrange_awd_100";
     const EVSE_type se_type = "xfc_350";
@@ -548,21 +572,31 @@ int sim_01()
     {
         std::cout << "    " << item << std::endl;
     }
-    const std::string path_to_inputs = "./inputs";
     std::stringstream output_file_path_prefix_ss;
     output_file_path_prefix_ss << "./outputs/" << "pevtype_" << pev_type << "__setype_" << se_type;
     const std::string index_to_c_rate_scale_factor_lookup_file_path = "./outputs/index_to_c_rate_scale_factor_lookup.csv";
+    
     std::vector< all_charge_profile_data > all_charge_profile_data_vec;
-    output_power_profiles( path_to_inputs,
+    collect_power_profiles( inventory,
+                            power_profiles_time_step_sec,
+                            pev_SE_pair(pev_type, se_type),
+                            curvegenerate_start_soc,
+                            cruvegenerate_end_soc, 
+                            target_acP3_kW,
+                            c_rate_scale_factor_levels,
+                            all_charge_profile_data_vec );
+    
+    output_power_profiles( inventory,
                            output_file_path_prefix_ss.str(),
                            index_to_c_rate_scale_factor_lookup_file_path,
                            pev_type,
                            se_type,
                            curvegenerate_start_soc,
                            cruvegenerate_end_soc,
-                           c_rate_scale_factor_levels,
-                           all_charge_profile_data_vec );
-    
+                           power_profiles_time_step_sec,
+                           target_acP3_kW,
+                           c_rate_scale_factor_levels );
+                           
     const double time_step_sec = 0.1;
     const double battery_capacity_kWh = 74.0;
     const double sim_start_soc = 10;
