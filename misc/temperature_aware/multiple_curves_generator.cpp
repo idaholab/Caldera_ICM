@@ -243,7 +243,20 @@ void output_power_profiles( const std::string path_to_inputs,
 }
 
 
-class temperature_gradient_model_v1
+class temperature_gradient_model
+{
+    public:
+    
+    virtual double eval( const double power_kW,
+                         const double temperature_C,
+                         const double charge_time_sec,
+                         const double soc ) const
+    {
+        return 0.0;
+    }
+};
+
+class temperature_gradient_model_v1 : public temperature_gradient_model
 {
     private:
     
@@ -272,7 +285,7 @@ class temperature_gradient_model_v1
         double eval( const double power_kW,
                      const double temperature_C,
                      const double charge_time_sec,
-                     const double soc ) const
+                     const double soc ) const override
         {
             return c0_int + c1_pwr*power_kW + c2_Temp*temperature_C + c3_time*charge_time_sec + c4_soc*soc;
         }
@@ -308,6 +321,20 @@ class TemperatureAwareProfiles
                     const double frac = (soc - soc0)/(soc1 - soc0);
                     power_kW = (1.0-frac) * profile.P2_kW.at(i) + frac * profile.P2_kW.at(i+1);
                     found_it = true;
+                    if( power_kW < 1e-5 )
+                    {
+                        std::cout << "ERROR: The power is pretty much zero. [1]" << std::endl
+                                  << " Are we starting at an SOC that's at the beginning of the curve?" << std::endl
+                                  << " We need to start at an SOC above the beginning of the curve." << std::endl;
+                        std::cout << "found power_kW: " << power_kW
+                                  << "   profile.P2_kW.at(i): " << profile.P2_kW.at(i)
+                                  << "   profile.P2_kW.at(i+1): " << profile.P2_kW.at(i+1)
+                                  << "   profile.soc.at(i): " << profile.soc.at(i)
+                                  << "   profile.soc.at(i+1): " << profile.soc.at(i+1)
+                                  << "   soc: " << soc
+                                  << std::endl;
+                        exit(0);
+                    }
                     break;
                 }    
             }
@@ -319,14 +346,10 @@ class TemperatureAwareProfiles
         }
         if( power_kW < 1e-5 )
         {
-            std::cout << "ERROR: The power is pretty much zero." << std::endl
+            std::cout << "ERROR: The power is pretty much zero. [2]" << std::endl
                       << " Are we starting at an SOC that's at the beginning of the curve?" << std::endl
                       << " We need to start at an SOC above the beginning of the curve." << std::endl;
             std::cout << "found power_kW: " << power_kW
-                      << "   profile.P2_kW.at(i): " << profile.P2_kW.at(i)
-                      << "   profile.P2_kW.at(i+1): " << profile.P2_kW.at(i+1)
-                      << "   profile.soc.at(i): " << profile.soc.at(i)
-                      << "   profile.soc.at(i+1): " << profile.soc.at(i+1)
                       << "   soc: " << soc
                       << std::endl;
             exit(0);
@@ -335,16 +358,30 @@ class TemperatureAwareProfiles
     }
     
     static void generate_temperature_aware_power_profile( const std::vector< all_charge_profile_data > power_profiles_sorted_low_to_high,
-                                                          const temperature_gradient_model_v1 temperature_grad_model,
+                                                          const temperature_gradient_model& temperature_grad_model,
                                                           const double time_step_sec,
                                                           const double battery_capacity_kWh,
                                                           const double start_soc,
                                                           const double start_temperature_C,
-                                                          const double max_temperature_C,
                                                           const double min_temperature_C,
+                                                          const double max_temperature_C,
                                                           const int start_power_level_index,
-                                                          const std::string output_file_name )
+                                                          const std::string output_file_name,
+                                                          std::function<int(
+                                                                        const int current_power_level_index,
+                                                                        const int power_profiles_vec_size,
+                                                                        const double current_temperature_C,
+                                                                        const double current_temperature_grad,
+                                                                        const double min_temperature_C,
+                                                                        const double max_temperature_C
+                                                                    )> update_power_level_index_callback )
     {
+        if( min_temperature_C >= max_temperature_C )
+        {
+            std::cout << "Error: Something is wrong with the min_temperature_C and max_temperature_C." << std::endl;
+            exit(0);
+        }
+        
         double time_sec = 0.0;
         double temperature_C = start_temperature_C;
         double soc = start_soc;
@@ -382,31 +419,18 @@ class TemperatureAwareProfiles
             temperature_gradient_dTdt_vec.push_back(temperature_grad);
             
             // Update the SOC, temperature, and time.
-            soc += ( power_kW * time_step_hrs / battery_capacity_kWh );
+            soc += ( power_kW * time_step_hrs / battery_capacity_kWh ) * 100.0;
             temperature_C += temperature_grad * time_step_sec;
             time_sec += time_step_sec;
             
             // Update the power level if needed.
-            if( temperature_C >= max_temperature_C )
-            {
-                pwr_level_i = std::max( pwr_level_i-1, 0 );
-            }
-            else if( temperature_C <= min_temperature_C )
-            {
-                pwr_level_i = std::min( pwr_level_i+1, ((int)power_profiles_sorted_low_to_high.size())-1 );
-            }
-            else
-            {
-                // Do nothing. Keep the same power level.
-            }
-            
+            pwr_level_i = update_power_level_index_callback( pwr_level_i,
+                                                             (int)power_profiles_sorted_low_to_high.size(),
+                                                             temperature_C,
+                                                             temperature_grad,
+                                                             min_temperature_C,
+                                                             max_temperature_C );
             loops_i++;
-            
-            // // For testing, just break after a few loops.
-            // if( loops_i > 50 )
-            // {
-            //     break;
-            // }
         }
         
         // -----------------------------------------------
@@ -472,12 +496,37 @@ int sim_00()
 
 int sim_01()
 {
-    const temperature_gradient_model_v1 temperature_grad_model(
-           -0.0006,  // 0.00020231134745501544, //const double c0_int,
-           1.73613180e-05,         //const double c1_pwr,
-           -4.31376160e-05,        // const double c2_Temp,
-           2.56712548e-07,         //const double c3_time,
-           3.22413435e-07          //const double c4_soc
+    // Setting the temperature model variables.
+    const temperature_gradient_model_v1 temperature_grad_model_v1(
+            // 0.00020231134745501544, //const double c0_int,
+            // 1.73613180e-05,         //const double c1_pwr,
+            // -4.31376160e-05,        // const double c2_Temp,
+            // 2.56712548e-07,         //const double c3_time,
+            // 3.22413435e-07          //const double c4_soc
+        
+            // -0.0006,  // 0.00020231134745501544, //const double c0_int,
+            // 1.73613180e-05,         //const double c1_pwr,
+            // -4.31376160e-05,        // const double c2_Temp,
+            // 2.56712548e-07,         //const double c3_time,
+            // 3.22413435e-07          //const double c4_soc
+           
+            // -0.0017,
+            // 1.73613180e-05,
+            // 0.0,
+            // 0.0,
+            // 0.0
+            
+            // -0.0017,
+            // 9.0e-05,
+            // 0.0,
+            // 0.0,
+            // 0.0
+            
+            -0.008,
+            9.0e-05,
+            0.0,
+            0.0,
+            0.0
     );
     
     // make the 'power_profiles_sorted_low_to_high'.
@@ -514,26 +563,87 @@ int sim_01()
                            c_rate_scale_factor_levels,
                            all_charge_profile_data_vec );
     
-    const double time_step_sec = 1;
+    const double time_step_sec = 0.1;
     const double battery_capacity_kWh = 74.0;
     const double sim_start_soc = 10;
-    const double start_temperature_C = 25;
+    const double start_temperature_C = 35;
     const double min_temperature_C = 10;
-    const double max_temperature_C = 40000000;
+    const double max_temperature_C = 40;
     const int start_power_level_index = all_charge_profile_data_vec.size()-1;
     const std::string sim_results_output_file_name = "./outputs/sim_results.csv";
     
+    // Define the callback (v1).
+    auto update_power_level_index_callback_v1 = [&] (
+        const int current_power_level_index,
+        const int power_profiles_vec_size,
+        const double current_temperature_C,
+        const double current_temperature_grad,
+        const double min_temperature_C,
+        const double max_temperature_C
+    ) {
+        if( current_temperature_C >= max_temperature_C )
+        {
+            return std::max( current_power_level_index-1, 0 );
+        }
+        else if( current_temperature_C <= min_temperature_C )
+        {
+            return std::min( current_power_level_index+1, power_profiles_vec_size-1 );
+        }
+        else
+        {
+            return current_power_level_index;
+        }
+    };
+    
+    // Define the callback (v2).
+    auto update_power_level_index_callback_v2 = [&] (
+        const int current_power_level_index,
+        const int power_profiles_vec_size,
+        const double current_temperature_C,
+        const double current_temperature_grad,
+        const double min_temperature_C,
+        const double max_temperature_C
+    ) {
+        // Approaching the max temperature threshold:
+        const double appoarching_max_temp_threshold = max_temperature_C - (max_temperature_C - min_temperature_C)/10;
+        const double upper_gradient_threshold = (max_temperature_C - current_temperature_C)/60.0;
+        const double lower_gradient_threshold = (max_temperature_C - current_temperature_C)/600.0;
+        if(
+            current_temperature_C >= max_temperature_C
+            ||
+            ( current_temperature_C > appoarching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
+        )
+        {
+            // Reduce the power level.
+            return std::max( current_power_level_index-1, 0 );
+        }
+        else if(
+            current_temperature_C <= min_temperature_C
+            ||
+            ( current_temperature_C < appoarching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+        )
+        {
+            // Increase the power level.
+            return std::min( current_power_level_index+1, power_profiles_vec_size-1 );
+        }
+        else
+        {
+            return current_power_level_index;
+        }
+    };
+    
+    // Generate the temperature-aware profile.
     TemperatureAwareProfiles::generate_temperature_aware_power_profile( all_charge_profile_data_vec,
-                                                                        temperature_grad_model,
+                                                                        temperature_grad_model_v1,
                                                                         time_step_sec,
                                                                         battery_capacity_kWh,
                                                                         sim_start_soc,
                                                                         start_temperature_C,
-                                                                        max_temperature_C,
                                                                         min_temperature_C,
+                                                                        max_temperature_C,
                                                                         start_power_level_index,
-                                                                        sim_results_output_file_name );
-    
+                                                                        sim_results_output_file_name,
+                                                                        update_power_level_index_callback_v2 );
     return 0;
 }
 
