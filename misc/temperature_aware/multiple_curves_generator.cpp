@@ -180,11 +180,19 @@ int sim_01()
     
     // Setting the temperature model variables.
     const temperature_gradient_model_v1 temperature_grad_model_v1(
-            // 0.00020231134745501544, //const double c0_int,
-            // 1.73613180e-05,         //const double c1_pwr,
-            // -4.31376160e-05,        // const double c2_Temp,
-            // 2.56712548e-07,         //const double c3_time,
-            // 3.22413435e-07          //const double c4_soc
+        
+            // ---------------------------------------------------------------------------
+            // NOTE: These are d(degree C)/d(1/10th of a second)
+            //    so to make it dC/dt where t is in seconds, I multiply them all by 10.
+            // ---------------------------------------------------------------------------
+            // [STEVEN TESTING:]  intercept =  0.00020231134745501544
+            // [STEVEN TESTING:]  coefs =  [ 1.73613180e-05 -4.31376160e-05  2.56712548e-07  3.22413435e-07]
+            // ---------------------------------------------------------------------------
+            10*(0.00020231134745501544), //const double c0_int,
+            10*(1.73613180e-05),         //const double c1_pwr,
+            10*(-4.31376160e-05),        // const double c2_Temp,
+            10*2.56712548e-07,         //const double c3_time,
+            10*3.22413435e-07          //const double c4_soc
         
             // -0.0006,  // 0.00020231134745501544, //const double c0_int,
             // 1.73613180e-05,         //const double c1_pwr,
@@ -204,11 +212,11 @@ int sim_01()
             // 0.0,
             // 0.0
             
-            -0.008,
-            9.0e-05,
-            0.0,
-            0.0,
-            0.0
+            // -0.008,
+            // 9.0e-05,
+            // 0.0,
+            // 0.0,
+            // 0.0
     );
     
     // This was hard-coded in 'factory_charge_profile_library_v2::get_charge_profile_library' so I'm doing the same thing here.
@@ -221,9 +229,14 @@ int sim_01()
     const EVSE_type se_type = "xfc_350";
     const double curvegenerate_start_soc = 5;
     const double cruvegenerate_end_soc = 100;
+    
+    // The number of charging curves to pre-compute.
+    const int N_curves = 15;
+    
+    // Generate the vector of c-rate-scale-factors (for each power level)
     const std::vector<double> c_rate_scale_factor_levels = [&] () {
         std::vector<double> c_rate_scale_factor_levels;
-        const int N = 10;
+        const int N = N_curves;
         for( int i = 0; i < N; i++ )
         {
             c_rate_scale_factor_levels.push_back((i+1)*(1.0/N));
@@ -257,14 +270,16 @@ int sim_01()
     const double time_step_sec = 0.1;
     const double battery_capacity_kWh = inventory.get_EV_inventory().at(pev_type).get_usable_battery_size_kWh();
     const double sim_start_soc = 10;
-    const double start_temperature_C = 35;
+    const double start_temperature_C = 25;
     const double min_temperature_C = 10;
-    const double max_temperature_C = 40;
+    const double max_temperature_C = 41;
     const SE_power::PowerType power_type = SE_power::PowerType::P2;
     const int start_power_level_index = all_charge_profile_data_vec.size()-1;
     const std::string sim_results_output_file_name = "./outputs/sim_results.csv";
     
+    // -------------------------
     // Define the callback (v1).
+    // -------------------------
     auto update_power_level_index_callback_v1 = [&] (
         const int current_power_level_index,
         const int power_profiles_vec_size,
@@ -287,7 +302,9 @@ int sim_01()
         }
     };
     
+    // -------------------------
     // Define the callback (v2).
+    // -------------------------
     auto update_power_level_index_callback_v2 = [&] (
         const int current_power_level_index,
         const int power_profiles_vec_size,
@@ -297,9 +314,10 @@ int sim_01()
         const double max_temperature_C
     ) {
         // Approaching the max temperature threshold:
-        const double appoarching_max_temp_threshold = max_temperature_C - (max_temperature_C - min_temperature_C)/10;
+        const double appoarching_max_temp_threshold = min_temperature_C + (1.0/10.0)*(max_temperature_C - min_temperature_C);
+        const double appoarching_min_temp_threshold = min_temperature_C + (2.0/3.0)*(max_temperature_C - min_temperature_C);
         const double upper_gradient_threshold = (max_temperature_C - current_temperature_C)/60.0;
-        const double lower_gradient_threshold = (max_temperature_C - current_temperature_C)/600.0;
+        const double lower_gradient_threshold = (min_temperature_C - current_temperature_C)/60.0;
         if(
             current_temperature_C >= max_temperature_C
             ||
@@ -313,10 +331,101 @@ int sim_01()
             current_temperature_C <= min_temperature_C
             ||
             ( current_temperature_C < appoarching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+            ||
+            current_temperature_C <= appoarching_min_temp_threshold
         )
         {
             // Increase the power level.
             return std::min( current_power_level_index+1, power_profiles_vec_size-1 );
+        }
+        else
+        {
+            return current_power_level_index;
+        }
+    };
+    
+    
+    // -------------------------
+    // Define the callback (v3).
+    // -------------------------
+    auto update_power_level_index_callback_v3 = [&] (
+        const int current_power_level_index,
+        const int power_profiles_vec_size,
+        const double current_temperature_C,
+        const double current_temperature_grad,
+        const double min_temperature_C,
+        const double max_temperature_C
+    ) {
+        // Approaching the max temperature threshold:
+        const double appoarching_max_temp_threshold = min_temperature_C + (3.0/4.0)*(max_temperature_C - min_temperature_C);
+        const double appoarching_min_temp_threshold = min_temperature_C + (1.0/2.0)*(max_temperature_C - min_temperature_C);
+        const double upper_gradient_threshold = (max_temperature_C - current_temperature_C)/900.0;
+        const double lower_gradient_threshold = (min_temperature_C - current_temperature_C)/900.0;
+        if(
+            current_temperature_C >= max_temperature_C
+            ||
+            ( current_temperature_C > appoarching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
+        )
+        {
+            // Reduce the power level.
+            return std::max( current_power_level_index-1, 0 );
+        }
+        else if(
+            current_temperature_C <= min_temperature_C
+            ||
+            ( current_temperature_C < appoarching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+            ||
+            current_temperature_C <= appoarching_min_temp_threshold
+        )
+        {
+            // Increase the power level.
+            return std::min( current_power_level_index+1, power_profiles_vec_size-1 );
+        }
+        else
+        {
+            return current_power_level_index;
+        }
+    };
+    
+    // -------------------------
+    // Define the callback (v4).
+    // -------------------------
+    auto update_power_level_index_callback_v4 = [&] (
+        const int current_power_level_index,
+        const int power_profiles_vec_size,
+        const double current_temperature_C,
+        const double current_temperature_grad,
+        const double min_temperature_C,
+        const double max_temperature_C
+    ) {
+        // Approaching the max temperature threshold:
+        const double appoarching_max_temp_threshold = min_temperature_C + (9.0/10.0)*(max_temperature_C - min_temperature_C);
+        const double appoarching_min_temp_threshold = min_temperature_C + (8.0/9.0)*(max_temperature_C - min_temperature_C);
+        const double upper_gradient_threshold = (max_temperature_C - current_temperature_C)/60.0;
+        const double lower_gradient_threshold = (min_temperature_C - current_temperature_C)/60.0;
+        if(
+            current_temperature_C >= max_temperature_C
+            ||
+            ( current_temperature_C > appoarching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
+        )
+        {
+            // Reduce the power level.
+            //std::max( current_power_level_index-5, 0 );
+            //return 0;
+            return 0;
+        }
+        else if(
+            current_temperature_C <= min_temperature_C
+            ||
+            ( current_temperature_C < appoarching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+            ||
+            current_temperature_C <= appoarching_min_temp_threshold
+        )
+        {
+            // Increase the power level.
+            //return std::min( current_power_level_index+5, power_profiles_vec_size-1 );
+            //return std::min( current_power_level_index+8, power_profiles_vec_size-1 );
+            return 9;
         }
         else
         {

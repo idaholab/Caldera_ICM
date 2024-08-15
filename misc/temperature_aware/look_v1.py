@@ -41,7 +41,8 @@ for i in range(0,len(idf)):
     #plots_list[k].plot( soc, p3 )
     plots_list[k].set_xlabel("SOC")
     plots_list[k].set_ylabel("Power (kW)")
-    plots_list[k].set_title("Power vs. SOC")
+    plots_list[k].set_title("SOC vs Power")
+    plots_list[k].set_xlim((0,100))
     
     k = 1
     #plots_list[k].plot( time_hrs, p1 )
@@ -49,13 +50,13 @@ for i in range(0,len(idf)):
     #plots_list[k].plot( time_hrs, p3 )
     plots_list[k].set_xlabel("Time (hrs)")
     plots_list[k].set_ylabel("Power (kW)")
-    plots_list[k].set_title("Power vs. Time")
+    plots_list[k].set_title("Time vs. Power")
     
     k = 2
     plots_list[k].plot( time_hrs, soc )
     plots_list[k].set_xlabel("Time (hrs)")
     plots_list[k].set_ylabel("SOC")
-    plots_list[k].set_title("SOC vs. Time")
+    plots_list[k].set_title("Time vs. SOC")
 
 
 # Set the legends.
@@ -111,6 +112,7 @@ plots_list[k].plot( time_min, soc )
 plots_list[k].set_title("Time vs. SOC")
 plots_list[k].set_xlabel("Time (min)")
 plots_list[k].set_ylabel("SOC")
+plots_list[k].set_ylim((0,100))
 
 fig.subplots_adjust(hspace=0.4)
 
