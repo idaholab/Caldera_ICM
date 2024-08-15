@@ -209,6 +209,9 @@ class temperature_gradient_model
                          const double charge_time_sec,
                          const double soc ) const
     {
+        std::cout << "Error: The base class version of this function should never get called."
+                  << "It needs to be overridden in a child class." << std::endl;
+        exit(0);
         return 0.0;
     }
 };
@@ -217,12 +220,12 @@ class temperature_gradient_model_v1 : public temperature_gradient_model
 {
     private:
     
-        // The temperature gradient model takes 4 coefficients
-        // and requires 3 inputs to evaluate.
+        // The temperature gradient model takes five coefficients
+        // and requires four inputs to evaluate.
         // These coefficients are usually determined by analyzing charge
         // data and using a OLS Regression model using scikit-learn.
         //
-        //  dT/dt = c0 + c1 * P + c2 * T + c3 * t
+        //  dT/dt = c0 + c1*P + c2*T + c3*t + c4*SOC
         //
         const double c0_int;  // Intercept (constant)
         const double c1_pwr;  // Coefficient associated with power.
@@ -253,39 +256,70 @@ class TemperatureAwareProfiles
 {
     public:
     
-    static double eval_P2_at_SOC( const double soc, const all_charge_profile_data profile )
+    static double eval_power_at_SOC( const SE_power::PowerType power_type,
+                                     const double soc,
+                                     const all_charge_profile_data profile )
     {
+        // ---- helper function ----
+        auto get_power_at_index = [&power_type, &profile] ( const int i )
+        {
+            if( power_type == SE_power::PowerType::P1 )
+            {
+                return profile.P1_kW.at(i);
+            }
+            else if( power_type == SE_power::PowerType::P2 )
+            {
+                return profile.P2_kW.at(i);
+            }
+            else if( power_type == SE_power::PowerType::P3 )
+            {
+                return profile.P3_kW.at(i);
+            }
+            else
+            {
+                std::cout << "Error: We don't support any other power type here." << std::endl;
+                exit(0);
+            }
+            return 0.0;
+        };
+        
+        // The profile size.
+        const int profile_size = profile.soc.size();
+        
+        // These are set below.
         double power_kW = 0.0;
         bool found_it = false;
+        
         if( soc < profile.soc.at(0) )
         {
-            power_kW = profile.P2_kW.at(0);
+            power_kW = get_power_at_index(0);
             found_it = true;
         }
         else if( soc >= profile.soc.at(profile.soc.size()-1) )
         {
-            power_kW = profile.P2_kW.at(profile.soc.size()-1);
+            power_kW = get_power_at_index(profile.soc.size()-1);
             found_it = true;
         }
         else
         {
-            for( int i = 0; i < profile.soc.size(); i++ )
+            for( int i = 0; i < profile_size; i++ )
             {
                 if( soc >= profile.soc.at(i) && soc < profile.soc.at(i+1) )
                 {
                     const double soc0 = profile.soc.at(i);
                     const double soc1 = profile.soc.at(i+1);
                     const double frac = (soc - soc0)/(soc1 - soc0);
-                    power_kW = (1.0-frac) * profile.P2_kW.at(i) + frac * profile.P2_kW.at(i+1);
+                    power_kW = (1.0-frac) * get_power_at_index(i) + frac * get_power_at_index(i+1);
                     found_it = true;
                     if( power_kW < 1e-5 )
                     {
                         std::cout << "ERROR: The power is pretty much zero. [1]" << std::endl
                                   << " Are we starting at an SOC that's at the beginning of the curve?" << std::endl
                                   << " We need to start at an SOC above the beginning of the curve." << std::endl;
-                        std::cout << "found power_kW: " << power_kW
-                                  << "   profile.P2_kW.at(i): " << profile.P2_kW.at(i)
-                                  << "   profile.P2_kW.at(i+1): " << profile.P2_kW.at(i+1)
+                        std::cout << "found: "
+                                  << "   power_kW: " << power_kW
+                                  << "   get_power_at_index(i): " << get_power_at_index(i)
+                                  << "   get_power_at_index(i+1): " << get_power_at_index(i+1)
                                   << "   profile.soc.at(i): " << profile.soc.at(i)
                                   << "   profile.soc.at(i+1): " << profile.soc.at(i+1)
                                   << "   soc: " << soc
@@ -304,10 +338,11 @@ class TemperatureAwareProfiles
         if( power_kW < 1e-5 )
         {
             std::cout << "ERROR: The power is pretty much zero. [2]" << std::endl
-                      << " Are we starting at an SOC that's at the beginning of the curve?" << std::endl
-                      << " We need to start at an SOC above the beginning of the curve." << std::endl;
-            std::cout << "found power_kW: " << power_kW
-                      << "   soc: " << soc
+                      << "  Are we starting at an SOC that's at the beginning of the curve?" << std::endl
+                      << "  We need to start at an SOC above the beginning of the curve." << std::endl;
+            std::cout << "found: "
+                      << "   power_kW: " << power_kW
+                      << "   soc:      " << soc
                       << std::endl;
             exit(0);
         }
@@ -316,6 +351,7 @@ class TemperatureAwareProfiles
     
     static void generate_temperature_aware_power_profile( const std::vector< all_charge_profile_data > power_profiles_sorted_low_to_high,
                                                           const temperature_gradient_model& temperature_grad_model,
+                                                          const SE_power::PowerType power_type,
                                                           const double time_step_sec,
                                                           const double battery_capacity_kWh,
                                                           const double start_soc,
@@ -356,7 +392,7 @@ class TemperatureAwareProfiles
         int loops_i = 0;
         while( soc < end_soc )
         {
-            const double power_kW = TemperatureAwareProfiles::eval_P2_at_SOC( soc, power_profiles_sorted_low_to_high.at(pwr_level_i) );
+            const double power_kW = TemperatureAwareProfiles::eval_power_at_SOC( power_type, soc, power_profiles_sorted_low_to_high.at(pwr_level_i) );
             const double temperature_grad = temperature_grad_model.eval( power_kW, temperature_C, time_sec, soc );
             
             // Display our progress.
@@ -551,11 +587,12 @@ int sim_01()
                            index_to_c_rate_scale_factor_lookup_file_path );
                            
     const double time_step_sec = 0.1;
-    const double battery_capacity_kWh = 74.0;
+    const double battery_capacity_kWh = inventory.get_EV_inventory().at(pev_type).get_usable_battery_size_kWh();
     const double sim_start_soc = 10;
     const double start_temperature_C = 35;
     const double min_temperature_C = 10;
     const double max_temperature_C = 40;
+    const SE_power::PowerType power_type = SE_power::PowerType::P2;
     const int start_power_level_index = all_charge_profile_data_vec.size()-1;
     const std::string sim_results_output_file_name = "./outputs/sim_results.csv";
     
@@ -622,6 +659,7 @@ int sim_01()
     // Generate the temperature-aware profile.
     TemperatureAwareProfiles::generate_temperature_aware_power_profile( all_charge_profile_data_vec,
                                                                         temperature_grad_model_v1,
+                                                                        power_type,
                                                                         time_step_sec,
                                                                         battery_capacity_kWh,
                                                                         sim_start_soc,
