@@ -249,6 +249,7 @@ class TemperatureAwareProfiles
                                                           const double time_step_sec,
                                                           const double battery_capacity_kWh,
                                                           const double start_soc,
+                                                          const double end_soc,
                                                           const double start_temperature_C,
                                                           const double min_temperature_C,
                                                           const double max_temperature_C,
@@ -274,7 +275,6 @@ class TemperatureAwareProfiles
         double soc = start_soc;
         int pwr_level_i = start_power_level_index;
         
-        const double end_soc = 98.8;
         const double time_step_hrs = time_step_sec/3600.0;
         
         std::vector<double> time_sec_vec;

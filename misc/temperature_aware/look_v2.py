@@ -147,7 +147,7 @@ for results_file_name in list_of_results_file_names:
     plots_list2[k].set_title("SOC vs. Power_kW")
     plots_list2[k].set_xlabel("SOC")
     plots_list2[k].set_ylabel("Power (kW)")
-    plots_list1[k].legend(legend_strs_list)
+    plots_list2[k].legend(legend_strs_list)
 
     # The second plot is Power vs temperature-gradient.
     k = 1
@@ -155,7 +155,7 @@ for results_file_name in list_of_results_file_names:
     plots_list2[k].set_title("Power_kW vs. temperature_grad_dTdt")
     plots_list2[k].set_xlabel("Power (kW)")
     plots_list2[k].set_ylabel("Temperature gradient (dT/dt)")
-    plots_list1[k].legend(legend_strs_list)
+    plots_list2[k].legend(legend_strs_list)
 
     fig2.subplots_adjust(hspace=0.4)
 
