@@ -292,7 +292,7 @@ int sim_01()
         {
             return std::max( current_power_level_index-1, 0 );
         }
-        else if( current_temperature_C <= min_temperature_C )
+        else if( current_temperature_C <= min_temperature_C + (0.75*(max_temperature_C-min_temperature_C)) )
         {
             return std::min( current_power_level_index+1, power_profiles_vec_size-1 );
         }
@@ -410,9 +410,9 @@ int sim_01()
         )
         {
             // Reduce the power level.
-            //std::max( current_power_level_index-5, 0 );
+            return std::max( current_power_level_index-7, 0 );
             //return 0;
-            return 0;
+            //return 0;
         }
         else if(
             current_temperature_C <= min_temperature_C
@@ -423,9 +423,9 @@ int sim_01()
         )
         {
             // Increase the power level.
-            //return std::min( current_power_level_index+5, power_profiles_vec_size-1 );
+            return std::min( current_power_level_index+7, power_profiles_vec_size-1 );
             //return std::min( current_power_level_index+8, power_profiles_vec_size-1 );
-            return 9;
+            //return 9;
         }
         else
         {
@@ -446,6 +446,46 @@ int sim_01()
                                                                         start_power_level_index,
                                                                         sim_results_output_file_name,
                                                                         update_power_level_index_callback_v2 );
+    
+    
+    using pwrlevind_callback_type = std::function<int(
+                  const int current_power_level_index,
+                  const int power_profiles_vec_size,
+                  const double current_temperature_C,
+                  const double current_temperature_grad,
+                  const double min_temperature_C,
+                  const double max_temperature_C
+              )>;
+    
+    // Now run all the lambdas so we can compare the results
+    const std::vector< pwrlevind_callback_type > pwrlevind_callbacks_vec = std::vector< pwrlevind_callback_type >({
+        update_power_level_index_callback_v1,
+        update_power_level_index_callback_v2,
+        update_power_level_index_callback_v3,
+        update_power_level_index_callback_v4
+    });
+    
+    for( int i = 0; i < pwrlevind_callbacks_vec.size(); i++ )
+    {
+        std::stringstream filename_ss;
+        filename_ss << "./outputs/sim_results_using_callback_v" << (i+1) << ".csv";
+        const std::string sim_results_output_file_name_SPECIFIC_CALLBACK = filename_ss.str();
+        
+        // Generate the temperature-aware profile.
+        TemperatureAwareProfiles::generate_temperature_aware_power_profile( all_charge_profile_data_vec,
+                                                                            temperature_grad_model_v1,
+                                                                            power_type,
+                                                                            time_step_sec,
+                                                                            battery_capacity_kWh,
+                                                                            sim_start_soc,
+                                                                            start_temperature_C,
+                                                                            min_temperature_C,
+                                                                            max_temperature_C,
+                                                                            start_power_level_index,
+                                                                            sim_results_output_file_name_SPECIFIC_CALLBACK,
+                                                                            pwrlevind_callbacks_vec.at(i) );
+    }
+    
     return 0;
 }
 
