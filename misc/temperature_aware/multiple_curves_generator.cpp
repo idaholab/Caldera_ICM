@@ -270,6 +270,7 @@ int sim_01()
     const double time_step_sec = 0.1;
     const double battery_capacity_kWh = inventory.get_EV_inventory().at(pev_type).get_usable_battery_size_kWh();
     const double sim_start_soc = 10;
+    const double sim_end_soc = 98.8;
     const double start_temperature_C = 25;
     const double min_temperature_C = 10;
     const double max_temperature_C = 41;
@@ -440,6 +441,7 @@ int sim_01()
                                                                         time_step_sec,
                                                                         battery_capacity_kWh,
                                                                         sim_start_soc,
+                                                                        sim_end_soc,
                                                                         start_temperature_C,
                                                                         min_temperature_C,
                                                                         max_temperature_C,
@@ -478,6 +480,7 @@ int sim_01()
                                                                             time_step_sec,
                                                                             battery_capacity_kWh,
                                                                             sim_start_soc,
+                                                                            sim_end_soc,
                                                                             start_temperature_C,
                                                                             min_temperature_C,
                                                                             max_temperature_C,
