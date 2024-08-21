@@ -96,7 +96,8 @@ public:
     static pev_charge_profile_library_v2 get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                      const double L1_timestep_sec,
                                                                      const double L2_timestep_sec,
-                                                                     const double HPC_timestep_sec );
+                                                                     const double HPC_timestep_sec,
+                                                                     const std::vector<double> c_rate_scale_factor_levels = {1.0} );
     
     static all_charge_profile_data build_all_charge_profile_data_for_specific_pev_SE_pair( const EV_EVSE_inventory& inventory,
                                                                                            const double timestep_sec,
