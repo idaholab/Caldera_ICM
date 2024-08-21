@@ -164,9 +164,10 @@ std::vector<pev_charge_fragment> CP_interface::USE_FOR_DEBUG_PURPOSES_ONLY_get_r
 //#############################################################################
 
 
-all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const double time_step_sec, 
+all_charge_profile_data CP_interface_v2::create_charge_profile_from_model_with_power_level( const double time_step_sec, 
                                                                            const EV_type pev_type, 
                                                                            const EVSE_type SE_type, 
+                                                                           const int c_rate_scale_factor_index,
                                                                            const double start_soc, 
                                                                            const double end_soc, 
                                                                            const double target_acP3_kW, 
@@ -192,7 +193,15 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const
     std::vector<ac_power_metrics> ac_power_vec;
     
     // "soc" and "ac_power_vec" are initialized by calling this function.
-    factory_charge_profile_library_v2::create_charge_profile( this->inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, ac_power_vec );
+    factory_charge_profile_library_v2::create_charge_profile( this->inventory,
+                                                              time_step_sec,
+                                                              pev_SE,
+                                                              start_soc,
+                                                              end_soc,
+                                                              target_acP3_kW,
+                                                              soc,
+                                                              ac_power_vec,
+                                                              this->CP_library_v2.get_c_rate_scale_factor_levels().at(c_rate_scale_factor_index) );
 
     //---------------------
     
@@ -210,6 +219,27 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const
     //-----------------------------
     
     return return_val;
+}
+
+all_charge_profile_data CP_interface_v2::create_charge_profile_from_model( const double time_step_sec, 
+                                                                           const EV_type pev_type, 
+                                                                           const EVSE_type SE_type, 
+                                                                           const double start_soc, 
+                                                                           const double end_soc, 
+                                                                           const double target_acP3_kW, 
+                                                                           const EV_ramping_map ramping_by_pevType_only, 
+                                                                           const EV_EVSE_ramping_map ramping_by_pevType_seType )
+{
+    return this->create_charge_profile_from_model_with_power_level(
+                                                   time_step_sec,
+                                                   pev_type,
+                                                   SE_type,
+                                                   this->CP_library_v2.get_c_rate_scale_factor_levels().size()-1,
+                                                   start_soc,
+                                                   end_soc,
+                                                   target_acP3_kW,
+                                                   ramping_by_pevType_only,
+                                                   ramping_by_pevType_seType );
 }
 
 CP_interface_v2::CP_interface_v2( const std::string& input_path )
@@ -231,6 +261,32 @@ CP_interface_v2::CP_interface_v2( const std::string& input_path,
 {
 }
 
+// If you want multiple power levels for each EV-EVSE pair, then call this constructor.
+CP_interface_v2::CP_interface_v2( const std::string& input_path,
+                                  const double L1_timestep_sec, 
+                                  const double L2_timestep_sec, 
+                                  const double HPC_timestep_sec,
+                                  const std::vector<double> c_rate_scale_factor_levels )
+    : loader{ load_EV_EVSE_inventory{ input_path } },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
+    CP_library_v2{
+        factory_charge_profile_library_v2::get_charge_profile_library( this->inventory, L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec, c_rate_scale_factor_levels )
+    }
+{
+}
+
+std::vector<double> CP_interface_v2::get_P3kW_charge_profile_with_power_level( const double start_soc,
+                                                              const double end_soc,
+                                                              const EV_type pev_type,
+                                                              const EVSE_type SE_type,
+                                                              const int c_rate_scale_factor_index )
+{
+    std::vector<double> return_val;
+    this->CP_library_v2.get_P3kW_charge_profile( start_soc, end_soc, pev_type, SE_type, c_rate_scale_factor_index, this->timestep_sec, return_val );
+    
+    return return_val;
+}
+
 std::vector<double> CP_interface_v2::get_P3kW_charge_profile( const double start_soc,
                                                               const double end_soc,
                                                               const EV_type pev_type,
@@ -248,6 +304,18 @@ double CP_interface_v2::get_timestep_of_prev_call_sec()
     return this->timestep_sec;
 }
 
+
+all_charge_profile_data CP_interface_v2::get_all_charge_profile_data_with_power_level( const double start_soc,
+                                                                      const double end_soc,
+                                                                      const EV_type pev_type,
+                                                                      const EVSE_type SE_type,
+                                                                      const int c_rate_scale_factor_index )
+{
+    all_charge_profile_data return_val;
+    this->CP_library_v2.get_all_charge_profile_data( start_soc, end_soc, pev_type, SE_type, c_rate_scale_factor_index, return_val );
+    
+    return return_val;
+}
 
 all_charge_profile_data CP_interface_v2::get_all_charge_profile_data( const double start_soc,
                                                                       const double end_soc,

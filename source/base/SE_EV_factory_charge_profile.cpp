@@ -548,9 +548,10 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
 pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                                              const double L1_timestep_sec,
                                                                                              const double L2_timestep_sec,
-                                                                                             const double HPC_timestep_sec )
+                                                                                             const double HPC_timestep_sec,
+                                                                                             const std::vector<double> c_rate_scale_factor_levels )
 {
-    pev_charge_profile_library_v2 return_val{ inventory };
+    pev_charge_profile_library_v2 return_val{ inventory, c_rate_scale_factor_levels };
     std::vector<pev_SE_pair> all_pev_SE_pairs = inventory.get_all_compatible_pev_SE_combinations();
     
     std::vector<ac_power_metrics> charge_profile;
@@ -579,11 +580,14 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
             return time_step_sec;
         }();
         
-        // "soc" and "charge_profile" are initialized by calling this function.
-        factory_charge_profile_library_v2::create_charge_profile( inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile );
-        
-        // Put the charge profile in the library.
-        return_val.add_charge_PkW_profile_to_library( pev_SE.ev_type, pev_SE.se_type, time_step_sec, soc, charge_profile );
+        for( int crsf_i = 0; crsf_i < c_rate_scale_factor_levels.size(); crsf_i++ )
+        {
+            // "soc" and "charge_profile" are initialized by calling this function.
+            factory_charge_profile_library_v2::create_charge_profile( inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile, c_rate_scale_factor_levels.at(crsf_i) );
+            
+            // Put the charge profile in the library.
+            return_val.add_charge_PkW_profile_to_library( pev_SE.ev_type, pev_SE.se_type, crsf_i, time_step_sec, soc, charge_profile );
+        }
     }
 
     return return_val;
