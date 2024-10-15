@@ -686,22 +686,23 @@ PYBIND11_MODULE(Caldera_globals, m)
             }
     ));
 
-    //---------------------------------
-    //   Control Strategy Parameters
-    //---------------------------------
-    py::enum_<L2_control_strategies_enum>(m, "L2_control_strategies_enum")
-        .value("NA", L2_control_strategies_enum::NA)
-        .value("ES100_A", L2_control_strategies_enum::ES100_A)
-        .value("ES100_B", L2_control_strategies_enum::ES100_B)
-        .value("ES110", L2_control_strategies_enum::ES110)
-        .value("ES200", L2_control_strategies_enum::ES200)
-        .value("ES300", L2_control_strategies_enum::ES300)
-        .value("ES500", L2_control_strategies_enum::ES500)
-        .value("VS100", L2_control_strategies_enum::VS100)
-        .value("VS200_A", L2_control_strategies_enum::VS200_A)
-        .value("VS200_B", L2_control_strategies_enum::VS200_B)
-        .value("VS200_C", L2_control_strategies_enum::VS200_C)
-        .value("VS300", L2_control_strategies_enum::VS300);
+	//---------------------------------
+	//   Control Strategy Parameters
+	//---------------------------------
+	py::enum_<L2_control_strategies_enum>(m, "L2_control_strategies_enum")
+		.value("NA", L2_control_strategies_enum::NA)
+		.value("ES100_A", L2_control_strategies_enum::ES100_A)
+		.value("ES100_B", L2_control_strategies_enum::ES100_B)
+		.value("ES110", L2_control_strategies_enum::ES110)
+		.value("ES200", L2_control_strategies_enum::ES200)
+		.value("ES300", L2_control_strategies_enum::ES300)
+		.value("ES400", L2_control_strategies_enum::ES400)
+		.value("ES500", L2_control_strategies_enum::ES500)
+		.value("VS100", L2_control_strategies_enum::VS100)
+		.value("VS200_A", L2_control_strategies_enum::VS200_A)
+		.value("VS200_B", L2_control_strategies_enum::VS200_B)
+		.value("VS200_C", L2_control_strategies_enum::VS200_C)
+		.value("VS300", L2_control_strategies_enum::VS300);
 
     py::class_<ES100_L2_parameters>(m, "ES100_L2_parameters")
         .def(py::init<>())
