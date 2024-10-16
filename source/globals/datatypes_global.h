@@ -228,6 +228,13 @@ struct normal_random_error
     normal_random_error() : seed(0), stdev(0.0), stdev_bounds(0.0) {}
 };
 
+struct ES400_L2_parameters
+{
+    bool communication;
+
+    ES400_L2_parameters() : communication(false) {}
+};
+
 
 struct ES500_L2_parameters
 {
