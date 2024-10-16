@@ -609,14 +609,14 @@ PYBIND11_MODULE(Caldera_globals, m)
             }
     ));
 
-    py::class_<all_charge_profile_data>(m, "all_charge_profile_data")
-        .def(py::init<>())
-        .def_readwrite("timestep_sec", &all_charge_profile_data::timestep_sec)
-        .def_readwrite("P1_kW", &all_charge_profile_data::P1_kW)
-        .def_readwrite("P2_kW", &all_charge_profile_data::P2_kW)
-        .def_readwrite("P3_kW", &all_charge_profile_data::P3_kW)
-        .def_readwrite("Q3_kVAR", &all_charge_profile_data::Q3_kVAR)
-        .def_readwrite("soc", &all_charge_profile_data::soc);
+	py::class_<all_charge_profile_data>(m, "all_charge_profile_data")
+		.def(py::init<>())
+		.def_readwrite("timestep_sec", &all_charge_profile_data::timestep_sec)
+		.def_readwrite("P1_kW", &all_charge_profile_data::P1_kW)
+		.def_readwrite("P2_kW", &all_charge_profile_data::P2_kW)
+		.def_readwrite("P3_kW", &all_charge_profile_data::P3_kW)
+		.def_readwrite("Q3_kVAR", &all_charge_profile_data::Q3_kVAR)
+		.def_readwrite("soc", &all_charge_profile_data::soc);
 
     py::class_<charge_event_P3kW_limits>(m, "charge_event_P3kW_limits")
         .def(py::init<>())
