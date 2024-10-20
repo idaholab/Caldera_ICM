@@ -197,7 +197,11 @@ void interface_to_SE_groups::set_PQ_setpoints(double now_unix_time, std::vector<
             if(SE_ptr->pev_is_connected_to_SE(now_unix_time) == false)
                 continue;
             
-            if(Z.ES_control_strategy == L2_control_strategies_enum::NA && Z.VS_control_strategy == L2_control_strategies_enum::NA && Z.ext_control_strategy != NA_string)
+            if (Z.ES_control_strategy == L2_control_strategies_enum::ES400)
+            {
+                SE_ptr->set_target_acP3_kW(X.PkW);
+            }
+            else if(Z.ES_control_strategy == L2_control_strategies_enum::NA && Z.VS_control_strategy == L2_control_strategies_enum::NA && Z.ext_control_strategy != NA_string)
             {
                 SE_ptr->set_target_acP3_kW(X.PkW);
                 
