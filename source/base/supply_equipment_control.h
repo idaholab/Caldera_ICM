@@ -350,6 +350,12 @@ public:
                                    supply_equipment_load& SE_load,
                                    ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void ES500_set_energy_setpoints( const double e3_setpoint_kWh );
+
+    //------------------------
+    //         ES400
+    //------------------------
+    
+    void ES400_set_power_setpoints(const double p3_kW);
 };
 
 #endif

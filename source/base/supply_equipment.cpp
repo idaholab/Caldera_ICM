@@ -208,4 +208,7 @@ void supply_equipment::ES500_set_energy_setpoints( const double e3_setpoint_kWh 
     this->SE_control.ES500_set_energy_setpoints(e3_setpoint_kWh);
 }
 
-    
+void supply_equipment::ES400_set_power_setpoints(const double p3_kW)
+{
+    this->SE_control.ES400_set_power_setpoints(p3_kW);
+}
