@@ -199,7 +199,7 @@ void interface_to_SE_groups::set_PQ_setpoints(double now_unix_time, std::vector<
             
             if (Z.ES_control_strategy == L2_control_strategies_enum::ES400)
             {
-                SE_ptr->set_target_acP3_kW(X.PkW);
+                SE_ptr->ES400_set_power_setpoints(X.PkW);
             }
             else if(Z.ES_control_strategy == L2_control_strategies_enum::NA && Z.VS_control_strategy == L2_control_strategies_enum::NA && Z.ext_control_strategy != NA_string)
             {
