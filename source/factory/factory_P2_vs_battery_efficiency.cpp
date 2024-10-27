@@ -41,45 +41,45 @@ const P2_vs_battery_efficiency_map factory_P2_vs_battery_efficiency::load_P2_vs_
         chemistry = EVs.second.get_chemistry();
         battery_size_kWh = EVs.second.get_battery_size_kWh();
 
-        if (chemistry == LTO)
+        if (chemistry == battery_chemistry::LTO)
         {
-            mode = charging;
+            mode = battery_charge_mode::charging;
             line_segment curve1{ 0, 6 * battery_size_kWh, -0.0078354 / battery_size_kWh, 0.987448 };
             zero_slope_threshold = (std::abs(curve1.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve1.a);              // If the slope is smaller than 0.000001 that the 'safe' method will be used. // Very little rational to using 0.000001 it will allow the complex method using a 1000 kWh battery pack
             inner_map.emplace(mode, P2_vs_battery_efficiency{ curve1, zero_slope_threshold });
 
             //-----------------------
-            mode = discharging;
+            mode = battery_charge_mode::discharging;
             line_segment curve2{ -6 * battery_size_kWh, 0, -0.0102411 / battery_size_kWh, 1.0109224 };
             zero_slope_threshold = (std::abs(curve2.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve2.a);
 
             inner_map.emplace(mode, P2_vs_battery_efficiency{ curve2, zero_slope_threshold });
         }
-        else if (chemistry == LMO)
+        else if (chemistry == battery_chemistry::LMO)
         {
-            mode = charging;
+            mode = battery_charge_mode::charging;
             line_segment curve1{ 0, 4 * battery_size_kWh, -0.0079286 / battery_size_kWh, 0.9936637 };
             zero_slope_threshold = (std::abs(curve1.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve1.a);
 
             inner_map.emplace(mode, P2_vs_battery_efficiency{ curve1, zero_slope_threshold });
 
             //-----------------------
-            mode = discharging;
+            mode = battery_charge_mode::discharging;
             line_segment curve2{ -4 * battery_size_kWh, 0, -0.0092091 / battery_size_kWh, 1.005674 };
             zero_slope_threshold = (std::abs(curve2.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve2.a);
 
             inner_map.emplace(mode, P2_vs_battery_efficiency{ curve2, zero_slope_threshold });
         }
-        else if (chemistry == NMC)
+        else if (chemistry == battery_chemistry::NMC)
         {
-            mode = charging;
+            mode = battery_charge_mode::charging;
             line_segment curve1{ 0, 4 * battery_size_kWh, -0.0053897 / battery_size_kWh, 0.9908405 };
             zero_slope_threshold = (std::abs(curve1.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve1.a);
 
             inner_map.emplace(mode, P2_vs_battery_efficiency{ curve1, zero_slope_threshold });
 
             //----------------------
-            mode = discharging;
+            mode = battery_charge_mode::discharging;
             line_segment curve2{ -4 * battery_size_kWh, 0, -0.0062339 / battery_size_kWh, 1.0088727 };
             zero_slope_threshold = (std::abs(curve2.a) < 0.000001) ? 0.000001 : 0.9 * std::abs(curve2.a);
 

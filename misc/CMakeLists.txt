@@ -1,0 +1,2 @@
+add_subdirectory(next_gen_prof_testing)
+add_subdirectory(temperature_aware)

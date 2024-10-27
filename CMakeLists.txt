@@ -15,4 +15,4 @@ find_package(pybind11 CONFIG)
 
 add_subdirectory(source)
 add_subdirectory(unittests)
-add_subdirectory(test)
+add_subdirectory(misc)

@@ -25,17 +25,22 @@ private:
     std::vector<pev_charge_fragment_variation> removed_fragments;
     std::vector<pev_charge_fragment_variation> retained_fragments;
     
-    int64_t calculate_variation_rank(std::list<pev_charge_fragment_variation>::iterator it, std::mt19937& gen, std::uniform_int_distribution<>& dis);
-    int get_index_of_elbow(int start_index, int end_index, std::list<pev_charge_fragment_variation>& fragment_variations);
+    int64_t calculate_variation_rank( const std::list<pev_charge_fragment_variation>::iterator it,
+                                      std::mt19937& gen,
+                                      std::uniform_int_distribution<>& dis );
+    int get_index_of_elbow( const int start_index,
+                            const int end_index,
+                            const std::list<pev_charge_fragment_variation>& fragment_variations );
     
 public:
     downsample_charge_fragment_vector() {};
-    downsample_charge_fragment_vector(pev_charge_fragment_removal_criteria fragment_removal_criteria_);
+    downsample_charge_fragment_vector( const pev_charge_fragment_removal_criteria fragment_removal_criteria_ );
     
     std::vector<pev_charge_fragment_variation> get_removed_fragments();
     std::vector<pev_charge_fragment_variation> get_retained_fragments();
 
-    void downsample(std::vector<pev_charge_fragment>& original_charge_fragments, std::vector<pev_charge_fragment>& downsampled_charge_fragments);
+    void downsample( std::vector<pev_charge_fragment>& original_charge_fragments,
+                     std::vector<pev_charge_fragment>& downsampled_charge_fragments );
 };
 
 
