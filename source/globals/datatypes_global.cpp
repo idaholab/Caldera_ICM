@@ -282,14 +282,14 @@ std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const
         if (!std::isspace(str_val[i]))
             tmp_str += str_val[i];
 
-	if 		(tmp_str == "NA") 	    enum_val = NA;
-	else if	(tmp_str == "ES100-A") 	enum_val = ES100_A;
-    else if	(tmp_str == "ES100-B") 	enum_val = ES100_B;
-    else if	(tmp_str == "ES110") 	enum_val = ES110;
-	else if (tmp_str == "ES200") 	enum_val = ES200;
-	else if (tmp_str == "ES300") 	enum_val = ES300;
-    else if (tmp_str == "ES400") 	enum_val = ES400;
-	else if (tmp_str == "ES500") 	enum_val = ES500;
+	if 		(tmp_str == "NA") 	    enum_val = L2_control_strategies_enum::NA;
+	else if	(tmp_str == "ES100-A") 	enum_val = L2_control_strategies_enum::ES100_A;
+    else if	(tmp_str == "ES100-B") 	enum_val = L2_control_strategies_enum::ES100_B;
+    else if	(tmp_str == "ES110") 	enum_val = L2_control_strategies_enum::ES110;
+	else if (tmp_str == "ES200") 	enum_val = L2_control_strategies_enum::ES200;
+	else if (tmp_str == "ES300") 	enum_val = L2_control_strategies_enum::ES300;
+    else if (tmp_str == "ES400") 	enum_val = L2_control_strategies_enum::ES400;
+	else if (tmp_str == "ES500") 	enum_val = L2_control_strategies_enum::ES500;
     
     else if (tmp_str == "VS100")     enum_val = L2_control_strategies_enum::VS100;
     else if (tmp_str == "VS200-A")     enum_val = L2_control_strategies_enum::VS200_A;
