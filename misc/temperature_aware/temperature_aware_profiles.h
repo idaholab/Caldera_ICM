@@ -3,6 +3,7 @@
 #include <sstream>
 #include "SE_EV_factory_charge_profile.h"
 #include <algorithm>
+#include <functional>
 
 namespace temperature_aware
 {
