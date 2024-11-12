@@ -1,4 +1,3 @@
-
 #include "ICM_interface.h"
 #include "ac_to_dc_converter.h"                        // ac_to_dc_converter
 #include "datatypes_module.h"                        // ac_power_metrics
@@ -464,8 +463,9 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     
     std::map<grid_node_id_type, std::vector<supply_equipment*> >::iterator it;
     std::pair<double, double> tmp_pwr;
-    ac_power_metrics ac_power_tmp;
-    double P3_kW, Q3_kVAR, soc;
+    //ac_power_metrics ac_power_tmp;
+    //double P3_kW, Q3_kVAR, soc;
+    double P3_kW, Q3_kVAR;
     
     for(std::pair<grid_node_id_type, double> pu_Vrms_pair : pu_Vrms)
     {
@@ -488,6 +488,23 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
             // Iterate over each supply_equipment pointer and sum up the power used by each during this timestep.
             P3_kW = 0;
             Q3_kVAR = 0;
+            
+            const int vec_size = gridnodeid_SEvec_pair.second.size();
+            
+            #pragma omp parallel for reduction(+:P3_kW, Q3_kVAR)
+            for (int i = 0; i < vec_size; i++)
+            {
+                supply_equipment* SE_ptr = gridnodeid_SEvec_pair.second.at(i);
+                ac_power_metrics ac_power_tmp;
+                double soc;
+
+                SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
+                
+                P3_kW += ac_power_tmp.P3_kW;
+                Q3_kVAR += ac_power_tmp.Q3_kVAR;
+            }
+
+            /*
             for( supply_equipment* SE_ptr : gridnodeid_SEvec_pair.second )
             {
                 SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
@@ -495,7 +512,8 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
                 P3_kW += ac_power_tmp.P3_kW;
                 Q3_kVAR += ac_power_tmp.Q3_kVAR;
             }
-            
+            */
+
             tmp_pwr.first = P3_kW;
             tmp_pwr.second = Q3_kVAR;
             
@@ -505,7 +523,6 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     
     return return_val;
 }
-
 
 SE_power interface_to_SE_groups::get_SE_power(SupplyEquipmentId SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms)
 {
