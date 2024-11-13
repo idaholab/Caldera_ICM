@@ -1,6 +1,12 @@
 #include "EV_EVSE_inventory.h"
 #include <algorithm>
 
+std::ostream& operator<<(std::ostream& out, const pev_SE_pair& x)
+{
+    out << "{" << x.ev_type << "," << x.se_type << "}";
+    return out;
+}
+
 EV_EVSE_inventory::EV_EVSE_inventory(const EV_inventory& EV_inv,
                                      const EVSE_inventory& EVSE_inv)
     : EV_inv{ EV_inv },
@@ -51,7 +57,7 @@ const std::vector<pev_SE_pair> EV_EVSE_inventory::load_compatible_EV_EVSE_pair()
     {
         for (const auto& EVSEs : this->get_EVSE_inventory())
         {
-            if (EVSEs.second.get_level() == DCFC)
+            if (EVSEs.second.get_level() == EVSE_level::DCFC)
             {
                 if (EVs.second.get_DCFC_capable() == true)
                 {

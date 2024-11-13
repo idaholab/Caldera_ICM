@@ -15,11 +15,11 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
 {
     // The points on the P2_vs_pu_Vrms plot are all multiplied by SE_P2_limit_atNominalV_kW
     // The P2_vs_pu_Vrms plot must pass through the point (1, 1)
-    //		At nominal voltage Vrms = 1 the final curve is 1*SE_P2_limit_atNominalV_kW or the limit at nominal voltage
+    //        At nominal voltage Vrms = 1 the final curve is 1*SE_P2_limit_atNominalV_kW or the limit at nominal voltage
 
     std::unordered_map<EVSE_level, std::map<puVrms, P2> > data;
 
-    data.emplace(L1, []() {
+    data.emplace(EVSE_level::L1, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.69, 0.7, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.00, 0.7, 2.0 };
 
@@ -32,7 +32,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
         return curve;
     }());
 
-    data.emplace(L2, []() {
+    data.emplace(EVSE_level::L2, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.34, 0.35, 0.94, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.0, 0.373, 1.0, 1.0 };
 
@@ -45,7 +45,7 @@ const std::unordered_map<EVSE_level, std::map<puVrms, P2> > factory_puVrms_vs_P2
         return curve;
     }());
 
-    data.emplace(DCFC, []() {
+    data.emplace(EVSE_level::DCFC, []() {
         std::vector<puVrms> puVrms_vec = { 0.0, 0.79, 0.80, 1.20, 1.21, 2.0 };
         std::vector<P2> P2_vec = { 0.0, 0.0, 1.0, 1.0, 0.0, 0.0 };
 
@@ -98,7 +98,7 @@ const poly_function_of_x factory_puVrms_vs_P2::get_puVrms_vs_P2(const EVSE_type&
 
             a = (prev_P2 - cur_P2) / (prev_puVrms - cur_puVrms);
             b = cur_P2 - a * cur_puVrms;
-            segments.emplace_back(prev_puVrms, cur_puVrms, first, a, b, 0, 0, 0 );      // x_LB, x_UB, degree, a, b, c, d, e
+            segments.emplace_back(prev_puVrms, cur_puVrms, poly_degree::first, a, b, 0, 0, 0 );      // x_LB, x_UB, degree, a, b, c, d, e
 
             prev_puVrms = cur_puVrms;
             prev_P2 = cur_P2;

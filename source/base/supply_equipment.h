@@ -34,7 +34,7 @@ public:
                                   factory_ac_to_dc_converter* ac_to_dc_converter_factory,
                                   pev_charge_profile_library* charge_profile_library );
     
-    bool is_SE_with_id( const SE_id_type SE_id );
+    bool is_SE_with_id( const SupplyEquipmentId SE_id );
 
     SE_configuration get_SE_configuration();
 
@@ -68,13 +68,13 @@ public:
                                                  std::vector<double>& charge_profile );
     
     void add_charge_event( const charge_event_data& charge_event );
-	
+    
     void set_target_acP3_kW( const double target_acP3_kW );
     
     void set_target_acQ3_kVAR( const double target_acQ3_kVAR );
     
     bool pev_is_connected_to_SE( const double now_unix_time );
-	
+    
     void get_next( const double prev_unix_time,
                    const double now_unix_time,
                    const double pu_Vrms,
@@ -99,6 +99,10 @@ public:
                                    ES500_aggregator_pev_charge_needs& pev_charge_needs );
     
     void ES500_set_energy_setpoints( const double e3_setpoint_kWh );
+
+    //------------------------------------------
+
+    void ES400_set_power_setpoints(const double p3_kW);
 };
 
 #endif

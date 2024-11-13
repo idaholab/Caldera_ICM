@@ -1,7 +1,6 @@
-
 #include "ICM_interface.h"
-#include "ac_to_dc_converter.h"		                // ac_to_dc_converter
-#include "datatypes_module.h"	                    // ac_power_metrics
+#include "ac_to_dc_converter.h"                        // ac_to_dc_converter
+#include "datatypes_module.h"                        // ac_power_metrics
 
 #include "SE_EV_factory_charge_profile.h"
 
@@ -93,8 +92,9 @@ interface_to_SE_groups::interface_to_SE_groups( const std::string& input_path,
 
 pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library(const interface_to_SE_groups_inputs& inputs)
 {
-    factory_charge_profile_library X{ inventory };
-    return X.get_charge_profile_library(false, inputs.create_charge_profile_library);
+    std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
+    const bool save_validation_data = false;
+    return factory_charge_profile_library::get_charge_profile_library( this->inventory, save_validation_data, inputs.create_charge_profile_library, validation_data);
 }
 
 interface_to_SE_groups::~interface_to_SE_groups()
@@ -113,11 +113,11 @@ interface_to_SE_groups::~interface_to_SE_groups()
 }
 
 
-void interface_to_SE_groups::stop_active_charge_events(std::vector<SE_id_type> SE_ids)
+void interface_to_SE_groups::stop_active_charge_events(std::vector<SupplyEquipmentId> SE_ids)
 {
     try
     {
-        for(SE_id_type x : SE_ids)
+        for(SupplyEquipmentId x : SE_ids)
             this->SEid_to_SE_ptr.at(x)->stop_active_CE();
     }
     catch(...)
@@ -196,7 +196,11 @@ void interface_to_SE_groups::set_PQ_setpoints(double now_unix_time, std::vector<
             if(SE_ptr->pev_is_connected_to_SE(now_unix_time) == false)
                 continue;
             
-            if(Z.ES_control_strategy == NA && Z.VS_control_strategy == NA && Z.ext_control_strategy != NA_string)
+            if (Z.ES_control_strategy == L2_control_strategies_enum::ES400)
+            {
+                SE_ptr->ES400_set_power_setpoints(X.PkW);
+            }
+            else if(Z.ES_control_strategy == L2_control_strategies_enum::NA && Z.VS_control_strategy == L2_control_strategies_enum::NA && Z.ext_control_strategy != NA_string)
             {
                 SE_ptr->set_target_acP3_kW(X.PkW);
                 
@@ -289,7 +293,7 @@ std::vector<CE_FICE> interface_to_SE_groups::get_FICE_by_SEids(std::vector<int> 
     bool pev_is_connected_to_SE;
     CE_FICE FICE_val;
     
-    for(SE_id_type SE_id : SEids)
+    for(SupplyEquipmentId SE_id : SEids)
     {
         if(this->SEid_to_SE_ptr.count(SE_id) == 0)
         {
@@ -389,14 +393,14 @@ std::map<int, std::vector<active_CE> > interface_to_SE_groups::get_active_CEs_by
 }
 
 
-std::vector<active_CE> interface_to_SE_groups::get_active_CEs_by_SEids(std::vector<SE_id_type> SEids)
+std::vector<active_CE> interface_to_SE_groups::get_active_CEs_by_SEids(std::vector<SupplyEquipmentId> SEids)
 {
     std::vector<active_CE> return_val;
     
     bool pev_is_connected_to_SE;
     active_CE active_CE_val;
     
-    for(SE_id_type SE_id : SEids)
+    for(SupplyEquipmentId SE_id : SEids)
     {
         if(this->SEid_to_SE_ptr.count(SE_id) == 0)
         {
@@ -416,7 +420,7 @@ std::vector<active_CE> interface_to_SE_groups::get_active_CEs_by_SEids(std::vect
 }
 
 
-std::vector<double> interface_to_SE_groups::get_SE_charge_profile_forecast_akW(SE_id_type SE_id, double setpoint_P3kW, double time_step_mins)
+std::vector<double> interface_to_SE_groups::get_SE_charge_profile_forecast_akW(SupplyEquipmentId SE_id, double setpoint_P3kW, double time_step_mins)
 {
     std::vector<double> charge_profile;
     
@@ -459,8 +463,9 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     
     std::map<grid_node_id_type, std::vector<supply_equipment*> >::iterator it;
     std::pair<double, double> tmp_pwr;
-    ac_power_metrics ac_power_tmp;
-    double P3_kW, Q3_kVAR, soc;
+    //ac_power_metrics ac_power_tmp;
+    //double P3_kW, Q3_kVAR, soc;
+    double P3_kW, Q3_kVAR;
     
     for(std::pair<grid_node_id_type, double> pu_Vrms_pair : pu_Vrms)
     {
@@ -483,6 +488,23 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
             // Iterate over each supply_equipment pointer and sum up the power used by each during this timestep.
             P3_kW = 0;
             Q3_kVAR = 0;
+            
+            const int vec_size = gridnodeid_SEvec_pair.second.size();
+            
+            //#pragma omp parallel for reduction(+:P3_kW, Q3_kVAR)
+            for (int i = 0; i < vec_size; i++)
+            {
+                supply_equipment* SE_ptr = gridnodeid_SEvec_pair.second.at(i);
+                ac_power_metrics ac_power_tmp;
+                double soc;
+
+                SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
+                
+                P3_kW += ac_power_tmp.P3_kW;
+                Q3_kVAR += ac_power_tmp.Q3_kVAR;
+            }
+
+            /*
             for( supply_equipment* SE_ptr : gridnodeid_SEvec_pair.second )
             {
                 SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
@@ -490,7 +512,8 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
                 P3_kW += ac_power_tmp.P3_kW;
                 Q3_kVAR += ac_power_tmp.Q3_kVAR;
             }
-            
+            */
+
             tmp_pwr.first = P3_kW;
             tmp_pwr.second = Q3_kVAR;
             
@@ -501,8 +524,7 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     return return_val;
 }
 
-
-SE_power interface_to_SE_groups::get_SE_power(SE_id_type SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms)
+SE_power interface_to_SE_groups::get_SE_power(SupplyEquipmentId SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms)
 {
     SE_power return_val;
     
@@ -517,7 +539,7 @@ SE_power interface_to_SE_groups::get_SE_power(SE_id_type SE_id, double prev_unix
         return_val.P3_kW = 0;
         return_val.Q3_kVAR = 0;
         return_val.soc = 0;
-        return_val.SE_status_val = no_ev_plugged_in;
+        return_val.SE_status_val = SE_charging_status::no_ev_plugged_in;
     }
     else
     {
@@ -552,7 +574,7 @@ ES500_aggregator_charging_needs interface_to_SE_groups::ES500_get_charging_needs
     
     for(supply_equipment* SE_ptr : this->SE_ptr_vector)
     {
-        if(SE_ptr->current_CE_is_using_control_strategy(unix_time_begining_of_next_agg_step, ES500))
+        if(SE_ptr->current_CE_is_using_control_strategy(unix_time_begining_of_next_agg_step, L2_control_strategies_enum::ES500))
         {
             SE_ptr->ES500_get_charging_needs(unix_time_now, unix_time_begining_of_next_agg_step, obj);
 
@@ -567,7 +589,7 @@ ES500_aggregator_charging_needs interface_to_SE_groups::ES500_get_charging_needs
 
 void interface_to_SE_groups::ES500_set_energy_setpoints(ES500_aggregator_e_step_setpoints pev_energy_setpoints)
 {
-    std::vector<SE_id_type>& SE_id = pev_energy_setpoints.SE_id;
+    std::vector<SupplyEquipmentId>& SE_id = pev_energy_setpoints.SE_id;
     std::vector<double>& e3_step_kWh = pev_energy_setpoints.e3_step_kWh;
     
     for(int i=0; i<SE_id.size(); i++)
