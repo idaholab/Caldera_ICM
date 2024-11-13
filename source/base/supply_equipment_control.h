@@ -60,6 +60,7 @@ public:
     const ES110_L2_parameters& get_ES110();
     const ES200_L2_parameters& get_ES200();
     const ES300_L2_parameters& get_ES300();
+    const ES300_L2_parameters& get_ES400();
     const ES500_L2_parameters& get_ES500();
     
     const VS100_L2_parameters& get_VS100();
@@ -161,6 +162,34 @@ public:
     void update_parameters_for_CE(double target_P3kW_);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
+
+
+//=========================================
+//        ES400 Control Strategy
+//=========================================
+
+class ES400_control_strategy
+{
+private:
+    manage_L2_control_strategy_parameters* params;
+    double target_P3kW;
+    double cur_P3kW_setpoint;
+    double next_P3kW_setpoint;
+    double unix_time_begining_of_next_agg_step;
+    bool updated_P3kW_setpoint_available;
+
+public:
+    ES400_control_strategy() {};
+    ES400_control_strategy(manage_L2_control_strategy_parameters* params_);
+    void update_parameters_for_CE(double target_P3kW_);
+    void get_charging_needs(
+        double unix_time_now,
+        double unix_time_begining_of_next_agg_step
+    );
+    double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
+    void set_power_setpoints(double P3kW_setpoint);
+};
+
 
 //=========================================
 //        ES500 Control Strategy
@@ -267,6 +296,7 @@ private:
     ES110_control_strategy ES110_obj;
     ES200_control_strategy ES200_obj;
     ES300_control_strategy ES300_obj;
+    ES400_control_strategy ES400_obj;
     ES500_control_strategy ES500_obj;
     
     VS100_control_strategy VS100_obj;
@@ -320,6 +350,12 @@ public:
                                    supply_equipment_load& SE_load,
                                    ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void ES500_set_energy_setpoints( const double e3_setpoint_kWh );
+
+    //------------------------
+    //         ES400
+    //------------------------
+    
+    void ES400_set_power_setpoints(const double p3_kW);
 };
 
 #endif

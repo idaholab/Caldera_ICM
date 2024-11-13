@@ -272,6 +272,84 @@ double ES300_control_strategy::get_P3kW_setpoint(double prev_unix_time, double n
     return this->cur_P3kW_setpoint;
 }
 
+//===============================================================================================
+//===============================================================================================
+//                                 ES400 Control Strategy
+//===============================================================================================
+//===============================================================================================
+
+
+ES400_control_strategy::ES400_control_strategy(
+    manage_L2_control_strategy_parameters* params_
+)
+{
+    this->params = params_;
+    this->cur_P3kW_setpoint = 0;
+    this->next_P3kW_setpoint = -1;
+    this->updated_P3kW_setpoint_available = false;
+    this->unix_time_begining_of_next_agg_step = -1;
+}
+
+void ES400_control_strategy::update_parameters_for_CE(
+    double target_P3kW_
+)
+{
+    //this->target_P3kW = target_P3kW_;
+
+    //this->cur_P3kW_setpoint = 0;
+    //this->next_P3kW_setpoint = -1;
+    //this->updated_P3kW_setpoint_available = false;
+    //this->unix_time_begining_of_next_agg_step = -1;
+
+
+    this->target_P3kW = this->cur_P3kW_setpoint;
+}
+
+
+void ES400_control_strategy::get_charging_needs(
+    double unix_time_now, 
+    double unix_time_begining_of_next_agg_step
+)
+{
+    //this->unix_time_begining_of_next_agg_step = unix_time_begining_of_next_agg_step;
+
+}
+
+double ES400_control_strategy::get_P3kW_setpoint(
+    double prev_unix_time, 
+    double now_unix_time
+)
+{
+    /*
+    if (!this->updated_P3kW_setpoint_available || this->unix_time_begining_of_next_agg_step < 0)
+        return this->cur_P3kW_setpoint;
+
+    //--------------------------
+
+    if (this->unix_time_begining_of_next_agg_step <= now_unix_time)
+    {
+        this->cur_P3kW_setpoint = this->next_P3kW_setpoint;
+        this->next_P3kW_setpoint = -1;
+        this->updated_P3kW_setpoint_available = false;
+        this->unix_time_begining_of_next_agg_step = -1;
+    }
+
+    return this->cur_P3kW_setpoint;
+    */
+    return this->cur_P3kW_setpoint;
+}
+
+
+void ES400_control_strategy::set_power_setpoints(
+    double P3kW_setpoint
+)
+{
+    /*
+    this->updated_P3kW_setpoint_available = true;
+    this->next_P3kW_setpoint = P3kW_setpoint;
+    */
+    this->cur_P3kW_setpoint = P3kW_setpoint;
+}
 
 //===============================================================================================
 //===============================================================================================
@@ -849,7 +927,10 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
             this->ES300_obj.update_parameters_for_CE(this->target_P3kW);
-        
+
+        else if (this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES400)
+            this->ES400_obj.update_parameters_for_CE(this->target_P3kW);
+
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
             this->ES500_obj.update_parameters_for_CE(this->target_P3kW);
     }
@@ -886,8 +967,8 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     }
     
     //----------------------------------
-    // Return if PEV is not Connected
-    //      Get Charge Status
+    // Get Charge Status
+    // Return if PEV is not Connected     
     //----------------------------------
     bool pev_is_connected_to_SE;
     SE_charging_status SE_status_val;
@@ -970,6 +1051,11 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
         {
             P3kW_setpoint = this->ES300_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
+        }
+        else if (this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES400)
+        {
+            P3kW_LB = 0.0;
+            P3kW_setpoint = this->ES400_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
         {
@@ -1095,6 +1181,13 @@ void supply_equipment_control::ES500_set_energy_setpoints( const double e3_setpo
     this->ES500_obj.set_energy_setpoints(e3_setpoint_kWh);
 }
 
+
+void supply_equipment_control::ES400_set_power_setpoints(const double p3_kW)
+{
+    //----------------
+
+    this->ES400_obj.set_power_setpoints(p3_kW);
+}
 
 //===============================================================================================
 //===============================================================================================

@@ -168,7 +168,8 @@ enum class L2_control_strategies_enum
     ES110 = 3,
     ES200 = 4,
     ES300 = 5,
-    ES500 = 6,
+    ES400 = 6,
+    ES500 = 7,
     VS100 = 8,   
     VS200_A = 10,
     VS200_B = 11,
@@ -225,6 +226,13 @@ struct normal_random_error
     double stdev_bounds;
     
     normal_random_error() : seed(0), stdev(0.0), stdev_bounds(0.0) {}
+};
+
+struct ES400_L2_parameters
+{
+    bool communication;
+
+    ES400_L2_parameters() : communication(false) {}
 };
 
 
