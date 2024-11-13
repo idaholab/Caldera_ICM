@@ -2,13 +2,13 @@
 
 std::ostream& operator<<(std::ostream& os, const EVSE_level& level) {
     switch(level) {
-        case EVSE_level::L1:
+        case L1:
             os << "L1";
             break;
-        case EVSE_level::L2:
+        case L2:
             os << "L2";
             break;
-        case EVSE_level::DCFC:
+        case DCFC:
             os << "DCFC";
             break;
         default:
@@ -20,10 +20,10 @@ std::ostream& operator<<(std::ostream& os, const EVSE_level& level) {
 
 std::ostream& operator<<(std::ostream& os, const EVSE_phase& phase) {
     switch (phase) {
-        case EVSE_phase::singlephase:
+        case singlephase:
             os << "singlephase";
             break;
-        case EVSE_phase::threephase:
+        case threephase:
             os << "threephase";
             break;
         default:

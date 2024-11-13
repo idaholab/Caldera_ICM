@@ -19,9 +19,9 @@ const EVSE_inventory& load_EVSE_inventory::get_EVSE_inventory() const
 const EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& str) const
 {
     const std::unordered_map<std::string, EVSE_level> map = {
-        {"L1", EVSE_level::L1},
-        {"L2", EVSE_level::L2},
-        {"DCFC", EVSE_level::DCFC}
+        {"L1", L1},
+        {"L2", L2},
+        {"DCFC", DCFC}
     };
 
     auto it = map.find(str);
@@ -36,10 +36,10 @@ const EVSE_level load_EVSE_inventory::string_to_EVSE_level(const std::string& st
 const EVSE_phase load_EVSE_inventory::string_to_EVSE_phase(const std::string& str) const
 {
     const std::unordered_map<std::string, EVSE_phase> map = {
-        {"1", EVSE_phase::singlephase},
-        {"one", EVSE_phase::singlephase},
-        {"3", EVSE_phase::threephase},
-        {"three", EVSE_phase::threephase}
+        {"1", singlephase},
+        {"one", singlephase},
+        {"3", threephase},
+        {"three", threephase}
     };
 
     auto it = map.find(str);
@@ -191,7 +191,7 @@ EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
             ASSERT(is_conversion_successful, EVSE_inputs_file << " " << column_names[4] << " " <<
                 str << " is not a double in line number " << line_number);
 
-            if(level == EVSE_level::DCFC)
+            if(level == DCFC)
             {
                 ASSERT(val > 0, EVSE_inputs_file << " " << column_names[4] << " " << str <<
                        " is less than or equal to 0 in line number " << line_number);
@@ -220,7 +220,7 @@ EVSE_inventory load_EVSE_inventory::load(const std::string& inputs_dir)
                 is_conversion_successful = false;
             }
 
-            if (level == EVSE_level::DCFC)
+            if (level == DCFC)
             {
                 ASSERT(is_conversion_successful, EVSE_inputs_file << " " << column_names[5] << " " <<
                        str << " is not a double in line number " << line_number);

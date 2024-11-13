@@ -7,8 +7,8 @@
 #include "EVSE_characteristics.h"
 #include "EV_EVSE_inventory.h"
 
-#include "datatypes_global.h"                    // pev_charge_ramping
-#include "battery_integrate_X_in_time.h"        // integrate_X_through_time
+#include "datatypes_global.h"					// pev_charge_ramping
+#include "battery_integrate_X_in_time.h"		// integrate_X_through_time
 #include "helper.h"
 
 typedef std::unordered_map<EV_type, pev_charge_ramping> EV_ramping_map;
@@ -20,37 +20,37 @@ typedef std::unordered_map<std::pair<EV_type, EVSE_type>, integrate_X_through_ti
 
 struct charging_transitions
 {
-    const EVSE_level_charging_transitions charging_transitions_by_EVSE_level;
-    const EV_charging_transitions charging_transitions_by_custom_EV;
-    const EV_EVSE_charging_transitions charging_transitions_by_custom_EV_EVSE;
+	const EVSE_level_charging_transitions charging_transitions_by_EVSE_level;
+	const EV_charging_transitions charging_transitions_by_custom_EV;
+	const EV_EVSE_charging_transitions charging_transitions_by_custom_EV_EVSE;
 
-    charging_transitions(const EVSE_level_charging_transitions& charging_transitions_by_EVSE_level,
-                         const EV_charging_transitions& charging_transitions_by_custom_EV,
-                         const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE);
+	charging_transitions(const EVSE_level_charging_transitions& charging_transitions_by_EVSE_level,
+						 const EV_charging_transitions& charging_transitions_by_custom_EV,
+						 const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE);
 };
 
 
 class factory_charging_transitions
 {
 private:
-    
-    const EV_EVSE_inventory& inventory;
+	
+	const EV_EVSE_inventory& inventory;
 
-    const EV_ramping_map custom_EV_ramping;
-    const EV_EVSE_ramping_map custom_EV_EVSE_ramping;
+	const EV_ramping_map custom_EV_ramping;
+	const EV_EVSE_ramping_map custom_EV_EVSE_ramping;
 
-    const charging_transitions charging_transitions_obj;
+	const charging_transitions charging_transitions_obj;
 
-    const charging_transitions load_charging_transitions();
+	const charging_transitions load_charging_transitions();
 
 
 public:
-    factory_charging_transitions(const EV_EVSE_inventory& inventory, 
-                                 const EV_ramping_map& custom_EV_ramping, 
-                                 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping);
+	factory_charging_transitions(const EV_EVSE_inventory& inventory, 
+								 const EV_ramping_map& custom_EV_ramping, 
+								 const EV_EVSE_ramping_map& custom_EV_EVSE_ramping);
 
-    const integrate_X_through_time& get_charging_transitions(const EV_type& EV, 
-                                                             const EVSE_type& EVSE) const;
+	const integrate_X_through_time& get_charging_transitions(const EV_type& EV, 
+															 const EVSE_type& EVSE) const;
 };
 
 #endif
