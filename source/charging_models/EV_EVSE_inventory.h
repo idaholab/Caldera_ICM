@@ -27,7 +27,6 @@ struct pev_SE_pair
         return (this->ev_type == rhs.ev_type) && (this->se_type == rhs.se_type);
     }
 };
-std::ostream& operator<<(std::ostream& out, const pev_SE_pair& x);
 
 class EV_EVSE_inventory {
 private:

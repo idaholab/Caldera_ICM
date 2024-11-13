@@ -94,10 +94,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 
         // When a battery is approaching 0 soc or 100 soc there is a chance that energy continues to go into the battery while
         // the soc is not changing (fixed at 0 or 100 soc)
-        //     - This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
-        //     - This problem (for small time steps) can be mitigated by the following:
-        //        - Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
-        //        - Make sure the ramp rate is large when a battery stops charging/discharging
+        // 	- This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
+        // 	- This problem (for small time steps) can be mitigated by the following:
+        //		- Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
+        //		- Make sure the ramp rate is large when a battery stops charging/discharging
         //      - Make sure the delay is small when battery stops charging/discharging
 
         std::vector<line_segment> charge_profile;
@@ -122,18 +122,17 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile( const battery_charge_mode& mode, 
-                                                                const EV_type& EV, 
-                                                                const EVSE_type& EVSE,
-                                                                const double c_rate_scale_factor ) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_charge_mode& mode, 
+                                                               const EV_type& EV, 
+                                                               const EVSE_type& EVSE) const
 {
-    if (mode == battery_charge_mode::charging)
+    if (mode == charging)
     {
-        return this->get_charging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
+        return this->get_charging_dcfc_charge_profile(EV, EVSE);
     }
-    else if (mode == battery_charge_mode::discharging)
+    else if (mode == discharging)
     {
-        return this->get_discharging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
+        return this->get_discharging_dcfc_charge_profile(EV, EVSE);
     }
     else
     {
@@ -143,13 +142,12 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile( const battery_ch
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const EV_type& EV, 
-                                                                         const EVSE_type& EVSE,
-                                                                         const double c_rate_scale_factor ) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV_type& EV, 
+                                                                        const EVSE_type& EVSE) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -268,7 +266,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const E
 
             if (std::abs(next_lower_soc - next_upper_soc) < 1)
             {
-                if (next_upper_point_type == point_type::extend)
+                if (next_upper_point_type == extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -281,7 +279,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const E
             }
             else if (next_upper_soc < next_lower_soc)
             {
-                if (next_upper_point_type == point_type::extend)
+                if (next_upper_point_type == extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -473,13 +471,12 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const E
     return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( const EV_type& EV, 
-                                                                            const EVSE_type& EVSE,
-                                                                            const double c_rate_scale_factor ) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, 
+                                                                           const EVSE_type& EVSE) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -597,7 +594,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( cons
 
             if (std::abs(next_lower_soc - next_upper_soc) < 1)
             {
-                if (next_upper_point_type == point_type::extend)
+                if (next_upper_point_type == extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -610,7 +607,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( cons
             }
             else if (next_upper_soc > next_lower_soc)
             {
-                if (next_upper_point_type == point_type::extend)
+                if (next_upper_point_type == extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -797,13 +794,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( cons
 //##########################################################
 
 
-factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const double c_rate_scale_factor ) 
+factory_SOC_vs_P2::factory_SOC_vs_P2(const EV_EVSE_inventory& inventory) 
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
     NMC_charge{ this->load_NMC_charge() },
     LTO_charge{ this->load_LTO_charge() },
     L1_L2_curves{ this->load_L1_L2_curves() },
-    DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
+    DCFC_curves{ this->load_DCFC_curves() }
 {
 }
 
@@ -813,7 +810,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 
-    if (level == EVSE_level::L1 || level == EVSE_level::L2)
+    if (level == L1 || level == L2)
     {
         if (this->L1_L2_curves.find(EV) != this->L1_L2_curves.end())
         {
@@ -825,7 +822,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
-    else if (level == EVSE_level::DCFC)
+    else if (level == DCFC)
     {
         const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
 
@@ -860,12 +857,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.898, point_type::interpolate));
-    points.emplace( 4.4, std::make_pair(1.056, point_type::interpolate));
-    points.emplace( 11.3, std::make_pair(1.154, point_type::interpolate));
-    points.emplace( 32.4, std::make_pair(1.215, point_type::interpolate));
-    points.emplace( 76.1, std::make_pair(1.274, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(0.898, interpolate));
+    points.emplace( 4.4, std::make_pair(1.056, interpolate));
+    points.emplace( 11.3, std::make_pair(1.154, interpolate));
+    points.emplace( 32.4, std::make_pair(1.215, interpolate));
+    points.emplace( 76.1, std::make_pair(1.274, extend));
+    points.emplace( 100.0, std::make_pair(0.064, use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -874,12 +871,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.742, point_type::interpolate));
-    points.emplace( 4.0, std::make_pair(2.044, point_type::interpolate));
-    points.emplace( 12.0, std::make_pair(2.249, point_type::interpolate));
-    points.emplace( 55.0, std::make_pair(2.418, point_type::extend));
-    points.emplace( 75.0, std::make_pair(1.190, point_type::use_directly));
-    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(1.742, interpolate));
+    points.emplace( 4.0, std::make_pair(2.044, interpolate));
+    points.emplace( 12.0, std::make_pair(2.249, interpolate));
+    points.emplace( 55.0, std::make_pair(2.418, extend));
+    points.emplace( 75.0, std::make_pair(1.190, use_directly));
+    points.emplace( 100.0, std::make_pair(0.064, use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -888,12 +885,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.667, point_type::interpolate));
-    points.emplace( 6.0, std::make_pair(3.246, point_type::interpolate));
-    points.emplace( 11.9, std::make_pair(3.436, point_type::interpolate));
-    points.emplace( 37.6, std::make_pair(3.628, point_type::extend));
-    points.emplace( 70.0, std::make_pair(1.440, point_type::use_directly));
-    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(2.667, interpolate));
+    points.emplace( 6.0, std::make_pair(3.246, interpolate));
+    points.emplace( 11.9, std::make_pair(3.436, interpolate));
+    points.emplace( 37.6, std::make_pair(3.628, extend));
+    points.emplace( 70.0, std::make_pair(1.440, use_directly));
+    points.emplace( 100.0, std::make_pair(0.064, use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -902,15 +899,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
-    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 0.0, std::make_pair(0, interpolate));
+    points.emplace( 100.0, std::make_pair(0, interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LMO_charge{ this->inventory, curves, battery_charge_mode::charging };
+    const create_dcPkW_from_soc LMO_charge{ this->inventory, curves, charging };
     return LMO_charge;
 }
 
@@ -929,12 +926,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.917, point_type::interpolate));
-    points.emplace( 4.0, std::make_pair(1.048, point_type::interpolate));
-    points.emplace( 10.0, std::make_pair(1.095, point_type::interpolate));
-    points.emplace( 88.0, std::make_pair(1.250, point_type::extend));
+    points.emplace( 0.0, std::make_pair(0.917, interpolate));
+    points.emplace( 4.0, std::make_pair(1.048, interpolate));
+    points.emplace( 10.0, std::make_pair(1.095, interpolate));
+    points.emplace( 88.0, std::make_pair(1.250, extend));
     // points.push_back({ 93.0, 0.595, use_directly});  // This point violates one of the key rules.
-    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -943,12 +940,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.750, point_type::interpolate));
-    points.emplace( 3.0, std::make_pair(2.000, point_type::interpolate));
-    points.emplace( 10.0, std::make_pair(2.143, point_type::interpolate));
-    points.emplace( 78.5, std::make_pair(2.417, point_type::extend));
-    points.emplace( 93.0, std::make_pair(0.595, point_type::use_directly));
-    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(1.750, interpolate));
+    points.emplace( 3.0, std::make_pair(2.000, interpolate));
+    points.emplace( 10.0, std::make_pair(2.143, interpolate));
+    points.emplace( 78.5, std::make_pair(2.417, extend));
+    points.emplace( 93.0, std::make_pair(0.595, use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -957,12 +954,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.798, point_type::interpolate));
-    points.emplace( 3.0, std::make_pair(3.167, point_type::interpolate));
-    points.emplace( 10.0, std::make_pair(3.393, point_type::interpolate));
-    points.emplace( 67.0, std::make_pair(3.750, point_type::extend));
-    points.emplace( 93.0, std::make_pair(0.595, point_type::use_directly));
-    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(2.798, interpolate));
+    points.emplace( 3.0, std::make_pair(3.167, interpolate));
+    points.emplace( 10.0, std::make_pair(3.393, interpolate));
+    points.emplace( 67.0, std::make_pair(3.750, extend));
+    points.emplace( 93.0, std::make_pair(0.595, use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -971,15 +968,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
-    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 0.0, std::make_pair(0, interpolate));
+    points.emplace( 100.0, std::make_pair(0, interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc NMC_charge{ this->inventory, curves, battery_charge_mode::charging };
+    const create_dcPkW_from_soc NMC_charge{ this->inventory, curves, charging };
     return NMC_charge;
 }
 
@@ -999,14 +996,14 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.798, point_type::interpolate));
-    points.emplace( 2.0, std::make_pair(0.882, point_type::interpolate));
-    points.emplace( 50.0, std::make_pair(0.966, point_type::interpolate));
-    points.emplace( 64.0, std::make_pair(1.008, point_type::interpolate));
-    points.emplace( 80.0, std::make_pair(1.040, point_type::interpolate));
-    points.emplace( 90.0, std::make_pair(1.071, point_type::interpolate));
-    points.emplace( 96.0, std::make_pair(1.134, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.057, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(0.798, interpolate));
+    points.emplace( 2.0, std::make_pair(0.882, interpolate));
+    points.emplace( 50.0, std::make_pair(0.966, interpolate));
+    points.emplace( 64.0, std::make_pair(1.008, interpolate));
+    points.emplace( 80.0, std::make_pair(1.040, interpolate));
+    points.emplace( 90.0, std::make_pair(1.071, interpolate));
+    points.emplace( 96.0, std::make_pair(1.134, extend));
+    points.emplace( 100.0, std::make_pair(0.057, use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -1015,13 +1012,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.765, point_type::interpolate));
-    points.emplace( 2.0, std::make_pair(1.828, point_type::interpolate));
-    points.emplace( 50.0, std::make_pair(1.975, point_type::interpolate));
-    points.emplace( 60.0, std::make_pair(2.038, point_type::interpolate));
-    points.emplace( 80.0, std::make_pair(2.122, point_type::interpolate));
-    points.emplace( 91.0, std::make_pair(2.227, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.057, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(1.765, interpolate));
+    points.emplace( 2.0, std::make_pair(1.828, interpolate));
+    points.emplace( 50.0, std::make_pair(1.975, interpolate));
+    points.emplace( 60.0, std::make_pair(2.038, interpolate));
+    points.emplace( 80.0, std::make_pair(2.122, interpolate));
+    points.emplace( 91.0, std::make_pair(2.227, extend));
+    points.emplace( 100.0, std::make_pair(0.057, use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -1030,13 +1027,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.647, point_type::interpolate));
-    points.emplace( 2.0, std::make_pair(2.794, point_type::interpolate));
-    points.emplace( 50.0, std::make_pair(2.983, point_type::interpolate));
-    points.emplace( 60.0, std::make_pair(3.109, point_type::interpolate));
-    points.emplace( 80.0, std::make_pair(3.256, point_type::interpolate));
-    points.emplace( 88.0, std::make_pair(3.361, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.085, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(2.647, interpolate));
+    points.emplace( 2.0, std::make_pair(2.794, interpolate));
+    points.emplace( 50.0, std::make_pair(2.983, interpolate));
+    points.emplace( 60.0, std::make_pair(3.109, interpolate));
+    points.emplace( 80.0, std::make_pair(3.256, interpolate));
+    points.emplace( 88.0, std::make_pair(3.361, extend));
+    points.emplace( 100.0, std::make_pair(0.085, use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -1045,13 +1042,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(3.655, point_type::interpolate));
-    points.emplace( 3.0, std::make_pair(3.782, point_type::interpolate));
-    points.emplace( 50.0, std::make_pair(4.055, point_type::interpolate));
-    points.emplace( 60.0, std::make_pair(4.202, point_type::interpolate));
-    points.emplace( 80.0, std::make_pair(4.391, point_type::interpolate));
-    points.emplace( 86.0, std::make_pair(4.517, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.113, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(3.655, interpolate));
+    points.emplace( 3.0, std::make_pair(3.782, interpolate));
+    points.emplace( 50.0, std::make_pair(4.055, interpolate));
+    points.emplace( 60.0, std::make_pair(4.202, interpolate));
+    points.emplace( 80.0, std::make_pair(4.391, interpolate));
+    points.emplace( 86.0, std::make_pair(4.517, extend));
+    points.emplace( 100.0, std::make_pair(0.113, use_directly));
 
     C_rate = 4;
     curves.emplace(C_rate, points);
@@ -1060,12 +1057,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(4.622, point_type::interpolate));
-    points.emplace( 4.0, std::make_pair(4.832, point_type::interpolate));
-    points.emplace( 50.0, std::make_pair(5.168, point_type::interpolate));
-    points.emplace( 60.0, std::make_pair(5.357, point_type::interpolate));
-    points.emplace( 84.0, std::make_pair(5.630, point_type::extend));
-    points.emplace( 100.0, std::make_pair(0.063, point_type::use_directly));
+    points.emplace( 0.0, std::make_pair(4.622, interpolate));
+    points.emplace( 4.0, std::make_pair(4.832, interpolate));
+    points.emplace( 50.0, std::make_pair(5.168, interpolate));
+    points.emplace( 60.0, std::make_pair(5.357, interpolate));
+    points.emplace( 84.0, std::make_pair(5.630, extend));
+    points.emplace( 100.0, std::make_pair(0.063, use_directly));
 
     C_rate = 5;
     curves.emplace(C_rate, points);
@@ -1074,15 +1071,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
-    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 0.0, std::make_pair(0, interpolate));
+    points.emplace( 100.0, std::make_pair(0, interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LTO_charge{ this->inventory, curves, battery_charge_mode::charging };
+    const create_dcPkW_from_soc LTO_charge{ this->inventory, curves, charging };
     return LTO_charge;
 }
 
@@ -1100,15 +1097,15 @@ const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curv
 
         const battery_chemistry& chemistry = EV_char.get_chemistry();
 
-        if (chemistry == battery_chemistry::LMO)
+        if (chemistry == LMO)
         {
             return_val.emplace(EV, this->LMO_charge.get_L1_or_L2_charge_profile(EV));
         }
-        else if (chemistry == battery_chemistry::NMC)
+        else if (chemistry == NMC)
         {
             return_val.emplace(EV, this->NMC_charge.get_L1_or_L2_charge_profile(EV));
         }
-        else if (chemistry == battery_chemistry::LTO)
+        else if (chemistry == LTO)
         {
             return_val.emplace(EV, this->LTO_charge.get_L1_or_L2_charge_profile(EV));
         }
@@ -1121,7 +1118,7 @@ const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curv
 }
 
 
-const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves( const double c_rate_scale_factor )
+const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves()
 {
     std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > return_val;
 
@@ -1134,7 +1131,7 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
         const EVSE_characteristics& EVSE_char = EVSE_elem.second;
         const EVSE_level& level = EVSE_char.get_level();
 
-        if (level == EVSE_level::DCFC)
+        if (level == DCFC)
         {
             for (const auto& EV_elem : EV_inv)
             {
@@ -1145,27 +1142,26 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
                 if (DCFC_capable == true)
                 {
                     const battery_chemistry& chemistry = EV_char.get_chemistry();
-                    // // NOTE: I commentted these out because these are not being used here.
-                    //const double& battery_size_kWh = EV_char.get_battery_size_kWh();
-                    //const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
-                    //const double& max_c_rate = EV_char.get_max_c_rate();
-                    //const double& power_limit_kW = EVSE_char.get_power_limit_kW();
-                    //const double& DC_current_limit = EVSE_char.get_current_limit_A();
+                    const double& battery_size_kWh = EV_char.get_battery_size_kWh();
+                    const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
+                    const double& max_c_rate = EV_char.get_max_c_rate();
+                    const double& power_limit_kW = EVSE_char.get_power_limit_kW();
+                    const double& DC_current_limit = EVSE_char.get_current_limit_A();
 
-                    const battery_charge_mode mode = battery_charge_mode::charging;
+                    const battery_charge_mode mode = charging;
 
                     // charge profile is not a reference because the data is not stored by the object.
-                    if (chemistry == battery_chemistry::LMO)
+                    if (chemistry == LMO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
                     }
-                    else if (chemistry == battery_chemistry::NMC)
+                    else if (chemistry == NMC)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE));
                     }
-                    else if (chemistry == battery_chemistry::LTO)
+                    else if (chemistry == LTO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
                     }
                     else
                     {

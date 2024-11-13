@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "inputs.h"                                 // vehicle_charge_model_inputs
-#include "battery.h"                                // battery
+#include "battery.h"				                // battery
 #include "datatypes_global.h"                       // charge_event_data, stop_charging_mode, stop_charging_decision_metric
 
 #include "EVSE_characteristics.h"                   // EV_type, EVSE_type
@@ -15,19 +15,19 @@
 class vehicle_charge_model
 {
 private:
-    charge_event_data charge_event;
+	charge_event_data charge_event;
     EV_type EV; 
     double arrival_unix_time, depart_unix_time, arrival_soc, requested_depart_soc;
     int charge_event_id;
     
     stop_charging_decision_metric decision_metric;
-    stop_charging_mode soc_mode;
-    stop_charging_mode depart_time_mode;
-    double soc_block_charging_max_undershoot_percent;
-    double depart_time_block_charging_max_undershoot_percent;
-    
-    bool stop_charging_at_target_soc;
-    double depart_soc;
+	stop_charging_mode soc_mode;
+	stop_charging_mode depart_time_mode;
+	double soc_block_charging_max_undershoot_percent;
+	double depart_time_block_charging_max_undershoot_percent;
+	
+	bool stop_charging_at_target_soc;
+	double depart_soc;
     
     battery bat;
     
@@ -50,7 +50,7 @@ public:
     void get_E1_battery_limits( double& max_E1_limit, 
                                 double& min_E1_limit );
     
-       void get_next( const double prev_unix_time, 
+   	void get_next( const double prev_unix_time, 
                    const double now_unix_time, 
                    const double pu_Vrms,  
                    bool& charge_has_completed, 

@@ -3,13 +3,13 @@
 
 std::ostream& operator<<(std::ostream& os, const battery_chemistry& chemistry) {
     switch (chemistry) {
-    case battery_chemistry::LTO:
+    case LTO:
         os << "LTO";
         break;
-    case battery_chemistry::LMO:
+    case LMO:
         os << "LMO";
         break;
-    case battery_chemistry::NMC:
+    case NMC:
         os << "NMC";
         break;
     default:
@@ -81,7 +81,7 @@ peak_power_per_crate EV_characteristics::compute_charge_profile_peak_power_W_per
     std::vector<power> NMC_power_vec = { 0, 1.25, 2.42, 3.75, 3.75, 3.75, 3.75 };
     std::vector<power> LTO_power_vec = { 0, 1.13, 2.23, 3.36, 4.52, 5.63, 5.63 };
 
-    data[battery_chemistry::LMO] = [&]() {
+    data[LMO] = [&]() {
         std::map<crate, power> m;
         for (int i = 0; i < crate_vec.size(); i++)
         {
@@ -90,7 +90,7 @@ peak_power_per_crate EV_characteristics::compute_charge_profile_peak_power_W_per
         return m;
     }();
 
-    data[battery_chemistry::NMC] = [&]() {
+    data[NMC] = [&]() {
         std::map<crate, power> m;
         for (int i = 0; i < crate_vec.size(); i++)
         {
@@ -99,7 +99,7 @@ peak_power_per_crate EV_characteristics::compute_charge_profile_peak_power_W_per
         return m;
     }();
 
-    data[battery_chemistry::LTO] = [&]() {
+    data[LTO] = [&]() {
         std::map<crate, power> m;
         for (int i = 0; i < crate_vec.size(); i++)
         {
@@ -161,15 +161,15 @@ double EV_characteristics::compute_battery_size_Ah_1C()
 
 double EV_characteristics::compute_battery_size_with_stochastic_degradation_kWh()
 {
-    if (this->chemistry == battery_chemistry::LTO)
+    if (this->chemistry == LTO)
     {
         return rand_val::rand_range(0.95, 1.0) * this->battery_size_kWh;
     }
-    else if (this->chemistry == battery_chemistry::LMO)
+    else if (this->chemistry == LMO)
     {
         return rand_val::rand_range(0.85, 1.0) * this->battery_size_kWh;
     }
-    else if (this->chemistry == battery_chemistry::NMC)
+    else if (this->chemistry == NMC)
     {
         return rand_val::rand_range(0.90, 1.0) * this->battery_size_kWh;
     }

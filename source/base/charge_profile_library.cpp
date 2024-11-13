@@ -139,8 +139,8 @@ pev_charge_fragment pev_charge_profile_aux::get_chargeFragment( const bool searc
         search_vector_of_doubles(search_value, this->charge_time_search, LB_index, UB_index);
     }
     
-    const pev_charge_fragment &LB = this->charge_fragments.at(LB_index);
-    const pev_charge_fragment &UB = this->charge_fragments.at(UB_index);
+    const pev_charge_fragment &LB = this->charge_fragments[LB_index];
+    const pev_charge_fragment &UB = this->charge_fragments[UB_index];
     
     //---------------------
     
@@ -178,7 +178,6 @@ pev_charge_profile_result pev_charge_profile_aux::get_pev_charge_profile_result(
     if(end.soc < start.soc)
     {
         std::cout << "ERROR: In pev_charge_profile_aux end_soc less than start_soc." << std::endl;
-        exit(0);
         obj = get_default_charge_profile_result();
     }
     else
@@ -354,7 +353,6 @@ pev_charge_profile_result pev_charge_profile::find_result_given_startSOC_and_end
     if(setpoint_P3kW <= 0)
     {
         std::cout << "ERROR A1: In pev_charge_profile (setpoint_P3kW <= 0)." << std::endl;
-        exit(0);
         return get_default_charge_profile_result();
     }
     
@@ -371,7 +369,6 @@ pev_charge_profile_result pev_charge_profile::find_result_given_startSOC_and_cha
     if(setpoint_P3kW <= 0)
     {
         std::cout << "ERROR A2: In pev_charge_profile (setpoint_P3kW <= 0)." << std::endl;
-        exit(0);
         return get_default_charge_profile_result();
     }
     
@@ -389,7 +386,6 @@ void pev_charge_profile::find_chargeProfile_given_startSOC_and_endSOCs( const do
     {
         std::cout << "ERROR A3: In pev_charge_profile (setpoint_P3kW <= 0)." << std::endl;
         charge_profile.clear();
-        exit(0);
         return;
     }
 
@@ -407,7 +403,6 @@ void pev_charge_profile::find_chargeProfile_given_startSOC_and_chargeTimes( cons
     {
         std::cout << "ERROR A4: In pev_charge_profile (setpoint_P3kW <= 0)." << std::endl;
         charge_profile.clear();
-        exit(0);
         return;
     }
     
@@ -460,7 +455,8 @@ void pev_charge_profile_library::add_charge_profile_to_library( const EV_type pe
                                                                 const EVSE_type SE_type,
                                                                 const pev_charge_profile& charge_profile )
 {
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key;
+    key = std::make_pair(pev_type, SE_type);
     
     if(this->charge_profile.count(key) == 0)
     {
@@ -469,7 +465,6 @@ void pev_charge_profile_library::add_charge_profile_to_library( const EV_type pe
     else
     {
         std::cout << "ERROR:  Duplicate charge profiles added to pev_charge_profile_library" << std::endl;
-        exit(0);
     }
 }
 
@@ -477,11 +472,10 @@ void pev_charge_profile_library::add_charge_profile_to_library( const EV_type pe
 pev_charge_profile* pev_charge_profile_library::get_charge_profile( const EV_type pev_type,
                                                                     const EVSE_type SE_type )
 {
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
     if(this->charge_profile.count(key) == 0)
     {
         std::cout << "ERROR:  Charge profile not in pev_charge_profile_library. (pev_type:" << pev_type << "  SE_type:" << SE_type << ")" << std::endl;
-        exit(0);
         return &this->default_profile;
     }
     return &this->charge_profile.at(key);
@@ -490,11 +484,10 @@ pev_charge_profile* pev_charge_profile_library::get_charge_profile( const EV_typ
 const pev_charge_profile* pev_charge_profile_library::get_charge_profile( const EV_type pev_type,
                                                                           const EVSE_type SE_type ) const
 {
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
     if(this->charge_profile.count(key) == 0)
     {
         std::cout << "ERROR:  Charge profile not in pev_charge_profile_library. (pev_type:" << pev_type << "  SE_type:" << SE_type << ")" << std::endl;
-        exit(0);
         return &this->default_profile;
     }
     return &this->charge_profile.at(key);
@@ -505,106 +498,74 @@ const pev_charge_profile* pev_charge_profile_library::get_charge_profile( const 
 //                          pev_charge_profile_library_v2
 //==============================================================================
 
-pev_charge_profile_library_v2::pev_charge_profile_library_v2( const EV_EVSE_inventory& inventory,
-                                                              const std::vector<double> c_rate_scale_factor_levels )
-    : inventory{ inventory },
-      c_rate_scale_factor_levels{c_rate_scale_factor_levels}
+pev_charge_profile_library_v2::pev_charge_profile_library_v2( const EV_EVSE_inventory& inventory )
+    : inventory{ inventory }
 {
 
 }
 
 void pev_charge_profile_library_v2::add_charge_PkW_profile_to_library( const EV_type pev_type,
                                                                        const EVSE_type SE_type,
-                                                                       const int c_rate_scale_factor_index,
                                                                        const double timestep_sec,
                                                                        const std::vector<double>& soc,
                                                                        const std::vector<ac_power_metrics>& profile )
 {
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key;
+    key = std::make_pair(pev_type, SE_type);
     
-    charge_profile_lib_data cpl_data;
-    cpl_data.PkW_profile = profile;
-    cpl_data.soc = soc;
-    cpl_data.timestep_sec = timestep_sec;
+    tmp_charge_profile X;
+    X.PkW_profile = profile;
+    X.soc = soc;
+    X.timestep_sec = timestep_sec;
     
-    // If we haven't used this key before, then put in an empty map.
-    if( this->PkW_profile.find(key) == this->PkW_profile.end() )
-    {
-        this->PkW_profile[ key ] = std::map< int, charge_profile_lib_data >();
-    }
-    
-    // Check for duplicates
-    if( this->PkW_profile.at(key).find( c_rate_scale_factor_index ) != this->PkW_profile.at(key).end() )
-    {
-        std::cout << "ERROR:  Duplicate charge profiles added to pev_charge_profile_library_v2" << std::endl;
-        exit(0);
-    }
+    if(this->PkW_profile.count(key) == 0)
+        this->PkW_profile[key] = X;
     else
+        std::cout << "ERROR:  Duplicate charge profiles added to pev_charge_profile_library_v2" << std::endl;
+}
+
+
+void pev_charge_profile_library_v2::find_index_and_weight( const double soc,
+                                                           const std::vector<double>& soc_vector,
+                                                           double& index,
+                                                           double& weight ) const
+{
+    int vector_size = soc_vector.size();
+    index = -1;
+    
+    for(int i=0; i<vector_size; i++)
     {
-        // Put in the new charge_profile_lib_data.
-        this->PkW_profile.at(key)[ c_rate_scale_factor_index ] = cpl_data;
+        if(soc < soc_vector.at(i))
+        {
+            index = i;
+            break;
+        }
     }
-}
-
-void pev_charge_profile_library_v2::add_charge_PkW_profile_to_library( const EV_type pev_type,
-                                                                       const EVSE_type SE_type,
-                                                                       const double timestep_sec,
-                                                                       const std::vector<double>& soc,
-                                                                       const std::vector<ac_power_metrics>& profile )
-{
-    this->add_charge_PkW_profile_to_library( pev_type, SE_type, this->c_rate_scale_factor_levels.size()-1, timestep_sec, soc, profile );
-}
-
-
-
-
-
-// --- helper function ---
-// Finds the start and end indices given the start and end SOC values.
-//
-void find_start_end_indexes_from_start_end_soc( const double start_soc,
-                                                const double end_soc,
-                                                const std::vector<double>& soc,
-                                                double& start_index,
-                                                double& end_index )
-{
-    // --- helper function ---
-    auto find_index_and_weight = [] ( const double soc,
-                                      const std::vector<double>& soc_vector,
-                                      double& index,
-                                      double& weight )
+    
+    //-------------------------
+    
+    if(index == -1)
     {
-        int vector_size = soc_vector.size();
-        index = -1;
+        index = vector_size-1;
+        weight = 1;
+    }
+    else if(index == 0)
+        weight = soc/soc_vector[index];    
+    else
+        weight = (soc - soc_vector[index-1])/(soc_vector[index] - soc_vector[index-1]);
+}
 
-        for( int i = 0; i < vector_size; i++)
-        {
-            if(soc < soc_vector.at(i))
-            {
-                index = i;
-                break;
-            }
-        }
-    
-        if(index == -1)
-        {
-            index = vector_size-1;
-            weight = 1;
-        }
-        else if(index == 0)
-        {
-            weight = soc/soc_vector[index]; 
-        }   
-        else
-        {
-            weight = ( soc - soc_vector.at(index-1) ) / ( soc_vector.at(index) - soc_vector.at(index-1) );
-        }
-    };
-    
+
+void pev_charge_profile_library_v2::find_start_end_indexes_from_start_end_soc( const double start_soc,
+                                                                               const double end_soc,
+                                                                               const std::vector<double>& soc,
+                                                                               double& start_index,
+                                                                               double& end_index ) const
+{
     double start_weight, end_weight;
     
-    find_index_and_weight( start_soc, soc, start_index, start_weight );
-    find_index_and_weight( end_soc, soc, end_index, end_weight );
+    find_index_and_weight(start_soc, soc, start_index, start_weight);
+    find_index_and_weight(end_soc, soc, end_index, end_weight);
     start_weight = 1 - start_weight;
     
     if(start_weight < 0.5)
@@ -628,7 +589,6 @@ void pev_charge_profile_library_v2::get_P3kW_charge_profile( const double start_
                                                              const double end_soc,
                                                              const EV_type pev_type,
                                                              const EVSE_type SE_type,
-                                                             const int c_rate_scale_factor_index,
                                                              double& timestep_sec,
                                                              std::vector<double>& P3kW_charge_profile ) const
 {
@@ -640,62 +600,35 @@ void pev_charge_profile_library_v2::get_P3kW_charge_profile( const double start_
     if(end_soc < start_soc)
     {
         std::cout << "ERROR:  start_soc must be less than end_soc in pev_charge_profile_library_v2::get_P3kW_charge_profile." << std::endl;
-        exit(0);
         return;
     }
     
     //-----------------------------
     
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key;
+    key = std::make_pair(pev_type, SE_type);
     
-    if( this->PkW_profile.find(key) == this->PkW_profile.end() )
+    if(this->PkW_profile.count(key) == 0)
     {
         std::cout << "ERROR:  Charge profile not in pev_charge_profile_library_v2. (pev_type:" << pev_type << "  SE_type:" << SE_type << ")" << std::endl;
-        exit(0);
     }
     else
     {
-        const std::map< int, charge_profile_lib_data >& index_to_profiles_map = this->PkW_profile.at(key);
-        
-        if( index_to_profiles_map.find( c_rate_scale_factor_index ) == index_to_profiles_map.end() )
-        {
-            std::cout << "ERROR:  Charge profile not in pev_charge_profile_library_v2."
-                      << " (pev_type:" << pev_type
-                      << "  SE_type:" << SE_type
-                      << "  c_rate_scale_factor_index: " << c_rate_scale_factor_index
-                      << ")" << std::endl;
-            exit(0);
-        }
-        else
-        {
-            const charge_profile_lib_data& cpl_data = index_to_profiles_map.at(c_rate_scale_factor_index);
-            
-            timestep_sec = cpl_data.timestep_sec;
+        const tmp_charge_profile& X = this->PkW_profile.at(key);
+        timestep_sec = X.timestep_sec;
 
-            double start_index, end_index;
-            find_start_end_indexes_from_start_end_soc( start_soc, end_soc, cpl_data.soc, start_index, end_index );
-            
-            //-------------------------
-            
-            const std::vector<ac_power_metrics>& ac_power_vec = cpl_data.PkW_profile;
-            
-            for( int i = start_index; i <= end_index; i++ )
-            {
-                P3kW_charge_profile.push_back(ac_power_vec.at(i).P3_kW);
-            }
+        double start_index, end_index;
+        find_start_end_indexes_from_start_end_soc(start_soc, end_soc, X.soc, start_index, end_index);
+        
+        //-------------------------
+        
+        const std::vector<ac_power_metrics>& ac_power_vec = X.PkW_profile;
+        
+        for(int i=start_index; i<=end_index; i++)
+        {
+            P3kW_charge_profile.push_back(ac_power_vec.at(i).P3_kW);
         }
     }
-}
-
-
-void pev_charge_profile_library_v2::get_P3kW_charge_profile( const double start_soc,
-                                                             const double end_soc,
-                                                             const EV_type pev_type,
-                                                             const EVSE_type SE_type,
-                                                             double& timestep_sec,
-                                                             std::vector<double>& P3kW_charge_profile ) const
-{
-    return this->get_P3kW_charge_profile( start_soc, end_soc, pev_type, SE_type, this->c_rate_scale_factor_levels.size()-1, timestep_sec, P3kW_charge_profile );
 }
 
 
@@ -703,7 +636,6 @@ void pev_charge_profile_library_v2::get_all_charge_profile_data( const double st
                                                                  const double end_soc,
                                                                  const EV_type pev_type,
                                                                  const EVSE_type SE_type,
-                                                                 const int c_rate_scale_factor_index,
                                                                  all_charge_profile_data& return_val ) const
 {
     return_val.timestep_sec = 1;
@@ -718,67 +650,39 @@ void pev_charge_profile_library_v2::get_all_charge_profile_data( const double st
     if(end_soc < start_soc)
     {
         std::cout << "ERROR:  start_soc must be less than end_soc in pev_charge_profile_library_v2::get_P3kW_charge_profile." << std::endl;
-        exit(0);
         return;
     }
     
     //-----------------------------
     
-    const std::pair<EV_type, EVSE_type> key = std::make_pair(pev_type, SE_type);
+    std::pair<EV_type, EVSE_type> key;
+    key = std::make_pair(pev_type, SE_type);
     
-    if( this->PkW_profile.find(key) == this->PkW_profile.end() )
+    if(this->PkW_profile.count(key) == 0)
     {
         std::cout << "ERROR:  Charge profile not in pev_charge_profile_library_v2. (pev_type:" << pev_type << "  SE_type:" << SE_type << ")" << std::endl;
-        exit(0);
     }
     else
     {
-        const std::map< int, charge_profile_lib_data >& index_to_profiles_map = this->PkW_profile.at(key);
+        const tmp_charge_profile& X = this->PkW_profile.at(key);
+        return_val.timestep_sec = X.timestep_sec;
+
+        double start_index, end_index;
+        find_start_end_indexes_from_start_end_soc(start_soc, end_soc, X.soc, start_index, end_index);
         
-        if( index_to_profiles_map.find( c_rate_scale_factor_index ) == index_to_profiles_map.end() )
+        //-------------------------
+        
+        const std::vector<ac_power_metrics>& ac_power_vec = X.PkW_profile;
+        
+        for(int i=start_index; i<=end_index; i++)
         {
-            std::cout << "ERROR:  Charge profile not in pev_charge_profile_library_v2."
-                      << " (pev_type:" << pev_type
-                      << "  SE_type:" << SE_type
-                      << "  c_rate_scale_factor_index: " << c_rate_scale_factor_index
-                      << ")" << std::endl;
-            exit(0);
+            return_val.P1_kW.push_back(ac_power_vec.at(i).P1_kW);
+            return_val.P2_kW.push_back(ac_power_vec.at(i).P2_kW);
+            return_val.P3_kW.push_back(ac_power_vec.at(i).P3_kW);
+            return_val.Q3_kVAR.push_back(ac_power_vec.at(i).Q3_kVAR);
+            return_val.soc.push_back(X.soc.at(i));
         }
-        else
-        {
-            const charge_profile_lib_data& cpl_data = index_to_profiles_map.at(c_rate_scale_factor_index);
-            
-            // Get the timestep
-            return_val.timestep_sec = cpl_data.timestep_sec;
-
-            // Calculate what the start and end indices are.
-            double start_index, end_index;
-            find_start_end_indexes_from_start_end_soc( start_soc, end_soc, cpl_data.soc, start_index, end_index );
-            
-            //-------------------------
-            
-            const std::vector<ac_power_metrics>& ac_power_vec = cpl_data.PkW_profile;
-            
-            for( int i = start_index; i <= end_index; i++ )
-            {
-                return_val.P1_kW.push_back(ac_power_vec.at(i).P1_kW);
-                return_val.P2_kW.push_back(ac_power_vec.at(i).P2_kW);
-                return_val.P3_kW.push_back(ac_power_vec.at(i).P3_kW);
-                return_val.Q3_kVAR.push_back(ac_power_vec.at(i).Q3_kVAR);
-                return_val.soc.push_back(cpl_data.soc.at(i));
-            }
-        }    
     }
-}
-
-
-void pev_charge_profile_library_v2::get_all_charge_profile_data( const double start_soc,
-                                                                 const double end_soc,
-                                                                 const EV_type pev_type,
-                                                                 const EVSE_type SE_type,
-                                                                 all_charge_profile_data& return_val ) const
-{
-    this->get_all_charge_profile_data( start_soc, end_soc, pev_type, SE_type, this->c_rate_scale_factor_levels.size()-1, return_val );
 }
 
 

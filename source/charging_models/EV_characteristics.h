@@ -8,7 +8,7 @@
 
 typedef std::string EV_type;
 
-enum class battery_chemistry
+enum battery_chemistry
 {
     LTO = 0,
     LMO = 1,

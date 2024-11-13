@@ -23,7 +23,7 @@ struct ac_power_metrics
     ac_power_metrics() {};
     ac_power_metrics(double time_step_duration_hrs_, double P1_kW_, double P2_kW_, double P3_kW_, double Q3_kVAR_);
     void add_to_self(const ac_power_metrics& rhs);
-    static std::string get_file_header();
+	static std::string get_file_header();
 };
 std::ostream& operator<<(std::ostream& out, ac_power_metrics& x);
 
