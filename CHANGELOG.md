@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/idaholab/Caldera_ICM/compare/v1.1.1...v1.2.0) (2024-11-13)
+
+
+### Features
+
+* New ES400 control ([c7fd630](https://github.com/idaholab/Caldera_ICM/commit/c7fd6308303704bb436acdc3aea29c1ab9153329))
+* Temperature aware charging profiles ([df37cbf](https://github.com/idaholab/Caldera_ICM/commit/df37cbfa56ab29aa50b0d8fd0b1b8dcd0fd856fb))
+
+
+### Bug Fixes
+
+* ICM code cleanups ([651a3a1](https://github.com/idaholab/Caldera_ICM/commit/651a3a1acdd11cc43abc7ea8b60baca7449675a1))
+
 ## [1.1.1](https://github.com/idaholab/Caldera_ICM/compare/v1.1.0...v1.1.1) (2024-07-18)
 
 
