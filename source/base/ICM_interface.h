@@ -37,7 +37,7 @@ private:
     // Pointers to the following should be in every supply_equipment_load object.
     factory_EV_charge_model* EV_model_factory;
     factory_ac_to_dc_converter* ac_to_dc_converter_factory;
-    pev_charge_profile_library charge_profile_library;
+    const pev_charge_profile_library charge_profile_library;
     get_base_load_forecast baseLD_forecaster;
 
     // manage_L2_control_strategy_parameters consists of random number generator

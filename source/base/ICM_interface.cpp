@@ -39,12 +39,11 @@ interface_to_SE_groups::interface_to_SE_groups( const std::string& input_path,
     factory_supply_equipment_model SE_factory(this->inventory, inputs.CE_queuing_inputs);
     factory_EV_charge_model* EV_model = this->EV_model_factory;
     factory_ac_to_dc_converter* ac_to_dc_converter = this->ac_to_dc_converter_factory;
-    pev_charge_profile_library* charge_profile_library_ = &this->charge_profile_library;
     manage_L2_control_strategy_parameters* manage_L2_control_ = &this->manage_L2_control;
 
     for (const SE_group_configuration& SE_group_conf : inputs.infrastructure_topology)
     {
-        supply_equipment_group Y(SE_group_conf, SE_factory, EV_model, ac_to_dc_converter, charge_profile_library_, this->baseLD_forecaster, manage_L2_control_);
+        supply_equipment_group Y(SE_group_conf, SE_factory, EV_model, ac_to_dc_converter, this->charge_profile_library, this->baseLD_forecaster, manage_L2_control_);
         this->SE_group_objs.push_back(Y);
     }
 

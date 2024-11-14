@@ -105,7 +105,7 @@ private:
 public:
     ES100_control_strategy(){};
     ES100_control_strategy(L2_control_strategies_enum L2_CS_enum_, manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
@@ -123,7 +123,7 @@ private:
 public:
     ES110_control_strategy(){};
     ES110_control_strategy(manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
@@ -208,7 +208,7 @@ public:
     void update_parameters_for_CE(double target_P3kW_);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
     
-    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, pev_charge_profile* charge_profile,
+    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, const pev_charge_profile& charge_profile,
                             const CE_status& charge_status, const charge_event_P3kW_limits& P3kW_limits, const SE_configuration& SE_config,
                             ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void set_energy_setpoints(double e3_setpoint_kWh);
@@ -312,7 +312,6 @@ private:
     double prev_pu_Vrms, target_P3kW;    
     bool must_charge_for_remainder_of_park;
     
-    pev_charge_profile* charge_profile;
     const get_base_load_forecast& baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control;
     

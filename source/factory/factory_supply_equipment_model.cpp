@@ -22,7 +22,8 @@ supply_equipment factory_supply_equipment_model::get_supply_equipment_model(
     bool building_charge_profile_library,
     const SE_configuration& SE_config, 
     const get_base_load_forecast& baseLD_forecaster,
-    manage_L2_control_strategy_parameters* manage_L2_control
+    manage_L2_control_strategy_parameters* manage_L2_control, 
+    const pev_charge_profile_library& charge_profile_library
 )
 {
     EVSE_type EVSE = SE_config.supply_equipment_type;
@@ -33,7 +34,7 @@ supply_equipment factory_supply_equipment_model::get_supply_equipment_model(
 
     //============================
 
-    supply_equipment_load load(P2_limit_kW, standby_acP_kW, standby_acQ_kVAR, SE_config, this->CE_queuing_inputs);
+    supply_equipment_load load(P2_limit_kW, standby_acP_kW, standby_acQ_kVAR, SE_config, this->CE_queuing_inputs, charge_profile_library);
     supply_equipment_control control(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control);
     
     return supply_equipment{ SE_config, control, load };
