@@ -29,7 +29,8 @@ public:
         bool building_charge_profile_library,
         const SE_configuration& SE_config, 
         const get_base_load_forecast& baseLD_forecaster,
-        manage_L2_control_strategy_parameters* manage_L2_control
+        manage_L2_control_strategy_parameters* manage_L2_control, 
+        const pev_charge_profile_library& charge_profile_library
     );
 };
 

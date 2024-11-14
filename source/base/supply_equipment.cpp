@@ -15,10 +15,9 @@ supply_equipment::supply_equipment( const SE_configuration& SE_config_,
 
 
 void supply_equipment::set_pointers_in_SE_Load( factory_EV_charge_model* PEV_charge_factory,
-                                                factory_ac_to_dc_converter* ac_to_dc_converter_factory,
-                                                pev_charge_profile_library* charge_profile_library )
+                                                factory_ac_to_dc_converter* ac_to_dc_converter_factory)
 {
-    this->SE_Load.set_pointers(PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
+    this->SE_Load.set_pointers(PEV_charge_factory, ac_to_dc_converter_factory);
 }
    
 

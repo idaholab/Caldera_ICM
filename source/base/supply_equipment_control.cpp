@@ -21,7 +21,7 @@ ES100_control_strategy::ES100_control_strategy(L2_control_strategies_enum L2_CS_
 }
 
 
-void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile)
+void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile)
 {
     this->target_P3kW = target_P3kW_;
     this->cur_P3kW_setpoint = 0;
@@ -33,7 +33,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     double arrival_unix_time = charge_status.arrival_unix_time;
     double departure_unix_time = charge_status.departure_unix_time;
 
-    pev_charge_profile_result Z = charge_profile->find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
+    pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
     double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
 
     //--------------------
@@ -186,7 +186,7 @@ ES110_control_strategy::ES110_control_strategy(manage_L2_control_strategy_parame
 }
 
 
-void ES110_control_strategy::update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile)
+void ES110_control_strategy::update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile)
 {    
     this->target_P3kW = target_P3kW_;
     this->cur_P3kW_setpoint = 0;
@@ -196,7 +196,7 @@ void ES110_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     double arrival_unix_time = charge_status.arrival_unix_time;
     double departure_unix_time = charge_status.departure_unix_time;
     
-    pev_charge_profile_result Z = charge_profile->find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
+    pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
     double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
     
     double w = this->params->ES110_getUniformRandomNumber_0to1();
@@ -419,7 +419,7 @@ void ES500_control_strategy::set_energy_setpoints(double e3_setpoint_kWh)
 }
 
 
-void ES500_control_strategy::get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, pev_charge_profile* charge_profile,
+void ES500_control_strategy::get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, const pev_charge_profile& charge_profile,
                                                 const CE_status& charge_status, const charge_event_P3kW_limits& P3kW_limits, const SE_configuration& SE_config,
                                                 ES500_aggregator_pev_charge_needs& pev_charge_needs)
 {
@@ -446,7 +446,7 @@ void ES500_control_strategy::get_charging_needs(double unix_time_now, double uni
     //-----------------------------------------
     //  min_time_to_complete_entire_charge_hrs
     //-----------------------------------------
-    X1 = charge_profile->find_result_given_startSOC_and_endSOC(P3kW_limits.max_P3kW, charge_status.arrival_SOC, charge_status.departure_SOC);
+    X1 = charge_profile.find_result_given_startSOC_and_endSOC(P3kW_limits.max_P3kW, charge_status.arrival_SOC, charge_status.departure_SOC);
     pev_charge_needs.min_time_to_complete_entire_charge_hrs = X1.total_charge_time_hrs;
     
     //-------------------------------------------------------
@@ -464,7 +464,7 @@ void ES500_control_strategy::get_charging_needs(double unix_time_now, double uni
     if(0.001 < this->cur_P3kW_setpoint)
     {
         time_from_now_to_beginning_of_next_agg_time_step_hrs = (unix_time_begining_of_next_agg_step_ - charge_status.now_unix_time)/3600.0;
-        X1 = charge_profile->find_result_given_startSOC_and_chargeTime(this->cur_P3kW_setpoint, charge_status.now_soc, time_from_now_to_beginning_of_next_agg_time_step_hrs);
+        X1 = charge_profile.find_result_given_startSOC_and_chargeTime(this->cur_P3kW_setpoint, charge_status.now_soc, time_from_now_to_beginning_of_next_agg_time_step_hrs);
         soc_increase_from_now_until_beginning_of_next_agg_time_step = X1.soc_increase;
     }
     
@@ -478,7 +478,7 @@ void ES500_control_strategy::get_charging_needs(double unix_time_now, double uni
     }
     else
     {
-        X2 = charge_profile->find_result_given_startSOC_and_endSOC(P3kW_limits.max_P3kW, startSOC, charge_status.departure_SOC);
+        X2 = charge_profile.find_result_given_startSOC_and_endSOC(P3kW_limits.max_P3kW, startSOC, charge_status.departure_SOC);
         pev_charge_needs.e3_charge_remain_kWh = X2.E3_kWh;
         pev_charge_needs.min_remaining_charge_time_hrs = X2.total_charge_time_hrs;
     }
@@ -835,7 +835,6 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
     if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::NA && this->L2_control_enums.VS_control_strategy == L2_control_strategies_enum::NA)
     {
         // When creating charge_profile_library the charging must be uncontrolled.
-        this->charge_profile = NULL;
         this->P3kW_limits.min_P3kW = 0;
         this->P3kW_limits.max_P3kW = 1;
         this->target_P3kW = 0;
@@ -851,8 +850,8 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
     }
     else
     {
-        this->charge_profile = SE_load.get_pev_charge_profile();
-        this->P3kW_limits = this->charge_profile->get_charge_event_P3kW_limits();
+        const pev_charge_profile& charge_profile = SE_load.get_pev_charge_profile();
+        this->P3kW_limits = charge_profile.get_charge_event_P3kW_limits();
         
         double max_P3kW = this->P3kW_limits.max_P3kW;
         this->target_P3kW = max_P3kW;
@@ -912,13 +911,13 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
         //----------------------
         
         if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_A)
-            this->ES100A_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
+            this->ES100A_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, charge_profile);
         
         if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES100_B)
-            this->ES100B_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
+            this->ES100B_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, charge_profile);
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES110)
-            this->ES110_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, this->charge_profile);
+            this->ES110_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, charge_profile);
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
             this->ES200_obj.update_parameters_for_CE(this->target_P3kW);
@@ -1157,9 +1156,10 @@ void supply_equipment_control::ES500_get_charging_needs( const double unix_time_
     CE_status tmp_charge_status;
     SE_load.get_current_CE_status( pev_is_connected_to_SE, SE_status_val, tmp_charge_status );
     
+    const pev_charge_profile& charge_profile = SE_load.get_pev_charge_profile();
     this->ES500_obj.get_charging_needs( unix_time_now,
                                         unix_time_begining_of_next_agg_step,
-                                        this->charge_profile,
+                                        charge_profile,
                                         tmp_charge_status,
                                         this->P3kW_limits,
                                         this->SE_config,

@@ -9,7 +9,7 @@ supply_equipment_group::supply_equipment_group( const SE_group_configuration& SE
                                                 factory_supply_equipment_model& SE_factory, 
                                                 factory_EV_charge_model* PEV_charge_factory,
                                                 factory_ac_to_dc_converter* ac_to_dc_converter_factory, 
-                                                pev_charge_profile_library* charge_profile_library,
+                                                const pev_charge_profile_library& charge_profile_library,
                                                 const get_base_load_forecast& baseLD_forecaster,
                                                 manage_L2_control_strategy_parameters* manage_L2_control )
 {
@@ -19,8 +19,8 @@ supply_equipment_group::supply_equipment_group( const SE_group_configuration& SE
     for(const SE_configuration& SE_config : SE_group_topology_.SEs)
     {
         bool building_charge_profile_library = false;
-        supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control);
-        SE_obj.set_pointers_in_SE_Load(PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
+        supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, charge_profile_library);
+        SE_obj.set_pointers_in_SE_Load(PEV_charge_factory, ac_to_dc_converter_factory);
         this->SE_objs.push_back(SE_obj);
     }
 }
