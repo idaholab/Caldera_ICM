@@ -731,12 +731,13 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 
 supply_equipment_control::supply_equipment_control( const bool building_charge_profile_library_,
                                                     const SE_configuration& SE_config_,
-                                                    get_base_load_forecast* baseLD_forecaster_,
+                                                    const get_base_load_forecast& baseLD_forecaster_,
                                                     manage_L2_control_strategy_parameters* manage_L2_control_ )
-    : SE_config{ SE_config_ }
+    : SE_config{ SE_config_ }, 
+    building_charge_profile_library{ building_charge_profile_library_ }, 
+    baseLD_forecaster{ baseLD_forecaster_ }
+
 {
-    this->building_charge_profile_library = building_charge_profile_library_;
-    
     if(this->building_charge_profile_library)
     {
         return;
@@ -744,7 +745,6 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
     
     //----------------
     
-    this->baseLD_forecaster = baseLD_forecaster_;
     this->manage_L2_control = manage_L2_control_;
     
     ES100_control_strategy ES100A_tmp(L2_control_strategies_enum::ES100_A, this->manage_L2_control);  this->ES100A_obj = ES100A_tmp;
@@ -836,7 +836,6 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
     {
         // When creating charge_profile_library the charging must be uncontrolled.
         this->charge_profile = NULL;
-        this->baseLD_forecaster = NULL;
         this->P3kW_limits.min_P3kW = 0;
         this->P3kW_limits.max_P3kW = 1;
         this->target_P3kW = 0;

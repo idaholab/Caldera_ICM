@@ -313,7 +313,7 @@ private:
     bool must_charge_for_remainder_of_park;
     
     pev_charge_profile* charge_profile;
-    get_base_load_forecast* baseLD_forecaster;
+    const get_base_load_forecast& baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control;
     
     LPF_kernel LPF;
@@ -323,10 +323,10 @@ private:
     bool ensure_pev_charge_needs_met_for_ext_control_strategy;
     
 public:
-    supply_equipment_control() {};
+    supply_equipment_control() : baseLD_forecaster{} {};
     supply_equipment_control( const bool building_charge_profile_library_,
                               const SE_configuration& SE_config_,
-                              get_base_load_forecast* baseLD_forecaster_,
+                              const get_base_load_forecast& baseLD_forecaster_,
                               manage_L2_control_strategy_parameters* manage_L2_control_ );
     
     control_strategy_enums get_control_strategy_enums();

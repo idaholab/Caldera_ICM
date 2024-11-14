@@ -61,7 +61,7 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
     //------------------------
     //   Create SE Object
     //------------------------
-    get_base_load_forecast* baseLD_forecaster = NULL;
+    get_base_load_forecast baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control = NULL;
     
     bool building_charge_profile_library = true;
@@ -475,7 +475,7 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     //------------------------
     //   Create SE Object
     //------------------------
-    get_base_load_forecast* baseLD_forecaster = NULL;
+    get_base_load_forecast baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control = NULL;
     
     bool building_charge_profile_library = true;

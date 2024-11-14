@@ -18,10 +18,12 @@ factory_supply_equipment_model::factory_supply_equipment_model(const EV_EVSE_inv
 }
 
 
-supply_equipment factory_supply_equipment_model::get_supply_equipment_model(bool building_charge_profile_library,
-                                                                const SE_configuration& SE_config, 
-                                                                get_base_load_forecast* baseLD_forecaster, 
-                                                                manage_L2_control_strategy_parameters* manage_L2_control)
+supply_equipment factory_supply_equipment_model::get_supply_equipment_model(
+    bool building_charge_profile_library,
+    const SE_configuration& SE_config, 
+    const get_base_load_forecast& baseLD_forecaster,
+    manage_L2_control_strategy_parameters* manage_L2_control
+)
 {
     EVSE_type EVSE = SE_config.supply_equipment_type;
 

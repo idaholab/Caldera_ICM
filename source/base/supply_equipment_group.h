@@ -25,7 +25,7 @@ public:
                            factory_EV_charge_model* PEV_charge_factory, 
                            factory_ac_to_dc_converter* ac_to_dc_converter_factory, 
                            pev_charge_profile_library* charge_profile_library,
-                           get_base_load_forecast* baseLD_forecaster, 
+                           const get_base_load_forecast& baseLD_forecaster, 
                            manage_L2_control_strategy_parameters* manage_L2_control);
     std::vector<supply_equipment*> get_pointers_to_all_SE_objects();
     SE_group_configuration get_SE_group_configuration();
