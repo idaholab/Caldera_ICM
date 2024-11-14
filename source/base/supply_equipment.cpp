@@ -7,10 +7,10 @@
 supply_equipment::supply_equipment( const SE_configuration& SE_config_,
                                     const supply_equipment_control& SE_control_,
                                     const supply_equipment_load& SE_Load_ )
+    : SE_config{ SE_config_ }, 
+    SE_control{ SE_control_ },
+    SE_Load{ SE_Load }
 {
-    this->SE_config = SE_config_;
-    this->SE_control = SE_control_;
-    this->SE_Load = SE_Load_;
 }
 
 

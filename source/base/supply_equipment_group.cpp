@@ -18,9 +18,8 @@ supply_equipment_group::supply_equipment_group( const SE_group_configuration& SE
     
     for(const SE_configuration& SE_config : SE_group_topology_.SEs)
     {
-        supply_equipment SE_obj;
         bool building_charge_profile_library = false;
-        SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, SE_obj);
+        supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control);
         SE_obj.set_pointers_in_SE_Load(PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
         this->SE_objs.push_back(SE_obj);
     }

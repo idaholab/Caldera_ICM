@@ -733,6 +733,7 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
                                                     const SE_configuration& SE_config_,
                                                     get_base_load_forecast* baseLD_forecaster_,
                                                     manage_L2_control_strategy_parameters* manage_L2_control_ )
+    : SE_config{ SE_config_ }
 {
     this->building_charge_profile_library = building_charge_profile_library_;
     
@@ -743,7 +744,6 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
     
     //----------------
     
-    this->SE_config = SE_config_;
     this->baseLD_forecaster = baseLD_forecaster_;
     this->manage_L2_control = manage_L2_control_;
     

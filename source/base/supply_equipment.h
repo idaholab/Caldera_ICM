@@ -17,7 +17,7 @@ class factory_ac_to_dc_converter;
 class supply_equipment
 {
 private:
-    SE_configuration SE_config;
+    const SE_configuration SE_config;
     
     supply_equipment_control SE_control;
     supply_equipment_load SE_Load;
