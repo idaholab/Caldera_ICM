@@ -39,6 +39,12 @@ private:
     factory_ac_to_dc_converter* ac_to_dc_converter_factory;
     pev_charge_profile_library charge_profile_library;
     get_base_load_forecast baseLD_forecaster;
+
+    // manage_L2_control_strategy_parameters consists of random number generator
+    // that keeps track of internal state. 
+    // This makes it unparallelizable. The memory needs are also somewhat big.
+    // So having individual copy of this in every supply_equiment_control is
+    // not a great idea. 1 solution could be using omp_critical block.
     manage_L2_control_strategy_parameters manage_L2_control;
     
 public:
