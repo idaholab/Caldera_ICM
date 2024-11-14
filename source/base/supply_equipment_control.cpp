@@ -764,8 +764,7 @@ supply_equipment_control::supply_equipment_control( const bool building_charge_p
     
     int max_window_size = this->manage_L2_control->get_LPF_max_window_size();
     double initial_raw_data_value = 1.0;
-    LPF_kernel X(max_window_size, initial_raw_data_value);
-    this->LPF = X;
+    this->LPF = LPF_kernel{ max_window_size, initial_raw_data_value };
     
     LPF_parameters LPF_params;
     LPF_params.window_size = 1;

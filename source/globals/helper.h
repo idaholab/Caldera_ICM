@@ -192,17 +192,26 @@ private:
 class LPF_kernel
 {
 private:
+    
+    int max_window_size;
+
+    // raw_data has a max length of max_window_size.
+    // new value added to the raw_data is added in a round-robin fashin. 
     std::vector<double> raw_data;
+
+    // cur_raw_data_index tracks the latest info added to the round-robin raw_data.
     int cur_raw_data_index;
     
+    // Options are Hanning, Blackmann, and Rectangular.
     LPF_window_enum window_type;
-       int window_size;
+
+    int window_size;
     
     std::vector<double> window;
     double window_area;
     
 public:
-    LPF_kernel() {};
+    LPF_kernel();
     LPF_kernel(int max_window_size, double initial_raw_data_value);
     void update_LPF(LPF_parameters& LPF_params);
     void add_raw_data_value(double next_input_value);

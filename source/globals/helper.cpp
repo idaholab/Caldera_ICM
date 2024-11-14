@@ -327,16 +327,24 @@ bool rand_val::rand_is_initialized = false;
 //                               Low Pass Filter
 //#############################################################################
 
+LPF_kernel::LPF_kernel() 
+    : max_window_size{ 1 },
+    raw_data{ std::vector<double>(this->max_window_size, 1.0) },
+    cur_raw_data_index{ 0 }, 
+    window_type{ LPF_window_enum::Rectangular }, 
+    window_size{ 1 }, 
+    window{ std::vector<double>(1, 1.0) },
+    window_area{ 1.0 }
+{
+
+}
+
 
 LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
-{
-    this->cur_raw_data_index = 0;
-    
-    for(int i=0; i<max_window_size; i++)
-    {
-        this->raw_data.push_back(initial_raw_data_value);
-    }
-    
+    : cur_raw_data_index{ 0 },
+    max_window_size{ max_window_size }, 
+    raw_data{std::vector<double>(max_window_size, initial_raw_data_value)}
+{    
     LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
     LPF_params.window_type = LPF_window_enum::Rectangular;
