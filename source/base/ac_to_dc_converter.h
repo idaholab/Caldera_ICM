@@ -31,10 +31,10 @@ public:
     virtual ~ac_to_dc_converter();
     virtual ac_to_dc_converter* clone() const = 0;
     
-    bool get_can_provide_reactive_power_control();
-    double get_max_nominal_S3kVA();
+    bool get_can_provide_reactive_power_control() const;
+    double get_max_nominal_S3kVA() const;
     double get_P3_from_P2( const double P2 );
-    double get_approxamate_P2_from_P3( const double P3 );
+    double get_approximate_P2_from_P3( const double P3 );
     void set_target_Q3_kVAR( const double target_Q3_kVAR_ );
     
     virtual void get_next( const double time_step_duration_hrs,
