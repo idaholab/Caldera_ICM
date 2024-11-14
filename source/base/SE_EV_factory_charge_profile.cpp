@@ -66,8 +66,7 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
     
     bool building_charge_profile_library = true;
     SE_configuration SE_config(1, 1, pev_SE.se_type, 12.2, 9.2, "bus_A", "U");  // (station_id, SE_id, SE_enum, lat, long, grid_node_id, location_type)
-    supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, charge_profile_library);
-    SE_obj.set_pointers_in_SE_Load(&PEV_charge_factory, &ac_to_dc_converter_factory);
+    supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
     
     //------------------------
     //  Create Charge Event
@@ -480,8 +479,7 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     
     bool building_charge_profile_library = true;
     SE_configuration SE_config(1, 1, pev_SE.se_type, 12.2, 9.2, "bus_A", "U");  // (station_id, SE_id, SE_enum, lat, long, grid_node_id, location_type)
-    supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, charge_profile_library);
-    SE_obj.set_pointers_in_SE_Load(&PEV_charge_factory, &ac_to_dc_converter_factory);
+    supply_equipment SE_obj = SE_factory.get_supply_equipment_model(building_charge_profile_library, SE_config, baseLD_forecaster, manage_L2_control, PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
     
     //------------------------
     //  Create Charge Event

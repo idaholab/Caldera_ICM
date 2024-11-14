@@ -4,10 +4,12 @@
 //                      AC to DC Converter Factory
 //#############################################################################
 
-ac_to_dc_converter* factory_ac_to_dc_converter::alloc_get_ac_to_dc_converter(ac_to_dc_converter_enum converter_type, 
-                                                                             EVSE_type EVSE, 
-                                                                             EV_type EV, 
-                                                                             charge_event_P3kW_limits& P3kW_limits)
+ac_to_dc_converter* factory_ac_to_dc_converter::alloc_get_ac_to_dc_converter(
+    ac_to_dc_converter_enum converter_type, 
+    EVSE_type EVSE, 
+    EV_type EV, 
+    charge_event_P3kW_limits& P3kW_limits
+) const
 {
     std::vector<poly_segment> inv_eff_from_P2_vec;
     std::vector<poly_segment> inv_pf_from_P3_vec;

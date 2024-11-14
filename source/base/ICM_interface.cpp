@@ -10,40 +10,42 @@
 #include <string>
 #include <unordered_set>
 
-interface_to_SE_groups::interface_to_SE_groups( const std::string& input_path,
-                                                const interface_to_SE_groups_inputs& inputs )
-                            : loader{ input_path },
-                              inventory{ this->loader.get_EV_EVSE_inventory() },
-                              charge_profile_library{ load_charge_profile_library(inputs) }
+const factory_EV_charge_model interface_to_SE_groups::load_factory_EV_charge_model(
+    const interface_to_SE_groups_inputs& inputs
+)
 {
     EV_EVSE_ramping_map ramping_by_pevType_seType_map;
     for (const pev_charge_ramping_workaround& X : inputs.ramping_by_pevType_seType)
     {
         ramping_by_pevType_seType_map[std::make_pair(X.pev_type, X.SE_type)] = X.pev_charge_ramping_obj;
     }
+    
+    return factory_EV_charge_model{ this->inventory, inputs.ramping_by_pevType_only, ramping_by_pevType_seType_map, false };
+}
 
-    //--------------------
-
-    this->EV_model_factory = new factory_EV_charge_model(this->inventory, inputs.ramping_by_pevType_only, ramping_by_pevType_seType_map, false);
-
-    this->ac_to_dc_converter_factory = new factory_ac_to_dc_converter(this->inventory);
-
-    this->baseLD_forecaster = get_base_load_forecast{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs };
-
-    this->manage_L2_control = manage_L2_control_strategy_parameters{ inputs.L2_parameters };
-
+interface_to_SE_groups::interface_to_SE_groups( 
+    const std::string& input_path,
+    const interface_to_SE_groups_inputs& inputs 
+)
+    : 
+    loader{ input_path },
+    inventory{ this->loader.get_EV_EVSE_inventory() },
+    EV_model_factory{ this->load_factory_EV_charge_model(inputs) },
+    ac_to_dc_converter_factory{ this->inventory },
+    charge_profile_library{ load_charge_profile_library(inputs) },
+    baseLD_forecaster{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs },
+    manage_L2_control{ inputs.L2_parameters }
+{
     //==========================================
     //          Initialize infrastructure
     //==========================================
 
     factory_supply_equipment_model SE_factory(this->inventory, inputs.CE_queuing_inputs);
-    factory_EV_charge_model* EV_model = this->EV_model_factory;
-    factory_ac_to_dc_converter* ac_to_dc_converter = this->ac_to_dc_converter_factory;
     manage_L2_control_strategy_parameters* manage_L2_control_ = &this->manage_L2_control;
 
     for (const SE_group_configuration& SE_group_conf : inputs.infrastructure_topology)
     {
-        supply_equipment_group Y(SE_group_conf, SE_factory, EV_model, ac_to_dc_converter, this->charge_profile_library, this->baseLD_forecaster, manage_L2_control_);
+        supply_equipment_group Y(SE_group_conf, SE_factory, this->EV_model_factory, this->ac_to_dc_converter_factory, this->charge_profile_library, this->baseLD_forecaster, manage_L2_control_);
         this->SE_group_objs.push_back(Y);
     }
 
@@ -93,21 +95,6 @@ pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library(c
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
     const bool save_validation_data = false;
     return factory_charge_profile_library::get_charge_profile_library( this->inventory, save_validation_data, inputs.create_charge_profile_library, validation_data);
-}
-
-interface_to_SE_groups::~interface_to_SE_groups()
-{
-    if(this->EV_model_factory != NULL)
-    {
-        delete this->EV_model_factory;
-        this->EV_model_factory = NULL;
-    }
-    
-    if(this->ac_to_dc_converter_factory != NULL)
-    {
-        delete this->ac_to_dc_converter_factory;
-        this->ac_to_dc_converter_factory = NULL;
-    }
 }
 
 

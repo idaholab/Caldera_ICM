@@ -27,9 +27,6 @@ public:
     supply_equipment( const SE_configuration& SE_config_,
                       const supply_equipment_control& SE_control_,
                       const supply_equipment_load& SE_Load_ );
-        
-    void set_pointers_in_SE_Load( factory_EV_charge_model* PEV_charge_factory,
-                                  factory_ac_to_dc_converter* ac_to_dc_converter_factory);
     
     bool is_SE_with_id( const SupplyEquipmentId SE_id );
 

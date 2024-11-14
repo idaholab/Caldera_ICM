@@ -150,22 +150,24 @@ supply_equipment_load::supply_equipment_load(
     const double standby_acP_kW,
     const double standby_acQ_kVAR,
     const SE_configuration& SE_config, 
-    const charge_event_queuing_inputs& CE_queuing_inputs, 
+    const charge_event_queuing_inputs& CE_queuing_inputs,
+    const factory_EV_charge_model& PEV_charge_factory,
+    const factory_ac_to_dc_converter& ac_to_dc_converter_factory,
     const pev_charge_profile_library& charge_profile_library
 ) :
     P2_limit_kW{ P2_limit_kW }, 
     standby_acP_kW{ standby_acP_kW }, 
     standby_acQ_kVAR{ standby_acQ_kVAR }, 
     SE_config{ SE_config },
+    SE_stat{ -1, SE_config, SE_charging_status::no_ev_plugged_in, false },
     event_handler{ CE_queuing_inputs },
-    charge_profile_library{ charge_profile_library }, 
-    SE_stat{ -1, SE_config, SE_charging_status::no_ev_plugged_in, false }
+    PEV_charge_factory{ PEV_charge_factory },
+    ac_to_dc_converter_factory{ ac_to_dc_converter_factory },
+    charge_profile_library{ charge_profile_library }
 {    
     
     this->ac_to_dc_converter_obj = NULL;
     this->ev_charge_model = NULL;
-    
-    this->PEV_charge_factory = NULL;    
 }
 
 
@@ -183,14 +185,6 @@ supply_equipment_load::~supply_equipment_load()
         this->ev_charge_model = NULL;
     }
 }
-
-
-void supply_equipment_load::set_pointers(factory_EV_charge_model* PEV_charge_factory_, factory_ac_to_dc_converter* ac_to_dc_converter_factory_)
-{
-    this->PEV_charge_factory = PEV_charge_factory_;
-    this->ac_to_dc_converter_factory = ac_to_dc_converter_factory_;
-}
-
 
 /*
 supply_equipment_load::supply_equipment_load(const supply_equipment_load& obj)
@@ -614,7 +608,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
             charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
             EVSE_type SE_type = this->SE_config.supply_equipment_type;
 
-            this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
+            this->ev_charge_model = this->PEV_charge_factory.alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
 
             // ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
             if(this->ev_charge_model != NULL)
@@ -673,7 +667,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                     this->ac_to_dc_converter_obj = NULL;
                 }
                 
-                this->ac_to_dc_converter_obj = this->ac_to_dc_converter_factory->alloc_get_ac_to_dc_converter(converter_type, SE_type, pev_type, P3kW_limits);                
+                this->ac_to_dc_converter_obj = this->ac_to_dc_converter_factory.alloc_get_ac_to_dc_converter(converter_type, SE_type, pev_type, P3kW_limits);                
             
                 //----------------------------------------
                 //          Set P3, Q3 Targets 
