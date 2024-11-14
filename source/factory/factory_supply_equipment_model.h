@@ -30,6 +30,8 @@ public:
         const SE_configuration& SE_config, 
         const get_base_load_forecast& baseLD_forecaster,
         manage_L2_control_strategy_parameters* manage_L2_control, 
+        const factory_EV_charge_model& PEV_charge_factory,
+        const factory_ac_to_dc_converter& ac_to_dc_converter_factory,
         const pev_charge_profile_library& charge_profile_library
     );
 };

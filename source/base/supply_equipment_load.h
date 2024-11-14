@@ -51,8 +51,8 @@ private:
     vehicle_charge_model* ev_charge_model;
     
     // Do not delete in destructor.
-    factory_EV_charge_model* PEV_charge_factory;
-    factory_ac_to_dc_converter* ac_to_dc_converter_factory;
+    const factory_EV_charge_model& PEV_charge_factory;
+    const factory_ac_to_dc_converter& ac_to_dc_converter_factory;
     
     const pev_charge_profile_library& charge_profile_library;
     
@@ -67,13 +67,13 @@ public:
         const double standby_acQ_kVAR,
         const SE_configuration& SE_config,
         const charge_event_queuing_inputs& CE_queuing_inputs,
+        const factory_EV_charge_model& PEV_charge_factory,
+        const factory_ac_to_dc_converter& ac_to_dc_converter_factory,
         const pev_charge_profile_library& charge_profile_library
     );
     ~supply_equipment_load();
     //supply_equipment_load& operator=(const supply_equipment_load& obj);
     //supply_equipment_load(const supply_equipment_load& obj);
-    
-    void set_pointers(factory_EV_charge_model* PEV_charge_factory_, factory_ac_to_dc_converter* ac_to_dc_converter_factory_);
     
     void get_CE_stats_at_end_of_charge(double setpoint_P3kW, double nowSOC, double now_unix_time, bool& pev_is_connected_to_SE, pev_charge_profile_result& return_val);
     void get_CE_FICE(FICE_inputs inputs, double nowSOC, double now_unix_time, bool& pev_is_connected_to_SE, CE_FICE& return_val);

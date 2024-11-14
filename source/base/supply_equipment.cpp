@@ -12,13 +12,6 @@ supply_equipment::supply_equipment( const SE_configuration& SE_config_,
     SE_Load{ SE_Load }
 {
 }
-
-
-void supply_equipment::set_pointers_in_SE_Load( factory_EV_charge_model* PEV_charge_factory,
-                                                factory_ac_to_dc_converter* ac_to_dc_converter_factory)
-{
-    this->SE_Load.set_pointers(PEV_charge_factory, ac_to_dc_converter_factory);
-}
    
 
 bool supply_equipment::is_SE_with_id( const SupplyEquipmentId SE_id )

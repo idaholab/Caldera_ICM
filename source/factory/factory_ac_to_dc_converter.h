@@ -20,10 +20,12 @@ public:
         : inventory{ inventory }
     {
     }
-    ac_to_dc_converter* alloc_get_ac_to_dc_converter(ac_to_dc_converter_enum converter_type, 
-                                                     EVSE_type EVSE, 
-                                                     EV_type EV, 
-                                                     charge_event_P3kW_limits& CE_P3kW_limits);
+    ac_to_dc_converter* alloc_get_ac_to_dc_converter(
+        ac_to_dc_converter_enum converter_type, 
+        EVSE_type EVSE, 
+        EV_type EV, 
+        charge_event_P3kW_limits& CE_P3kW_limits
+    ) const;
 };
 
 #endif  // FACTORY_AC_TO_DC_CONVERTER_H
