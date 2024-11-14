@@ -60,7 +60,7 @@ public:
     const ES110_L2_parameters& get_ES110();
     const ES200_L2_parameters& get_ES200();
     const ES300_L2_parameters& get_ES300();
-    const ES300_L2_parameters& get_ES400();
+    const ES400_L2_parameters& get_ES400();
     const ES500_L2_parameters& get_ES500();
     
     const VS100_L2_parameters& get_VS100();
