@@ -225,7 +225,7 @@ void supply_equipment_load::set_target_acP3_kW(double target_acP3_kW_)
 {
     if(this->ev_charge_model != NULL)
     {
-        double approx_P2_kW = this->ac_to_dc_converter_obj->get_approxamate_P2_from_P3(target_acP3_kW_);
+        double approx_P2_kW = this->ac_to_dc_converter_obj->get_approximate_P2_from_P3(target_acP3_kW_);
         
         if(this->P2_limit_kW < approx_P2_kW)
             approx_P2_kW = this->P2_limit_kW;
@@ -240,7 +240,7 @@ void supply_equipment_load::set_target_acQ3_kVAR(double target_acQ3_kVAR_)
     if(this->ev_charge_model != NULL)
     {
         this->ac_to_dc_converter_obj->set_target_Q3_kVAR(target_acQ3_kVAR_);
-    } 
+    }
 }
 
 

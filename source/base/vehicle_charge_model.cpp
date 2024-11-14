@@ -44,30 +44,30 @@ void vehicle_charge_model::set_target_P2_kW(double target_P2_kW_)
     this->target_P2_kW = target_P2_kW_; 
 }
 
-double vehicle_charge_model::get_target_P2_kW() 
+double vehicle_charge_model::get_target_P2_kW() const
 {
     return this->target_P2_kW;
 }
 
-bool vehicle_charge_model::charge_has_completed() 
+bool vehicle_charge_model::charge_has_completed() const
 {
     return this->charge_has_completed_;
 }
 
 
-bool vehicle_charge_model::pev_has_arrived_at_SE(double now_unix_time)
+bool vehicle_charge_model::pev_has_arrived_at_SE(double now_unix_time) const
 {
     return (this->arrival_unix_time <= now_unix_time);
 }
 
 
-bool vehicle_charge_model::pev_is_connected_to_SE(double now_unix_time) 
+bool vehicle_charge_model::pev_is_connected_to_SE(double now_unix_time) const
 {
     return (this->arrival_unix_time <= now_unix_time && now_unix_time <= this->depart_unix_time);
 }
 
 
-void vehicle_charge_model::get_E1_battery_limits(double& max_E1_limit, double& min_E1_limit)
+void vehicle_charge_model::get_E1_battery_limits(double& max_E1_limit, double& min_E1_limit) const
 {
     max_E1_limit = this->bat.max_E1_limit;
     min_E1_limit = this->bat.min_E1_limit;

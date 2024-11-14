@@ -47,10 +47,11 @@ private:
     control_strategy_enums control_enums;
     
     charge_event_handler event_handler;
+    
+    // Both pointer are local to this class.
     ac_to_dc_converter* ac_to_dc_converter_obj;
     vehicle_charge_model* ev_charge_model;
     
-    // Do not delete in destructor.
     const factory_EV_charge_model& PEV_charge_factory;
     const factory_ac_to_dc_converter& ac_to_dc_converter_factory;
     
