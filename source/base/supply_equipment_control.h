@@ -289,7 +289,7 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 class supply_equipment_control
 {
 private:
-    SE_configuration SE_config;
+    const SE_configuration SE_config;
     
     ES100_control_strategy ES100A_obj;
     ES100_control_strategy ES100B_obj;
