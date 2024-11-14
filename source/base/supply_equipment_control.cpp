@@ -1327,18 +1327,19 @@ manage_L2_control_strategy_parameters::manage_L2_control_strategy_parameters(con
 }
 
 
-const ES100_L2_parameters& manage_L2_control_strategy_parameters::get_ES100_A() {return this->parameters.ES100_A;}
-const ES100_L2_parameters& manage_L2_control_strategy_parameters::get_ES100_B() {return this->parameters.ES100_B;}
-const ES110_L2_parameters& manage_L2_control_strategy_parameters::get_ES110()   {return this->parameters.ES110;}
-const ES200_L2_parameters& manage_L2_control_strategy_parameters::get_ES200()   {return this->parameters.ES200;}
-const ES300_L2_parameters& manage_L2_control_strategy_parameters::get_ES300()   {return this->parameters.ES300;}
-const ES500_L2_parameters& manage_L2_control_strategy_parameters::get_ES500()   {return this->parameters.ES500;}
+const ES100_L2_parameters& manage_L2_control_strategy_parameters::get_ES100_A() { return this->parameters.ES100_A; }
+const ES100_L2_parameters& manage_L2_control_strategy_parameters::get_ES100_B() { return this->parameters.ES100_B; }
+const ES110_L2_parameters& manage_L2_control_strategy_parameters::get_ES110()   { return this->parameters.ES110; }
+const ES200_L2_parameters& manage_L2_control_strategy_parameters::get_ES200()   { return this->parameters.ES200; }
+const ES300_L2_parameters& manage_L2_control_strategy_parameters::get_ES300()   { return this->parameters.ES300; }
+const ES400_L2_parameters& manage_L2_control_strategy_parameters::get_ES400()   { return this->parameters.ES400; }
+const ES500_L2_parameters& manage_L2_control_strategy_parameters::get_ES500()   { return this->parameters.ES500; }
 
-const VS100_L2_parameters& manage_L2_control_strategy_parameters::get_VS100()   {return this->parameters.VS100;}
-const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_A() {return this->parameters.VS200_A;}
-const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_B() {return this->parameters.VS200_B;}
-const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_C() {return this->parameters.VS200_C;}
-const VS300_L2_parameters& manage_L2_control_strategy_parameters::get_VS300()   {return this->parameters.VS300;}
+const VS100_L2_parameters& manage_L2_control_strategy_parameters::get_VS100()   { return this->parameters.VS100; }
+const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_A() { return this->parameters.VS200_A; }
+const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_B() { return this->parameters.VS200_B; }
+const VS200_L2_parameters& manage_L2_control_strategy_parameters::get_VS200_C() { return this->parameters.VS200_C; }
+const VS300_L2_parameters& manage_L2_control_strategy_parameters::get_VS300()   { return this->parameters.VS300; }
    
 
 double manage_L2_control_strategy_parameters::ES100A_getUniformRandomNumber_0to1()

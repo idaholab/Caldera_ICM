@@ -288,6 +288,7 @@ struct L2_control_strategy_parameters
     ES110_L2_parameters ES110;
     ES200_L2_parameters ES200;
     ES300_L2_parameters ES300;
+    ES400_L2_parameters ES400;
     ES500_L2_parameters ES500;
     
     VS100_L2_parameters VS100;    
