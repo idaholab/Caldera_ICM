@@ -570,10 +570,10 @@ double get_value_from_normal_distribution::get_value()
     double random_val;
     while(true)
     {
-        //#pragma omp critical
-        //{
+        #pragma omp critical
+        {
             random_val = this->dis(this->gen);
-        //}
+        }
         if(std::abs(random_val) <= this->stdev_bounds)
             return this->stdev*random_val + this->mean;
     }
@@ -602,8 +602,13 @@ get_real_value_from_uniform_distribution::get_real_value_from_uniform_distributi
 
 
 double get_real_value_from_uniform_distribution::get_value()
-{    
-    double random_val = this->dis(this->gen);
+{   
+    
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -631,7 +636,12 @@ get_int_value_from_uniform_distribution::get_int_value_from_uniform_distribution
 
 int get_int_value_from_uniform_distribution::get_value()
 {    
-    int random_val = this->dis(this->gen);
+    int random_val;
+    
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -662,7 +672,11 @@ get_bernoulli_success::get_bernoulli_success(int seed, double p)
 
 bool get_bernoulli_success::is_success()
 {   
-    double random_val = this->dis(this->gen);
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return (random_val <= this->p_val);
 }
 

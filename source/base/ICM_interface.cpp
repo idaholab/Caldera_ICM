@@ -476,13 +476,17 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
             
             const int vec_size = gridnodeid_SEvec_pair.second.size();
             
-            //#pragma omp parallel for reduction(+:P3_kW, Q3_kVAR)
+            #pragma omp parallel for reduction(+:P3_kW, Q3_kVAR)
             for (int i = 0; i < vec_size; i++)
             {
                 supply_equipment* SE_ptr = gridnodeid_SEvec_pair.second.at(i);
                 ac_power_metrics ac_power_tmp;
                 double soc;
 
+                // As of 11/14/2024, the get_next function is threadsafe although it isn't const.
+                // All class members are local or const& except for manage_L2_control_strategy 
+                // which is protected by pragma omp critical. 
+                // Future version will need to ensure we maintain thread safety.
                 SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
                 
                 P3_kW += ac_power_tmp.P3_kW;
