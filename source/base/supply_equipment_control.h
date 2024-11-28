@@ -322,7 +322,7 @@ private:
     bool ensure_pev_charge_needs_met_for_ext_control_strategy;
     
 public:
-    supply_equipment_control() : baseLD_forecaster{} {};
+    //supply_equipment_control() : baseLD_forecaster{} {};
     supply_equipment_control( const bool building_charge_profile_library_,
                               const SE_configuration& SE_config_,
                               const get_base_load_forecast& baseLD_forecaster_,

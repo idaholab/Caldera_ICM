@@ -4,11 +4,11 @@
 #include "factory_supply_equipment_model.h"     // factory_supply_equipment_model
 
 
-supply_equipment::supply_equipment( const SE_configuration& SE_config_,
-                                    const supply_equipment_control& SE_control_,
-                                    const supply_equipment_load& SE_Load_ )
-    : SE_config{ SE_config_ }, 
-    SE_control{ SE_control_ },
+supply_equipment::supply_equipment( const SE_configuration& SE_config,
+                                    const supply_equipment_control& SE_control,
+                                    const supply_equipment_load& SE_Load )
+    : SE_config{ SE_config }, 
+    SE_control{ SE_control },
     SE_Load{ SE_Load }
 {
 }
