@@ -636,25 +636,22 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //--------------------------------
                 EV_type pev_type = charge_event.vehicle_type;
                 
-                const pev_charge_profile& cur_charge_profile = this->charge_profile_library.get_charge_profile(pev_type, SE_type);
-                
-                //--------------------------------
-                //  Create ac_to_dc_converter_obj
-                //--------------------------------
-                charge_event_P3kW_limits P3kW_limits = cur_charge_profile.get_charge_event_P3kW_limits();
-
-                /*
-                if(this->cur_charge_profile != NULL)
+                charge_event_P3kW_limits P3kW_limits;
+                if (this->charge_profile_library.has_charge_profile(pev_type, SE_type))
                 {
-                    P3kW_limits = this->cur_charge_profile->get_charge_event_P3kW_limits();
+                    const pev_charge_profile& cur_charge_profile = this->charge_profile_library.get_charge_profile(pev_type, SE_type);
+                    P3kW_limits = cur_charge_profile.get_charge_event_P3kW_limits();
+
                 }
                 else
                 {
-                    // This is what is used when creating charge_profile_library.
                     P3kW_limits.min_P3kW = 0;
                     P3kW_limits.max_P3kW = 1;
                 }
-                */
+                //--------------------------------
+                //  Create ac_to_dc_converter_obj
+                //--------------------------------
+
                 ac_to_dc_converter_enum converter_type = ac_to_dc_converter_enum::pf;
                 if(this->control_enums.inverter_model_supports_Qsetpoint)
                 {
