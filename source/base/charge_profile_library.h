@@ -160,10 +160,11 @@ public:
         const EVSE_type SE_type
     ) const;
 
-    //pev_charge_profile* get_charge_profile( const EV_type pev_type,
-    //                                        const EVSE_type SE_type );
-    //const pev_charge_profile* get_charge_profile( const EV_type pev_type,
-    //                                              const EVSE_type SE_type ) const;
+    bool has_charge_profile( const EV_type pev_type, const EVSE_type SE_type) const
+    {
+        std::pair<EV_type, EVSE_type> key = {pev_type, SE_type};
+        return this->charge_profile.find(key) != this->charge_profile.end(); 
+    }
 };
 
 
