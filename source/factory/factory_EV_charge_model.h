@@ -24,6 +24,11 @@ private:
     const factory_SOC_vs_P2 SOC_vs_P2_obj;
     const factory_P2_vs_battery_efficiency P2_vs_battery_eff_obj;
 
+    // IDEA: Add another 'factory' object similar to 'SOC_vs_P2_obj' except it
+    //     computes a curve using the temperature-aware method.
+    //     Is this the right way to do it?
+    // const factory_temperature_aware_SOC_vs_P2 temperature_aware_SOC_vs_P2_obj;
+
     const bool model_stochastic_battery_degregation;
 
 public:

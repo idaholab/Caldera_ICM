@@ -442,15 +442,15 @@ std::vector<double> interface_to_SE_groups::get_SE_group_charge_profile_forecast
 
 std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::get_charging_power(double prev_unix_time, double now_unix_time, std::map<grid_node_id_type, double> pu_Vrms)
 {
+    const int POWER_TO_RETURN_P1P2P3 = 3;
+    
     std::map<grid_node_id_type, std::pair<double, double> > return_val;
     
     //---------------------------
     
     std::map<grid_node_id_type, std::vector<supply_equipment*> >::iterator it;
     std::pair<double, double> tmp_pwr;
-    //ac_power_metrics ac_power_tmp;
-    //double P3_kW, Q3_kVAR, soc;
-    double P3_kW, Q3_kVAR;
+    double P1_kW, P2_kW, P3_kW, Q3_kVAR;
     
     for(std::pair<grid_node_id_type, double> pu_Vrms_pair : pu_Vrms)
     {
@@ -459,9 +459,18 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
         if( it == this->gridNodeId_to_SE_ptrs.end() )
         {
             // There is no SE on this grid node. Just put zeros in there.
+            P1_kW = 0;
+            P2_kW = 0;
             P3_kW = 0;
             Q3_kVAR = 0;
-            tmp_pwr.first = P3_kW;
+            if( POWER_TO_RETURN_P1P2P3 == 1 )      tmp_pwr.first = P1_kW;
+            else if( POWER_TO_RETURN_P1P2P3 == 2 ) tmp_pwr.first = P2_kW;
+            else if( POWER_TO_RETURN_P1P2P3 == 3 ) tmp_pwr.first = P3_kW;
+            else
+            {
+                std::cout << "Error in interface_to_SE_groups::get_charging_power [1]" << std::endl;
+                exit(0);
+            }
             tmp_pwr.second = Q3_kVAR;
             return_val[pu_Vrms_pair.first] = tmp_pwr;
         }
@@ -471,39 +480,40 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
             const std::pair< grid_node_id_type, std::vector<supply_equipment*> >& gridnodeid_SEvec_pair = *it; 
             
             // Iterate over each supply_equipment pointer and sum up the power used by each during this timestep.
+            P1_kW = 0;
+            P2_kW = 0;
             P3_kW = 0;
             Q3_kVAR = 0;
-            
+
             const int vec_size = gridnodeid_SEvec_pair.second.size();
-            
-            #pragma omp parallel for reduction(+:P3_kW, Q3_kVAR)
+
+            #pragma omp parallel for reduction(+:P3_kW, P2_kW, P1_kW, Q3_kVAR)
             for (int i = 0; i < vec_size; i++)
             {
                 supply_equipment* SE_ptr = gridnodeid_SEvec_pair.second.at(i);
                 ac_power_metrics ac_power_tmp;
                 double soc;
-
+                
                 // As of 11/14/2024, the get_next function is threadsafe although it isn't const.
                 // All class members are local or const& except for manage_L2_control_strategy 
                 // which is protected by pragma omp critical. 
                 // Future version will need to ensure we maintain thread safety.
                 SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
                 
+                P1_kW += ac_power_tmp.P1_kW;
+                P2_kW += ac_power_tmp.P2_kW;
                 P3_kW += ac_power_tmp.P3_kW;
                 Q3_kVAR += ac_power_tmp.Q3_kVAR;
             }
-
-            /*
-            for( supply_equipment* SE_ptr : gridnodeid_SEvec_pair.second )
+            
+            if( POWER_TO_RETURN_P1P2P3 == 1 )      tmp_pwr.first = P1_kW;
+            else if( POWER_TO_RETURN_P1P2P3 == 2 ) tmp_pwr.first = P2_kW;
+            else if( POWER_TO_RETURN_P1P2P3 == 3 ) tmp_pwr.first = P3_kW;
+            else
             {
-                SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
-                
-                P3_kW += ac_power_tmp.P3_kW;
-                Q3_kVAR += ac_power_tmp.Q3_kVAR;
+                std::cout << "Error in interface_to_SE_groups::get_charging_power [2]" << std::endl;
+                exit(0);
             }
-            */
-
-            tmp_pwr.first = P3_kW;
             tmp_pwr.second = Q3_kVAR;
             
             return_val[pu_Vrms_pair.first] = tmp_pwr;
