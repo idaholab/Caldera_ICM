@@ -27,3 +27,7 @@ CTestTestfile.cmake
 
 # Executables that get created when we run make install
 run_models
+misc/next_gen_prof_testing/ICM_Aux
+misc/next_gen_prof_testing/ICM_Full
+misc/next_gen_prof_testing/ICM_NextGen
+
