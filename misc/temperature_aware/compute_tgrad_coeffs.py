@@ -19,63 +19,17 @@ from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
-data_dir = "./data_ignore"
 
+
+
+
+
+
+data_dir = "./data_ignore"
 
 #########################################
 ##           Helper Functions          ##
 #########################################
-
-
-# Retrieves all experiment data from the 'experiments' directory.
-# Returns:
-#     Tuple[List[pd.DataFrame], List[str]]: A tuple containing:
-#         - A list of DataFrames, each representing an experiment's data.
-#         - A list of filepaths corresponding to the experiments.
-#
-def get_all_experiments() -> Tuple[List[pd.DataFrame], List[str]]:
-    exps_root = data_dir + "/experiments/"
-    experiment_paths = []
-    for root, dirs, files in os.walk(exps_root):
-        for file in files:
-            if file.startswith('Formatted_IONIQ_') and file.endswith('.parquet'):
-                filepath = root + file
-                data = file.removesuffix('.parquet').split('_')[1:]
-                data.append(filepath)
-                experiment_paths.append(data)
-    experiments_df = pd.DataFrame( experiment_paths, columns=['vehicle_name', 'init_temp', 'init_condition', 'evse_limit', 'init_soc', 'filepath'] )
-    experiments_df.sort_values(by=['vehicle_name', 'init_temp',], inplace=True)
-    print("len(experiments_df['filepath']): ",len(experiments_df['filepath']) )
-    sample_dfs = [pd.read_parquet(experiment) for experiment in experiments_df['filepath']]
-    return sample_dfs, experiments_df['filepath']
-
-# # Retrieves all simulation data from the 'simulations' directory.
-# # Returns:
-# #     Dict[Tuple[str, str], pd.DataFrame]: A dictionary where each key is a tuple of:
-# #         - Electric Vehicle (EV) name
-# #         - Electric Vehicle Supply Equipment (EVSE) name
-# #       and each value is a DataFrame representing the simulation data.
-# #
-# def get_all_simulations() -> Dict[Tuple[str, str], pd.DataFrame]:
-#     sims_root = data_dir + "/simulations/"
-#     simulations = {}
-#     for root, dirs, files in os.walk(sims_root):
-#         for file in files:
-#             print("   file: ",file)
-#             if file.startswith('pevtype_ngp_hyundai_ioniq_5_longrange_awd') and file.endswith('.parquet'):
-#                 print("got it.")
-#                 df = pd.read_parquet(root + file)
-#                 # add column for the SOC rate of change
-#                 df['SOC gradient'] = np.gradient(df['SOC | '].values)
-#                 ev_evse = file.removesuffix('.parquet').split('__')
-#                 ev_evse[0] = ev_evse[0][8:]
-#                 ev_evse[1] = ev_evse[1][7:]
-#                 print("ev_evse: ",ev_evse)
-#                 simulations[(ev_evse[0], ev_evse[1])] = df
-#             else:
-#                 print("skipped")
-#     print("in the function 'get_all_simulations', we have len(simulations): ",len(simulations))
-#     return simulations
 
 # Retrieves experiment data matching the specified criteria.
 # Args:
@@ -139,18 +93,6 @@ def get_column_names(df) -> Tuple[str, str, str]:
     soc_col  = next( (col for col in df.columns if col.startswith("Battery Display")), None )
     return power_col, temperature_col, soc_col
 
-# # Calculates and prints charge rates at various levels of degradation.
-# # Args:
-# #     baseline_c_rate (float): The initial charge rate (100% capacity)
-# # Returns:
-# #     None
-# #
-# def calc_charge_rates(baseline_c_rate) -> None:
-#     for n in range(0, 10):    
-#         calc_c_rate = baseline_c_rate - baseline_c_rate * (0.1 * n)
-#         print(f'Calculated Charge {(10 - n) * 10}%: {calc_c_rate}')
-#         print()
-
 # Displays a dataframe.
 #
 def display(df,make_pyplot_table=False):
@@ -164,24 +106,6 @@ def display(df,make_pyplot_table=False):
     else:
         print(df)
 
-# ###########################################
-# ## Storing the experiments as .csv files ##
-# ## so I can look at them.                ##
-# ###########################################
-# experiments_df, filepaths = get_all_experiments()
-# for i,df in enumerate(experiments_df):
-#     if( filepaths[i][-8:] != ".parquet" ):
-#         print("ERROR: Not a parquet file.")
-#         exit()
-#     filename_without_ext = filepaths[i][0:-8]
-#     df.to_csv(filename_without_ext+".csv", index=False)
-
-# #########################################
-# ## Load and Preprocess Experiment Data ##
-# #########################################
-# experiments_df, filepaths = get_all_experiments()
-# for df in experiments_df:
-#     df['Avg Battery Temp [°C]'] = df['Avg Battery Temp [°C]'].replace('--', None, inplace=False)
 
 
 
@@ -280,13 +204,6 @@ print(f'Shape of Input Data {combined_data.shape}')
 display(combined_data.sample(10))
 
 
-
-
-
-
-
-
-
 ######################################################################
 ##  Fit the data using Ordinary Least Squares (OLS) Regression      ##
 ##  Train Linear Regression Model and Evaluate Performance          ##
@@ -306,7 +223,6 @@ display(combined_data.sample(10))
 #      - intercept:        The temperature gradient when all regressors are zero
 #  * Calculates and prints the Mean Squared Error (MSE) between actual and predicted temperature gradients
 #  * Calculates and prints the Coefficient of Determination (R-squared) to measure model accuracy
-
 
 X_train, X_test, y_train, y_test = train_test_split( combined_data[['P1 | kW', 'temperature | ºC', 'time | s', 'SOC | ']],
                                                      combined_data['temperature gradient | ºC/ds'].tolist(),
@@ -334,59 +250,6 @@ r2 = r2_score(y_test, y_pred)
 print(f"R-squared (Accuracy): {r2:.2f}")
 
 print("intercept: ",intercept, "  fitted_curve_coefs: ",fitted_curve_coefs)
-
-# # Helper function to evaluate a test result.
-# def eval_function_with_coeffs( intercept, fitted_curve_coefs, x_vec ):
-#     ret_val = 0.0
-#     ret_val += intercept
-#     for i in range(0,len(x_vec)):
-#         ret_val += fitted_curve_coefs[i]*x_vec[i]
-#     return ret_val
-# 
-# N = 2000
-# my_power_vec = np.arange(0,200,0.1)
-# my_temperature_vec = np.ones(2000)*30
-# my_time_vec = np.arange(0,3600,1.8)
-# my_soc_vec = np.arange(0,100,0.05)
-# output_tgrad_vec = numpy.zeros(2000)
-# for i in range(0,N):
-#     x_vec = [ my_power_vec[i], my_temperature_vec[i], my_time_vec[i], my_soc_vec[i] ]
-#     output_tgrad_vec[i] = eval_function_with_coeffs(intercept,fitted_curve_coefs,x_vec)
-# 
-# plt.figure()
-# plt.plot(my_time_vec,output_tgrad_vec)
-# plt.legend(["time vs tgrad"])
-# plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
