@@ -14,7 +14,7 @@
 //#############################################################################
 
 
-charge_event_handler::charge_event_handler(charge_event_queuing_inputs& CE_queuing_inputs_)
+charge_event_handler::charge_event_handler( const charge_event_queuing_inputs& CE_queuing_inputs_)
 {
     this->CE_queuing_inputs = CE_queuing_inputs_;
 }
@@ -145,38 +145,29 @@ charge_event_data charge_event_handler::get_next_charge_event( const double now_
 //                           Supply Equipment 
 //#############################################################################
 
-supply_equipment_load::supply_equipment_load()
-{
-    this->ac_to_dc_converter_obj = NULL;
-    this->ev_charge_model = NULL;
-    
-    this->PEV_charge_factory = NULL;
-    this->charge_profile_library = NULL;
-    this->cur_charge_profile = NULL;
-}
-
-
-supply_equipment_load::supply_equipment_load(double P2_limit_kW_, double standby_acP_kW_, double standby_acQ_kVAR_, const SE_configuration& SE_config_, charge_event_queuing_inputs& CE_queuing_inputs)
-{
-    this->P2_limit_kW = P2_limit_kW_;
-    this->standby_acP_kW = standby_acP_kW_;
-    this->standby_acQ_kVAR = standby_acQ_kVAR_;
-    this->SE_config = SE_config_;
-    
-    charge_event_handler X(CE_queuing_inputs);
-    this->event_handler = X;
-    
-    this->SE_stat.SE_config = SE_config_;
-    this->SE_stat.now_unix_time = -1;
-    this->SE_stat.SE_charging_status_val = SE_charging_status::no_ev_plugged_in;
-    this->SE_stat.pev_is_connected_to_SE = false;
+supply_equipment_load::supply_equipment_load(
+    const double P2_limit_kW,
+    const double standby_acP_kW,
+    const double standby_acQ_kVAR,
+    const SE_configuration& SE_config, 
+    const charge_event_queuing_inputs& CE_queuing_inputs,
+    const factory_EV_charge_model& PEV_charge_factory,
+    const factory_ac_to_dc_converter& ac_to_dc_converter_factory,
+    const pev_charge_profile_library& charge_profile_library
+) :
+    P2_limit_kW{ P2_limit_kW }, 
+    standby_acP_kW{ standby_acP_kW }, 
+    standby_acQ_kVAR{ standby_acQ_kVAR }, 
+    SE_config{ SE_config },
+    SE_stat{ -1, SE_config, SE_charging_status::no_ev_plugged_in, false },
+    event_handler{ CE_queuing_inputs },
+    PEV_charge_factory{ PEV_charge_factory },
+    ac_to_dc_converter_factory{ ac_to_dc_converter_factory },
+    charge_profile_library{ charge_profile_library }
+{    
     
     this->ac_to_dc_converter_obj = NULL;
     this->ev_charge_model = NULL;
-    
-    this->PEV_charge_factory = NULL;
-    this->charge_profile_library = NULL;
-    this->cur_charge_profile = NULL;    
 }
 
 
@@ -194,15 +185,6 @@ supply_equipment_load::~supply_equipment_load()
         this->ev_charge_model = NULL;
     }
 }
-
-
-void supply_equipment_load::set_pointers(factory_EV_charge_model* PEV_charge_factory_, factory_ac_to_dc_converter* ac_to_dc_converter_factory_, pev_charge_profile_library* charge_profile_library_)
-{
-    this->PEV_charge_factory = PEV_charge_factory_;
-    this->ac_to_dc_converter_factory = ac_to_dc_converter_factory_;
-    this->charge_profile_library = charge_profile_library_;
-}
-
 
 /*
 supply_equipment_load::supply_equipment_load(const supply_equipment_load& obj)
@@ -243,7 +225,7 @@ void supply_equipment_load::set_target_acP3_kW(double target_acP3_kW_)
 {
     if(this->ev_charge_model != NULL)
     {
-        double approx_P2_kW = this->ac_to_dc_converter_obj->get_approxamate_P2_from_P3(target_acP3_kW_);
+        double approx_P2_kW = this->ac_to_dc_converter_obj->get_approximate_P2_from_P3(target_acP3_kW_);
         
         if(this->P2_limit_kW < approx_P2_kW)
             approx_P2_kW = this->P2_limit_kW;
@@ -258,7 +240,7 @@ void supply_equipment_load::set_target_acQ3_kVAR(double target_acQ3_kVAR_)
     if(this->ev_charge_model != NULL)
     {
         this->ac_to_dc_converter_obj->set_target_Q3_kVAR(target_acQ3_kVAR_);
-    } 
+    }
 }
 
 
@@ -275,7 +257,7 @@ double supply_equipment_load::get_PEV_SE_combo_max_nominal_S3kVA()
 void supply_equipment_load::get_active_charge_profile_forecast_akW(double setpoint_P3kW, double time_step_mins, bool& pev_is_connected_to_SE, std::vector<double>& charge_profile)
 {
     std::vector<pev_charge_profile_result> charge_profile_aux;
-    get_active_charge_profile_forecast_allInfo(setpoint_P3kW, time_step_mins, pev_is_connected_to_SE, charge_profile_aux);
+    this->get_active_charge_profile_forecast_allInfo(setpoint_P3kW, time_step_mins, pev_is_connected_to_SE, charge_profile_aux);
     
     //---------------
     
@@ -294,7 +276,7 @@ void supply_equipment_load::get_active_charge_profile_forecast_allInfo(double se
     charge_profile.clear();
     
     double time_to_complete_charge_hrs;
-    get_time_to_complete_active_charge_hrs(setpoint_P3kW, pev_is_connected_to_SE, time_to_complete_charge_hrs);
+    this->get_time_to_complete_active_charge_hrs(setpoint_P3kW, pev_is_connected_to_SE, time_to_complete_charge_hrs);
     
     if(pev_is_connected_to_SE && 0 < time_to_complete_charge_hrs)
     {
@@ -316,13 +298,22 @@ void supply_equipment_load::get_active_charge_profile_forecast_allInfo(double se
         }
 
         double startSOC = this->SE_stat.current_charge.now_soc;
-        this->cur_charge_profile->find_chargeProfile_given_startSOC_and_chargeTimes(setpoint_P3kW, startSOC, charge_time_hrs, charge_profile);
+        const EVSE_type& SE_type = this->SE_config.supply_equipment_type;
+        const EV_type& pev_type = this->SE_stat.current_charge.vehicle_type;
+
+        const pev_charge_profile& cur_charge_profile = this->charge_profile_library.get_charge_profile(pev_type, SE_type);
+
+        cur_charge_profile.find_chargeProfile_given_startSOC_and_chargeTimes(setpoint_P3kW, startSOC, charge_time_hrs, charge_profile);
     }
 }
 
 
 void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, double nowSOC, double endSOC, double now_unix_time, double end_unix_time, pev_charge_profile_result& return_val)
 {
+    // The function should only work if pev_is_connected_to_SE, else there is 
+    // no EV to get pev_charge_profile.
+    ASSERT(this->SE_stat.pev_is_connected_to_SE, "This function shouldn't be called when pev is not connected to EVSE");
+    
     // Needed due to incomplete implementation of pev_charge_profile.
     if(setpoint_P3kW != 0)
         setpoint_P3kW = 100000;
@@ -339,6 +330,11 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
     pev_charge_profile_result target_soc_val, depart_time_val;
     bool return_val_is_zero = false;
     
+    const EVSE_type& SE_type = this->SE_config.supply_equipment_type;
+    const EV_type& pev_type = this->SE_stat.current_charge.vehicle_type;
+
+    const pev_charge_profile& cur_charge_profile = this->charge_profile_library.get_charge_profile(pev_type, SE_type);
+    
     if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_target_soc || stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
     {
         if(departure_SOC < endSOC)
@@ -347,7 +343,7 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
         if(endSOC <= nowSOC)
             return_val_is_zero = true;
         else
-            target_soc_val = this->cur_charge_profile->find_result_given_startSOC_and_endSOC(setpoint_P3kW, nowSOC, endSOC);
+            target_soc_val = cur_charge_profile.find_result_given_startSOC_and_endSOC(setpoint_P3kW, nowSOC, endSOC);
     }
     
     if(stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_depart_time || stop_charge_val.decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
@@ -360,7 +356,7 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
         else
         {
             double charge_time_hrs = (end_unix_time - now_unix_time)/3600.0;
-            depart_time_val = this->cur_charge_profile->find_result_given_startSOC_and_chargeTime(setpoint_P3kW, nowSOC, charge_time_hrs);
+            depart_time_val = cur_charge_profile.find_result_given_startSOC_and_chargeTime(setpoint_P3kW, nowSOC, charge_time_hrs);
         }
     }
     
@@ -387,6 +383,7 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
         else
             return_val = target_soc_val;
     }
+
 }
 
 
@@ -580,9 +577,16 @@ control_strategy_enums supply_equipment_load::get_control_strategy_enums()
 }
 
 
-pev_charge_profile* supply_equipment_load::get_pev_charge_profile()
+const pev_charge_profile& supply_equipment_load::get_pev_charge_profile()
 {
-    return this->cur_charge_profile;
+    // The function should only work if pev_is_connected_to_SE, else there is 
+    // no EV to get pev_charge_profile.
+    ASSERT(this->SE_stat.pev_is_connected_to_SE, "This function shouldn't be called when pev is not connected to EVSE");
+
+    const EVSE_type SE_type = this->SE_config.supply_equipment_type;
+    const EV_type pev_type = this->SE_stat.current_charge.vehicle_type;
+
+    return this->charge_profile_library.get_charge_profile(pev_type, SE_type);
 }
 
 
@@ -604,7 +608,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
             charge_event_data charge_event = this->event_handler.get_next_charge_event(now_unix_time);
             EVSE_type SE_type = this->SE_config.supply_equipment_type;
 
-            this->ev_charge_model = this->PEV_charge_factory->alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
+            this->ev_charge_model = this->PEV_charge_factory.alloc_get_EV_charge_model(charge_event, SE_type, this->P2_limit_kW);
 
             // ev_charge_model == NULL when there is a compatibility issue between the PEV and Supply Equipment
             if(this->ev_charge_model != NULL)
@@ -630,33 +634,23 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 //--------------------------------
                 //  Update Charge Profile
                 //--------------------------------
-                SE_type = this->SE_config.supply_equipment_type;
                 EV_type pev_type = charge_event.vehicle_type;
                 
-                if(this->charge_profile_library != NULL)
-                {
-                    this->cur_charge_profile = this->charge_profile_library->get_charge_profile(pev_type, SE_type);
-                }
-                else
-                {
-                    this->cur_charge_profile = NULL;  // This is what is used when creating charge_profile_library.
-                }
-                
-                //--------------------------------
-                //  Create ac_to_dc_converter_obj
-                //--------------------------------
                 charge_event_P3kW_limits P3kW_limits;
-                
-                if(this->cur_charge_profile != NULL)
+                if (this->charge_profile_library.has_charge_profile(pev_type, SE_type))
                 {
-                    P3kW_limits = this->cur_charge_profile->get_charge_event_P3kW_limits();
+                    const pev_charge_profile& cur_charge_profile = this->charge_profile_library.get_charge_profile(pev_type, SE_type);
+                    P3kW_limits = cur_charge_profile.get_charge_event_P3kW_limits();
+
                 }
                 else
                 {
-                    // This is what is used when creating charge_profile_library.
                     P3kW_limits.min_P3kW = 0;
                     P3kW_limits.max_P3kW = 1;
                 }
+                //--------------------------------
+                //  Create ac_to_dc_converter_obj
+                //--------------------------------
 
                 ac_to_dc_converter_enum converter_type = ac_to_dc_converter_enum::pf;
                 if(this->control_enums.inverter_model_supports_Qsetpoint)
@@ -670,21 +664,21 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                     this->ac_to_dc_converter_obj = NULL;
                 }
                 
-                this->ac_to_dc_converter_obj = this->ac_to_dc_converter_factory->alloc_get_ac_to_dc_converter(converter_type, SE_type, pev_type, P3kW_limits);                
+                this->ac_to_dc_converter_obj = this->ac_to_dc_converter_factory.alloc_get_ac_to_dc_converter(converter_type, SE_type, pev_type, P3kW_limits);                
             
                 //----------------------------------------
                 //          Set P3, Q3 Targets 
                 //----------------------------------------
                 if(this->control_enums.ES_control_strategy == L2_control_strategies_enum::NA && control_enums.ext_control_strategy == "NA")
                 {
-                    set_target_acP3_kW(1.3*this->P2_limit_kW);      // Uncontrolled Charging - (Nominal Power May increase with Vrms)
+                    this->set_target_acP3_kW(1.3*this->P2_limit_kW);      // Uncontrolled Charging - (Nominal Power May increase with Vrms)
                 }
                 else
                 {
-                    set_target_acP3_kW(0);
+                    this->set_target_acP3_kW(0);
                 }
                 
-                set_target_acQ3_kVAR(0);
+                this->set_target_acQ3_kVAR(0);
             }
         }
     }

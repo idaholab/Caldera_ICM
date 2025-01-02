@@ -182,31 +182,31 @@ poly_function_of_x::poly_function_of_x(double x_tolerance_, bool take_abs_of_x_,
 
 double poly_function_of_x::get_val(double x)
 {
-    if(take_abs_of_x)
+    if(this->take_abs_of_x)
         x = std::abs(x);
 
     //--------------------
     
     bool x_out_of_bounds = false;
     
-    if(index == 0 && x < x_LB)
+    if(this->index == 0 && x < this->x_LB)
     {
-        x = x_LB;
+        x = this->x_LB;
         x_out_of_bounds = true;
     }
-    else if(index == segments.size()-1 && x > x_UB)
+    else if(this->index == this->segments.size()-1 && x > this->x_UB)
     {
-        x = x_UB;
+        x = this->x_UB;
         x_out_of_bounds = true;
     }
-    else if(x < x_LB || x_UB < x)
+    else if(x < this->x_LB || this->x_UB < x)
     {
         bool index_set = false;
-        for(unsigned int i = 0; i < segments.size(); i++)
+        for(unsigned int i = 0; i < this->segments.size(); i++)
         {
-            if(segments[i].x_LB - x_tolerance <= x && x <= segments[i].x_UB + x_tolerance)
+            if(this->segments[i].x_LB - this->x_tolerance <= x && x <= this->segments[i].x_UB + this->x_tolerance)
             {
-                index = i;
+                this->index = i;
                 index_set = true;
                 break;
             }
@@ -216,53 +216,53 @@ double poly_function_of_x::get_val(double x)
         {
             x_out_of_bounds = true;
             
-            if(x <= segments[0].x_LB)
+            if(x <= this->segments[0].x_LB)
             {
-                index = 0;
-                x = segments[index].x_LB;
+                this->index = 0;
+                x = this->segments[index].x_LB;
             }
             else
             {
-                index = (int)segments.size() - 1;
-                x = segments[index].x_UB;
+                this->index = (int)this->segments.size() - 1;
+                x = this->segments[index].x_UB;
             }
         }
         
-        x_LB = segments[index].x_LB;
-        x_UB = segments[index].x_UB;
-        a = segments[index].a;
-        b = segments[index].b;
-        c = segments[index].c;
-        d = segments[index].d;
-        e = segments[index].e;
-        degree = segments[index].degree;
+        this->x_LB = this->segments[index].x_LB;
+        this->x_UB = this->segments[index].x_UB;
+        this->a = this->segments[index].a;
+        this->b = this->segments[index].b;
+        this->c = this->segments[index].c;
+        this->d = this->segments[index].d;
+        this->e = this->segments[index].e;
+        this->degree = this->segments[index].degree;
     }
     
     //-------------------------------------------
     
-    if(x_out_of_bounds && if_x_is_out_of_bounds_print_warning_message)
+    if(x_out_of_bounds && this->if_x_is_out_of_bounds_print_warning_message)
     {
-        std::string msg = "poly_function_of_x::get_val,  name:" + warning_msg_poly_function_name + "  msg:x_val out of range.  x_val:" + std::to_string(x);
+        std::string msg = "poly_function_of_x::get_val,  name:" + this->warning_msg_poly_function_name + "  msg:x_val out of range.  x_val:" + std::to_string(x);
         std::cout << msg << std::endl;
     }
     
     //-------------------------------------------    
     
-    if(degree == poly_degree::first)
-        return a*x + b;
-    else if(degree == poly_degree::second)
-        return a*x*x + b*x + c;
+    if(this->degree == poly_degree::first)
+        return this->a*x + this->b;
+    else if(this->degree == poly_degree::second)
+        return this->a*x*x + this->b*x + this->c;
     else
     {
         double x_2 = x*x;
         double x_3 = x*x_2;
         
-        if(degree == poly_degree::third)
-            return a*x_3 + b*x_2 + c*x + d;
-        else if(degree == poly_degree::fourth)
+        if(this->degree == poly_degree::third)
+            return this->a*x_3 + this->b*x_2 + this->c*x + d;
+        else if(this->degree == poly_degree::fourth)
         {
             double x_4 = x*x_3;
-            return a*x_4 + b*x_3 + c*x_2 + d*x + e;
+            return this->a*x_4 + this->b*x_3 + this->c*x_2 + this->d*x + e;
         }
     }
     
@@ -327,16 +327,24 @@ bool rand_val::rand_is_initialized = false;
 //                               Low Pass Filter
 //#############################################################################
 
+LPF_kernel::LPF_kernel() 
+    : max_window_size{ 1 },
+    raw_data{ std::vector<double>(this->max_window_size, 1.0) },
+    cur_raw_data_index{ 0 }, 
+    window_type{ LPF_window_enum::Rectangular }, 
+    window_size{ 1 }, 
+    window{ std::vector<double>(1, 1.0) },
+    window_area{ 1.0 }
+{
+
+}
+
 
 LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
-{
-    this->cur_raw_data_index = 0;
-    
-    for(int i=0; i<max_window_size; i++)
-    {
-        this->raw_data.push_back(initial_raw_data_value);
-    }
-    
+    : cur_raw_data_index{ 0 },
+    max_window_size{ max_window_size }, 
+    raw_data{std::vector<double>(max_window_size, initial_raw_data_value)}
+{    
     LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
     LPF_params.window_type = LPF_window_enum::Rectangular;
@@ -562,10 +570,10 @@ double get_value_from_normal_distribution::get_value()
     double random_val;
     while(true)
     {
-        //#pragma omp critical
-        //{
+        #pragma omp critical
+        {
             random_val = this->dis(this->gen);
-        //}
+        }
         if(std::abs(random_val) <= this->stdev_bounds)
             return this->stdev*random_val + this->mean;
     }
@@ -594,8 +602,13 @@ get_real_value_from_uniform_distribution::get_real_value_from_uniform_distributi
 
 
 double get_real_value_from_uniform_distribution::get_value()
-{    
-    double random_val = this->dis(this->gen);
+{   
+    
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -623,7 +636,12 @@ get_int_value_from_uniform_distribution::get_int_value_from_uniform_distribution
 
 int get_int_value_from_uniform_distribution::get_value()
 {    
-    int random_val = this->dis(this->gen);
+    int random_val;
+    
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -654,7 +672,11 @@ get_bernoulli_success::get_bernoulli_success(int seed, double p)
 
 bool get_bernoulli_success::is_success()
 {   
-    double random_val = this->dis(this->gen);
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return (random_val <= this->p_val);
 }
 

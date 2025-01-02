@@ -99,9 +99,6 @@ private:
     std::vector<pev_charge_profile_aux> charge_profiles;
     std::vector<double> setpoint_P3kW_search;
     
-    pev_charge_profile_aux* UB_profile;
-    pev_charge_profile_aux* LB_profile;
-    
     void update_UB_LB_profiles(double setpoint_P3kW);
     
 public:
@@ -114,23 +111,31 @@ public:
     charge_event_P3kW_limits get_charge_event_P3kW_limits() const;
     std::vector<double> get_P3kW_setpoints_of_charge_profiles() const;
     
-    pev_charge_profile_result find_result_given_startSOC_and_endSOC( const double setpoint_P3kW,
-                                                                     const double startSOC,
-                                                                     const double endSOC );
+    pev_charge_profile_result find_result_given_startSOC_and_endSOC( 
+        const double setpoint_P3kW,
+        const double startSOC,
+        const double endSOC 
+    ) const;
 
-    pev_charge_profile_result find_result_given_startSOC_and_chargeTime( const double setpoint_P3kW,
-                                                                         const double startSOC,
-                                                                         const double charge_time_hrs );
+    pev_charge_profile_result find_result_given_startSOC_and_chargeTime( 
+        const double setpoint_P3kW,
+        const double startSOC,
+        const double charge_time_hrs 
+    ) const;
     
-    void find_chargeProfile_given_startSOC_and_endSOCs( const double setpoint_P3kW,
-                                                        const double startSOC,
-                                                        const std::vector<double>& endSOC,
-                                                        std::vector<pev_charge_profile_result>& charge_profile );
+    void find_chargeProfile_given_startSOC_and_endSOCs( 
+        const double setpoint_P3kW,
+        const double startSOC,
+        const std::vector<double>& endSOC,
+        std::vector<pev_charge_profile_result>& charge_profile 
+    ) const;
     
-    void find_chargeProfile_given_startSOC_and_chargeTimes( const double setpoint_P3kW,
-                                                            const double startSOC,
-                                                            const std::vector<double>& charge_time_hrs,
-                                                            std::vector<pev_charge_profile_result>& charge_profile );
+    void find_chargeProfile_given_startSOC_and_chargeTimes( 
+        const double setpoint_P3kW,
+        const double startSOC,
+        const std::vector<double>& charge_time_hrs,
+        std::vector<pev_charge_profile_result>& charge_profile 
+    ) const;
 };
 
 
@@ -150,10 +155,16 @@ public:
                                         const EVSE_type SE_type,
                                         const pev_charge_profile& charge_profile );
 
-    pev_charge_profile* get_charge_profile( const EV_type pev_type,
-                                            const EVSE_type SE_type );
-    const pev_charge_profile* get_charge_profile( const EV_type pev_type,
-                                                  const EVSE_type SE_type ) const;
+    const pev_charge_profile& get_charge_profile(
+        const EV_type pev_type,
+        const EVSE_type SE_type
+    ) const;
+
+    bool has_charge_profile( const EV_type pev_type, const EVSE_type SE_type) const
+    {
+        std::pair<EV_type, EVSE_type> key = {pev_type, SE_type};
+        return this->charge_profile.find(key) != this->charge_profile.end(); 
+    }
 };
 
 

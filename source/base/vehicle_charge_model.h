@@ -42,19 +42,21 @@ public:
     vehicle_charge_model( const vehicle_charge_model_inputs& inputs );
     
     void set_target_P2_kW( const double target_P2_kW_ );
-    double get_target_P2_kW();
-    bool pev_has_arrived_at_SE( const double now_unix_time );
-    bool pev_is_connected_to_SE( const double now_unix_time );
-    bool charge_has_completed();
+    double get_target_P2_kW() const;
+    bool pev_has_arrived_at_SE( const double now_unix_time ) const;
+    bool pev_is_connected_to_SE( const double now_unix_time ) const;
+    bool charge_has_completed() const;
     
     void get_E1_battery_limits( double& max_E1_limit, 
-                                double& min_E1_limit );
+                                double& min_E1_limit ) const;
     
-       void get_next( const double prev_unix_time, 
-                   const double now_unix_time, 
-                   const double pu_Vrms,  
-                   bool& charge_has_completed, 
-                   battery_state& bat_state );
+    void get_next( 
+        const double prev_unix_time, 
+        const double now_unix_time, 
+        const double pu_Vrms,  
+        bool& charge_has_completed, 
+        battery_state& bat_state 
+    );
 };
 
 

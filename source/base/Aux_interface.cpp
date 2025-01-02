@@ -86,16 +86,16 @@ std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_d
 charge_event_P3kW_limits CP_interface::get_charge_event_P3kW_limits( const EV_type pev_type,
                                                                      const EVSE_type SE_type )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
-    return CP_ptr->get_charge_event_P3kW_limits();
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile(pev_type, SE_type);
+    return charge_profile.get_charge_event_P3kW_limits();
 }
 
 
 std::vector<double> CP_interface::get_P3kW_setpoints_of_charge_profiles( const EV_type pev_type,
                                                                          const EVSE_type SE_type )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
-    return CP_ptr->get_P3kW_setpoints_of_charge_profiles();
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile(pev_type, SE_type);
+    return charge_profile.get_P3kW_setpoints_of_charge_profiles();
 }
 
 
@@ -105,8 +105,8 @@ pev_charge_profile_result CP_interface::find_result_given_startSOC_and_endSOC( c
                                                                                const double startSOC,
                                                                                const double endSOC )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
-    return CP_ptr->find_result_given_startSOC_and_endSOC( setpoint_P3kW, startSOC, endSOC );
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile(pev_type, SE_type);
+    return charge_profile.find_result_given_startSOC_and_endSOC( setpoint_P3kW, startSOC, endSOC );
 }
 
 
@@ -116,8 +116,8 @@ pev_charge_profile_result CP_interface::find_result_given_startSOC_and_chargeTim
                                                                                    const double startSOC,
                                                                                    const double charge_time_hrs )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile(pev_type, SE_type);
-    return CP_ptr->find_result_given_startSOC_and_chargeTime( setpoint_P3kW, startSOC, charge_time_hrs );
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile(pev_type, SE_type);
+    return charge_profile.find_result_given_startSOC_and_chargeTime( setpoint_P3kW, startSOC, charge_time_hrs );
 }
 
 
@@ -127,12 +127,12 @@ std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_st
                                                                                                     const double startSOC,
                                                                                                     const std::vector<double> endSOC )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile( pev_type, SE_type );
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile( pev_type, SE_type );
     
-    std::vector<pev_charge_profile_result> charge_profile;
-    CP_ptr->find_chargeProfile_given_startSOC_and_endSOCs( setpoint_P3kW, startSOC, endSOC, charge_profile );
+    std::vector<pev_charge_profile_result> charge_profile_res;
+    charge_profile.find_chargeProfile_given_startSOC_and_endSOCs( setpoint_P3kW, startSOC, endSOC, charge_profile_res);
     
-    return charge_profile;
+    return charge_profile_res;
 }
 
 
@@ -142,12 +142,12 @@ std::vector<pev_charge_profile_result> CP_interface::find_chargeProfile_given_st
                                                                                                         const double startSOC,
                                                                                                         const std::vector<double> charge_time_hrs )
 {
-    pev_charge_profile* CP_ptr = this->CP_library.get_charge_profile( pev_type, SE_type );
+    const pev_charge_profile& charge_profile = this->CP_library.get_charge_profile( pev_type, SE_type );
         
-    std::vector<pev_charge_profile_result> charge_profile;
-    CP_ptr->find_chargeProfile_given_startSOC_and_chargeTimes( setpoint_P3kW, startSOC, charge_time_hrs, charge_profile );
+    std::vector<pev_charge_profile_result> charge_profile_res;
+    charge_profile.find_chargeProfile_given_startSOC_and_chargeTimes( setpoint_P3kW, startSOC, charge_time_hrs, charge_profile_res);
     
-    return charge_profile;
+    return charge_profile_res;
 }
 
 

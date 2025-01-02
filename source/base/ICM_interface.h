@@ -34,18 +34,24 @@ private:
     std::vector<supply_equipment*> SE_ptr_vector;
     std::map<grid_node_id_type, std::vector<supply_equipment*> > gridNodeId_to_SE_ptrs;
     
-    // Pointers to the following should be in every supply_equipment_load object.
-    factory_EV_charge_model* EV_model_factory;
-    factory_ac_to_dc_converter* ac_to_dc_converter_factory;
-    pev_charge_profile_library charge_profile_library;
-    get_base_load_forecast baseLD_forecaster;
+    // References to the following should be in every supply_equipment_load object.
+    const factory_EV_charge_model EV_model_factory;
+    const factory_ac_to_dc_converter ac_to_dc_converter_factory;
+    const pev_charge_profile_library charge_profile_library;
+    const get_base_load_forecast baseLD_forecaster;
+
+    // manage_L2_control_strategy_parameters consists of random number generator
+    // that keeps track of internal state. 
+    // This makes it unparallelizable. The memory needs are also somewhat big.
+    // So having individual copy of this in every supply_equiment_control is
+    // not a great idea. 1 solution could be using omp_critical block.
     manage_L2_control_strategy_parameters manage_L2_control;
     
+    const factory_EV_charge_model load_factory_EV_charge_model(const interface_to_SE_groups_inputs& inputs);
+
 public:
     interface_to_SE_groups( const std::string& input_path,
                             const interface_to_SE_groups_inputs& inputs );
-
-    ~interface_to_SE_groups();
 
     pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
     

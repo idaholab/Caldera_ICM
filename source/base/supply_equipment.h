@@ -17,22 +17,16 @@ class factory_ac_to_dc_converter;
 class supply_equipment
 {
 private:
-    SE_configuration SE_config;
+    const SE_configuration SE_config;
     
     supply_equipment_control SE_control;
     supply_equipment_load SE_Load;
     
 public:
 
-    supply_equipment() {};
-
     supply_equipment( const SE_configuration& SE_config_,
                       const supply_equipment_control& SE_control_,
                       const supply_equipment_load& SE_Load_ );
-        
-    void set_pointers_in_SE_Load( factory_EV_charge_model* PEV_charge_factory,
-                                  factory_ac_to_dc_converter* ac_to_dc_converter_factory,
-                                  pev_charge_profile_library* charge_profile_library );
     
     bool is_SE_with_id( const SupplyEquipmentId SE_id );
 

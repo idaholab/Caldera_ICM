@@ -60,7 +60,7 @@ public:
     const ES110_L2_parameters& get_ES110();
     const ES200_L2_parameters& get_ES200();
     const ES300_L2_parameters& get_ES300();
-    const ES300_L2_parameters& get_ES400();
+    const ES400_L2_parameters& get_ES400();
     const ES500_L2_parameters& get_ES500();
     
     const VS100_L2_parameters& get_VS100();
@@ -105,7 +105,7 @@ private:
 public:
     ES100_control_strategy(){};
     ES100_control_strategy(L2_control_strategies_enum L2_CS_enum_, manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
@@ -123,7 +123,7 @@ private:
 public:
     ES110_control_strategy(){};
     ES110_control_strategy(manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
@@ -208,7 +208,7 @@ public:
     void update_parameters_for_CE(double target_P3kW_);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
     
-    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, pev_charge_profile* charge_profile,
+    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, const pev_charge_profile& charge_profile,
                             const CE_status& charge_status, const charge_event_P3kW_limits& P3kW_limits, const SE_configuration& SE_config,
                             ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void set_energy_setpoints(double e3_setpoint_kWh);
@@ -289,7 +289,7 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 class supply_equipment_control
 {
 private:
-    SE_configuration SE_config;
+    const SE_configuration SE_config;
     
     ES100_control_strategy ES100A_obj;
     ES100_control_strategy ES100B_obj;
@@ -312,8 +312,7 @@ private:
     double prev_pu_Vrms, target_P3kW;    
     bool must_charge_for_remainder_of_park;
     
-    pev_charge_profile* charge_profile;
-    get_base_load_forecast* baseLD_forecaster;
+    const get_base_load_forecast& baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control;
     
     LPF_kernel LPF;
@@ -323,10 +322,10 @@ private:
     bool ensure_pev_charge_needs_met_for_ext_control_strategy;
     
 public:
-    supply_equipment_control() {};
+    //supply_equipment_control() : baseLD_forecaster{} {};
     supply_equipment_control( const bool building_charge_profile_library_,
                               const SE_configuration& SE_config_,
-                              get_base_load_forecast* baseLD_forecaster_,
+                              const get_base_load_forecast& baseLD_forecaster_,
                               manage_L2_control_strategy_parameters* manage_L2_control_ );
     
     control_strategy_enums get_control_strategy_enums();
