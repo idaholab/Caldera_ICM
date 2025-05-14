@@ -10,8 +10,10 @@ __pycache__/
 # Distribution / packaging
 *.vs*
 
-build/
-build_debug/
+build
+build_debug
+build_dev
+build_xcode
 
 CMakeCache.txt
 CMakeFiles
