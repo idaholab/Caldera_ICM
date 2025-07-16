@@ -123,7 +123,9 @@ void vehicle_charge_model::get_next( const double prev_unix_time,
             charge_needs_met_soc = (this->depart_soc <= soc_t1);
 
             if(!charge_needs_met_soc)
+            {
                 charge_needs_met_soc = (bat_state.reached_target_status == energy_target_reached_status::can_reach_energy_target_this_timestep && (bat_state.E1_energy_to_target_soc_kWh < bat_state.P1_kW * bat_state.time_step_duration_hrs));
+            }
         }
         else if(this->soc_mode == stop_charging_mode::block_charging)
         {        
@@ -149,35 +151,45 @@ void vehicle_charge_model::get_next( const double prev_unix_time,
         //-------------------------------
 
         if(this->decision_metric == stop_charging_decision_metric::stop_charging_using_depart_time)
+        {
             this->charge_needs_met_ = charge_needs_met_depart_time;
+        }
         else
         {
             if(this->soc_of_full_battery <= soc_t1)
+            {
                 this->charge_needs_met_ = true;
-            
+            }
             else if(this->decision_metric == stop_charging_decision_metric::stop_charging_using_target_soc)
+            {
                 this->charge_needs_met_ = charge_needs_met_soc;
-
+            }
             else if(this->decision_metric == stop_charging_decision_metric::stop_charging_using_whatever_happens_first)
-                this->charge_needs_met_ = charge_needs_met_soc || charge_needs_met_depart_time;            
-                
+            {
+                this->charge_needs_met_ = charge_needs_met_soc || charge_needs_met_depart_time;
+            }
             else
+            {
                 this->charge_needs_met_ = false;
+            }
         }
     }
 
     this->prev_soc_t1 = bat_state.soc_t1;
-
-/*
-this->bat.print_debug_info = false;
-if(this->charge_event_id == 1214)
-{
-  if(99.7 < bat_state.soc_t1 && bat_state.soc_t1 < 99.9)
-  {
-    this->bat.print_debug_info = true;
-    std::cout << "soc_full_bat: " << this->soc_of_full_battery << "  soc_t1: " << bat_state.soc_t1 << "  charge_needs_met: " << charge_needs_met_ << "  bat_P1kW: " << bat_state.P1_kW << "  bat_target_P2kW: " << this->bat.get_target_P2_kW() << std::endl;
-    std::cout << std::endl;
-  }
-}
-*/
+    
+    // this->bat.print_debug_info = false;
+    // if(this->charge_event_id == 1214)
+    // {
+    //   if(99.7 < bat_state.soc_t1 && bat_state.soc_t1 < 99.9)
+    //   {
+    //     this->bat.print_debug_info = true;
+    //     std::cout << "soc_full_bat: " << this->soc_of_full_battery
+    //               << "  soc_t1: " << bat_state.soc_t1
+    //               << "  charge_needs_met: " << charge_needs_met_
+    //               << "  bat_P1kW: " << bat_state.P1_kW
+    //               << "  bat_target_P2kW: " << this->bat.get_target_P2_kW()
+    //               << std::endl;
+    //     std::cout << std::endl;
+    //   }
+    // }
 }

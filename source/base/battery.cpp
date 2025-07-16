@@ -15,7 +15,13 @@ std::string battery_state::get_file_header()
 
 std::ostream& operator<<(std::ostream& out, battery_state& x)
 {
-    out << x.soc_t1 << "," << x.P1_kW << "," << x.P2_kW << "," << x.time_step_duration_hrs << "," << x.reached_target_status << "," << x.E1_energy_to_target_soc_kWh << "," << x.min_time_to_target_soc_hrs;
+    out << x.soc_t1 << ","
+        << x.P1_kW << ","
+        << x.P2_kW << ","
+        << x.time_step_duration_hrs << ","
+        << x.reached_target_status << ","
+        << x.E1_energy_to_target_soc_kWh << ","
+        << x.min_time_to_target_soc_hrs;
     return out;
 }
 
@@ -81,7 +87,8 @@ void battery::get_next( const double prev_unix_time,
                         const bool stop_charging_at_target_soc, 
                         battery_state& return_val )
 {
-    double time_step_sec, time_step_hrs;
+    double time_step_sec;
+    double time_step_hrs;
     
     time_step_sec = now_unix_time - prev_unix_time;
     time_step_hrs = time_step_sec/3600;
@@ -91,8 +98,17 @@ void battery::get_next( const double prev_unix_time,
     //        (E1_UB, E1_LB, E2_UB, E2_LB)
     //-----------------------------------------
     
-    double E1_kWh_UB, E1_kWh_LB, E2_kWh_UB, E2_kWh_LB, c, d, eff_tmp, x;
-    E1_energy_limit E1_limit_UB, E1_limit_LB;
+    double E1_kWh_UB;
+    double E1_kWh_LB;
+    double E2_kWh_UB;
+    double E2_kWh_LB;
+    double c;
+    double d;
+    double eff_tmp;
+    double x;
+    
+    E1_energy_limit E1_limit_UB;
+    E1_energy_limit E1_limit_LB;
     
     //------------------
     // Get E1_limit_UB
@@ -195,7 +211,10 @@ void battery::get_next( const double prev_unix_time,
     //      Calculate P2_kW
     //------------------------------
 
-    double target_P2, P2_kW, P2_kW_UB, P2_kW_LB;
+    double target_P2;
+    double P2_kW;
+    double P2_kW_UB;
+    double P2_kW_LB;
     integral_of_X P2_struct;
     
     target_P2 = this->target_P2_kW;
@@ -272,3 +291,4 @@ void battery::get_next( const double prev_unix_time,
     return_val.E1_energy_to_target_soc_kWh = (this->target_P2_kW == 0) ? 0 :(this->target_P2_kW >= 0) ? E1_limit_UB.E1_energy_to_target_soc_kWh : E1_limit_LB.E1_energy_to_target_soc_kWh;
     return_val.min_time_to_target_soc_hrs = (this->target_P2_kW == 0) ? -1 :(this->target_P2_kW >= 0) ? E1_limit_UB.min_time_to_target_soc_hrs : E1_limit_LB.min_time_to_target_soc_hrs;
 }
+

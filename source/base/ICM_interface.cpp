@@ -440,7 +440,9 @@ std::vector<double> interface_to_SE_groups::get_SE_group_charge_profile_forecast
 }
 
 
-std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::get_charging_power(double prev_unix_time, double now_unix_time, std::map<grid_node_id_type, double> pu_Vrms)
+std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::get_charging_power( const double prev_unix_time,
+                                                                                                   const double now_unix_time,
+                                                                                                   const std::map<grid_node_id_type, double> gnid_to_puVrms_map)
 {
     const int POWER_TO_RETURN_P1P2P3 = 3;
     
@@ -452,9 +454,12 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
     std::pair<double, double> tmp_pwr;
     double P1_kW, P2_kW, P3_kW, Q3_kVAR;
     
-    for(std::pair<grid_node_id_type, double> pu_Vrms_pair : pu_Vrms)
+    for(std::pair<grid_node_id_type, double> gnid_puVrms_pair : gnid_to_puVrms_map)
     {
-        it = this->gridNodeId_to_SE_ptrs.find(pu_Vrms_pair.first);
+        const grid_node_id_type& gnid = gnid_puVrms_pair.first;
+        const double pu_Vrms = gnid_puVrms_pair.second;
+        
+        it = this->gridNodeId_to_SE_ptrs.find(gnid);
         
         if( it == this->gridNodeId_to_SE_ptrs.end() )
         {
@@ -472,14 +477,19 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
                 exit(0);
             }
             tmp_pwr.second = Q3_kVAR;
-            return_val[pu_Vrms_pair.first] = tmp_pwr;
+            return_val[gnid] = tmp_pwr;
         }
         else
         {
             // Access the object the iterator is pointing to.
             const std::pair< grid_node_id_type, std::vector<supply_equipment*> >& gridnodeid_SEvec_pair = *it; 
             
+            // NOTE: There may be multiple supply-equipments on a single grid-node-id.
+            
+            // --------------------------------------------------------------------------------------------------
             // Iterate over each supply_equipment pointer and sum up the power used by each during this timestep.
+            // --------------------------------------------------------------------------------------------------
+            
             P1_kW = 0;
             P2_kW = 0;
             P3_kW = 0;
@@ -498,7 +508,7 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
                 // All class members are local or const& except for manage_L2_control_strategy 
                 // which is protected by pragma omp critical. 
                 // Future version will need to ensure we maintain thread safety.
-                SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms_pair.second, soc, ac_power_tmp);
+                SE_ptr->get_next(prev_unix_time, now_unix_time, pu_Vrms, soc, ac_power_tmp);
                 
                 P1_kW += ac_power_tmp.P1_kW;
                 P2_kW += ac_power_tmp.P2_kW;
@@ -516,7 +526,7 @@ std::map<grid_node_id_type, std::pair<double, double>> interface_to_SE_groups::g
             }
             tmp_pwr.second = Q3_kVAR;
             
-            return_val[pu_Vrms_pair.first] = tmp_pwr;
+            return_val[gnid] = tmp_pwr;
         }
     }
     

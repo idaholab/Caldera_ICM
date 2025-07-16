@@ -50,9 +50,9 @@ private:
     
     // Both pointer are local to this class.
     ac_to_dc_converter* ac_to_dc_converter_obj;
-    vehicle_charge_model* ev_charge_model;
+    vehicle_charge_model* ev_charge_model;               // <--- This object is built by the 'factory_EV_charge_model'.
     
-    const factory_EV_charge_model& PEV_charge_factory;
+    const factory_EV_charge_model& PEV_charge_factory;   // <--- This factory builds a 'vehicle_charge_model' object.
     const factory_ac_to_dc_converter& ac_to_dc_converter_factory;
     
     const pev_charge_profile_library& charge_profile_library;

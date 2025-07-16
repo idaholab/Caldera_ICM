@@ -73,7 +73,9 @@ public:
     std::vector<double> get_SE_charge_profile_forecast_akW(SupplyEquipmentId SE_id, double setpoint_P3kW, double time_step_mins);
     std::vector<double> get_SE_group_charge_profile_forecast_akW(int SE_group, double setpoint_P3kW, double time_step_mins);
     
-    std::map<grid_node_id_type, std::pair<double, double> > get_charging_power(double prev_unix_time, double now_unix_time, std::map<grid_node_id_type, double> pu_Vrms);
+    std::map<grid_node_id_type, std::pair<double, double> > get_charging_power( const double prev_unix_time,
+                                                                                const double now_unix_time,
+                                                                                const std::map<grid_node_id_type, double> gnid_to_puVrms_map);
     // "pu_Vrms" means "per unit voltage root mean squared"
     SE_power get_SE_power(SupplyEquipmentId SE_id, double prev_unix_time, double now_unix_time, double pu_Vrms);
     

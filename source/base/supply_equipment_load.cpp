@@ -103,7 +103,7 @@ void charge_event_handler::remove_charge_events_that_are_ending_soon( const doub
     for(std::set<charge_event_data>::iterator it : its_to_remove)
     {
         std::stringstream str_ss;
-        str_ss << "Warning : Charge Event removed since charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
+        str_ss << "Notice : Charge Event removed (a.k.a. concluded early) since *remaining* charge time less than " << time_limit_seconds << " sec.  charge_event_id: " << std::to_string(it->charge_event_id);
         // Erasing the item after we create the Warning string so that the iterator is still valid.
         this->charge_events.erase(it);
         std::cout << str_ss.str() << std::endl;
@@ -600,6 +600,7 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 
         // Remove any charge-events that are ending too soon.
         const double time_limit_seconds = 60.0;  //<----- TODO: I think this should be equal to the current Caldera_ICM timestep.
+        // const double time_limit_seconds = fmin( 60.0, fmax(10.0,now_unix_time-prev_unix_time) );   <--- Maybe do this instead?
         this->event_handler.remove_charge_events_that_are_ending_soon( now_unix_time, time_limit_seconds );
 
         // If there is another event available, process it.
@@ -696,7 +697,11 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
 
         this->ev_charge_model->get_next(prev_unix_time, now_unix_time, pu_Vrms, charge_has_completed, bat_state);
         
-//std::cout << "Simulation Time: " << now_unix_time/3600 << "    target_P2_kW: " << this->ev_charge_model->get_target_P2_kW() << "    P2_kW: " << bat_state.P2_kW << "    now-prev: " << now_unix_time-prev_unix_time << std::endl;
+        // std::cout << "Simulation Time: " << now_unix_time/3600
+        //           << "    target_P2_kW: " << this->ev_charge_model->get_target_P2_kW()
+        //           << "    P2_kW: " << bat_state.P2_kW
+        //           << "    now-prev: " << now_unix_time-prev_unix_time
+        //           << std::endl;
         
         this->SE_stat.pev_is_connected_to_SE = true;
         this->SE_stat.current_charge.now_soc = bat_state.soc_t1;
@@ -710,7 +715,9 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         this->SE_stat.current_charge.now_acQkVAR = ac_power.Q3_kVAR;
         
         if(this->ac_to_dc_converter_obj->get_can_provide_reactive_power_control())
+        {
             Q3_kVAR = ac_power.Q3_kVAR;
+        }
         
         //--------------
         
@@ -722,13 +729,22 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         
         if(charge_has_completed)
         {
-//################
-//if(this->SE_stat.current_charge.charge_event_id < 1000) 
-//    std::cout << "Charge Completed!  now_time_hrs: " << now_unix_time/3600.0 << "  charge_event_id: " << this->SE_stat.current_charge.charge_event_id << "  soc: " << bat_state.soc_t1 << "  SE_type: " << this->SE_config.supply_equipment_type << "  EV_type: " << this->SE_stat.current_charge.vehicle_type << std::endl;
-//################
+            //################
+            // if(this->SE_stat.current_charge.charge_event_id < 1000)
+            // {
+            //    std::cout << "Charge Completed!  "
+            //              << "  now_unix_time:      " << now_unix_time
+            //              << "  now_unix_time(hrs): " << now_unix_time/3600.0
+            //              << "  charge_event_id: " << this->SE_stat.current_charge.charge_event_id
+            //              << "  soc: " << bat_state.soc_t1
+            //              << "  SE_type: " << this->SE_config.supply_equipment_type
+            //              << "  EV_type: " << this->SE_stat.current_charge.vehicle_type << std::endl;
+            // }
+            //################
 
             SE_charge_status = SE_charging_status::ev_charge_complete;
             
+            // The corresponding 'new' command was done in 'factory_EV_charge_model::alloc_get_EV_charge_model'
             delete this->ev_charge_model;
             this->ev_charge_model = NULL;
             
@@ -741,9 +757,13 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
         else
         {
             if(std::abs(bat_state.P1_kW) < 0.0001)
+            {
                 SE_charge_status = SE_charging_status::ev_plugged_in_not_charging;
+            }
             else
+            {
                 SE_charge_status = SE_charging_status::ev_charging;
+            }
         }
     }
     else

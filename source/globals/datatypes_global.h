@@ -476,7 +476,7 @@ struct charge_event_data
     int charge_event_id;
     int SE_group_id;
     SupplyEquipmentId SE_id;
-       vehicle_id_type vehicle_id;
+    vehicle_id_type vehicle_id;
     EV_type vehicle_type;
     double arrival_unix_time;    // in seconds
     double departure_unix_time;  // in seconds
