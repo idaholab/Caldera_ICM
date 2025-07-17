@@ -1,17 +1,8 @@
 #include "factory_SOC_vs_P2.h"
 #include <fstream>
 #include <algorithm>
+#include <unordered_set>
 
-//##########################################################
-//                      SOC_vs_P2
-//##########################################################
-
-SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
-                     const double& zero_slope_threshold)
-    : curve{ curve }, 
-    zero_slope_threshold{ zero_slope_threshold }
-{
-}
 
 
 //##########################################################
@@ -804,6 +795,9 @@ factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const 
     LTO_charge{ this->load_LTO_charge() },
     L1_L2_curves{ this->load_L1_L2_curves() },
     DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor, 20, 10.0 ) }
+#endif
 {
 }
 
@@ -825,6 +819,22 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    else if (level == EVSE_level::DCFC)
+    {
+        const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
+
+        if (this->TA_DCFC_curves.find(key) != this->TA_DCFC_curves.end())
+        {
+            return this->TA_DCFC_curves.at(key);
+        }
+        else
+        {
+            ASSERT(false, "Error: [TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING IS TRUE] P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
+            return this->error_case_curve;
+        }
+    }
+#else
     else if (level == EVSE_level::DCFC)
     {
         const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
@@ -839,6 +849,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
+#endif
     else
     {
         ASSERT(false, "invalid EVSE_level");
@@ -1186,6 +1197,209 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
     }
 
     return return_val;
+}
+
+
+const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( 
+                                                                                                            const double c_rate_scale_factor,
+                                                                                                            const int n_curves,
+                                                                                                            const double starting_battery_temperature_C )
+{    
+    // ---------------------------------------------------------------------------------------------------
+    // Step 1: Load 'n_curves' curves at different c-rate levels.
+    // ---------------------------------------------------------------------------------------------------
+    
+    std::vector< std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > > curves_each_level_array;
+    std::unordered_set< std::pair<EV_type, EVSE_type>, pair_hash > ev_evse_pairs_set;
+    for( int i = 0; i < n_curves; i++ )
+    {
+        const double adjusted_c_rate_scale_factor = ((double)(i+1))/((double)n_curves);
+        const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash >& curves_for_level_i = factory_SOC_vs_P2::load_DCFC_curves( adjusted_c_rate_scale_factor );
+        curves_each_level_array.push_back( curves_for_level_i );
+        for( const auto& evevsepair_curve_pair : curves_for_level_i )
+        {
+            ev_evse_pairs_set.insert( evevsepair_curve_pair.first );
+        }
+    }
+    
+    // ---------------------------------------------
+    // Step 1.1:  Define things we will need below.
+    // ---------------------------------------------
+    
+    // --------------------------------------------------------
+    // Define the 'update_power_level_index_callback' callback.
+    // --------------------------------------------------------
+    auto update_power_level_index_callback_v4 = [&] (
+        const int current_power_level_index,
+        const int max_power_level_index_at_current_SOC_and_temperature,
+        const double current_temperature_C,
+        const double current_temperature_grad,
+        const double min_temperature_C,
+        const double max_temperature_C
+    ) -> int {
+        // Approaching the max temperature threshold:
+        const double approaching_max_temp_threshold = min_temperature_C + (9.0/10.0)*(max_temperature_C - min_temperature_C);
+        const double approaching_min_temp_threshold = min_temperature_C + (8.0/9.0)*(max_temperature_C - min_temperature_C);
+        const double upper_gradient_threshold = (max_temperature_C - current_temperature_C)/60.0;
+        const double lower_gradient_threshold = (min_temperature_C - current_temperature_C)/60.0;
+        if(
+            current_temperature_C >= max_temperature_C
+            ||
+            ( current_temperature_C > approaching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
+        )
+        {
+            // Reduce the power level.
+            return std::min( std::max( current_power_level_index-7, 0 ), max_power_level_index_at_current_SOC_and_temperature );
+        }
+        else if(
+            current_temperature_C <= min_temperature_C
+            ||
+            ( current_temperature_C < approaching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+            ||
+            current_temperature_C <= approaching_min_temp_threshold
+        )
+        {
+            // Increase the power level.
+            return std::min( current_power_level_index+7, max_power_level_index_at_current_SOC_and_temperature );
+        }
+        else
+        {
+            return std::min( current_power_level_index, max_power_level_index_at_current_SOC_and_temperature );
+        }
+    };
+    
+    
+    // ---------------------------------------
+    // FOR NOW, just HARD-CODING these values. <--------- TODO: Later, we need a way to input these for each EV-EVSE-pair (and ambient temperature).
+    // ---------------------------------------
+    // For ngp_hyundai_ioniq_5_longrange_awd:   
+    const std::string tgradmodel_EV_type = "ngp_hyundai_ioniq_5_longrange_awd";
+    const double tgradmodel_c0_intercept = 0.002023113474550346;
+    const double tgradmodel_c1_power_kW = 0.0001736131802966143;
+    const double tgradmodel_c2_temperature_C = -0.00043137615959905405;
+    const double tgradmodel_c3_time_sec = 2.5671254825204444e-06;
+    const double tgradmodel_c4_soc = 3.224134349228123e-06;
+    temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
+                                        tgradmodel_c0_intercept,
+                                        tgradmodel_c1_power_kW,
+                                        tgradmodel_c2_temperature_C,
+                                        tgradmodel_c3_time_sec,
+                                        tgradmodel_c4_soc );
+    // For ngp_hyundai_ioniq_5_longrange_awd:   
+    std::vector<double> battery_temperature_C = {-1000,0,15,16,20,22,24,25,50,1000};
+    std::vector<double> max_charging_power_kW_at_each_T_pts = {20,60,75,107,108,200,200,233,233,300}; 
+    std::vector<double> battery_SOC = {-1000,0,15,55,77,82,100,1000};
+    std::vector<double> max_charging_power_kW_at_each_SOC_pts = {0,219,224,238,156,131,5,0};
+    temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
+    // For ngp_hyundai_ioniq_5_longrange_awd:  
+    const double min_temperature_C = 39;
+    const double max_temperature_C = 49;
+    
+
+    // ---------------------------------------------------------------------------------------------------
+    // Step 2: For each (EV_type, EVSE_type) pair, compute the corresponding temperature-aware profile.
+    // ---------------------------------------------------------------------------------------------------
+
+    #define TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING 0
+    
+    const EV_inventory& EV_inv = this->inventory.get_EV_inventory();
+    const EVSE_inventory& EVSE_inv = this->inventory.get_EVSE_inventory();
+
+    std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > return_value;
+
+    for( const auto& ev_evse_pair : ev_evse_pairs_set )
+    {    
+        // Other parameters
+        const double time_step_sec = 5;
+        const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
+        const double start_soc = 0;               // <---------------------------------------------------------------- TODO: We technically should be doing this simulation
+                                                  //                                                                         for each individual charge event since we won't
+                                                  //                                                                         know the start_SOC until the specific charge event and
+                                                  //                                                                         that affects the temperature and actual power profile curve!!
+        const double end_soc = 100;
+        const double start_temperature_C = starting_battery_temperature_C;
+        
+    
+        std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high;
+        for( int i = 0; i < n_curves; i++ )
+        {
+            const SOC_vs_P2& socvsp2_for_level_i = curves_each_level_array.at(i).at( ev_evse_pair );
+            power_profiles_sorted_low_to_high.push_back( socvsp2_for_level_i );
+        }
+        
+        const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
+                                                                                    power_profiles_sorted_low_to_high,
+                                                                                    max_power_model,
+                                                                                    start_temperature_C,
+                                                                                    start_soc );
+    
+        const SOC_vs_P2 socVsP2_temperature_aware = temperature_aware::TemperatureAwareProfiles::generate_temperature_aware_power_profile(
+                                                                power_profiles_sorted_low_to_high,     // const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high,
+                                                                temperature_grad_model,                // const temperature_gradient_model& temperature_grad_model,
+                                                                max_power_model,                       // const max_charging_power_model& max_power_model,
+                                                                time_step_sec,                         // const double time_step_sec,
+                                                                battery_capacity_kWh,                  // const double battery_capacity_kWh,
+                                                                start_soc,                             // const double start_soc,
+                                                                end_soc,                               // const double end_soc,
+                                                                start_temperature_C,                   // const double start_temperature_C,
+                                                                min_temperature_C,                     // const double min_temperature_C,
+                                                                max_temperature_C,                     // const double max_temperature_C,
+                                                                start_power_level_index,               // const int start_power_level_index,
+                                                                time_step_sec*3,                       // const double update_power_level_delay_sec,
+                                                                #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                                                                    std::string("TAP_TEMPORARY_output_for_testing.csv"),      // const std::string output_file_name,
+                                                                #else
+                                                                    std::string(""),      // const std::string output_file_name,
+                                                                #endif
+                                                                update_power_level_index_callback_v4   // std::function<int(
+                                                                                                       //               const int current_power_level_index,
+                                                                                                       //               const int max_power_level_index_at_current_temperature,
+                                                                                                       //               const double current_temperature_C,
+                                                                                                       //               const double current_temperature_grad,
+                                                                                                       //               const double min_temperature_C,
+                                                                                                       //               const double max_temperature_C
+                                                                                                       //           )> update_power_level_index_callback
+                                                            );
+        
+        
+        //  ----------------------------------------------------------------------
+        //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+        //  ----------------------------------------------------------------------
+        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+        if( ev_evse_pair.first == "bev250_350kW" && ev_evse_pair.second == "xfc_350" )   
+        {
+            std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
+            std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
+            
+            //
+            // Plot these results to see if you think it's doing it right!!
+            //
+            const std::string file_name = "TEMPORARY_output_for_testing.csv";
+            std::ofstream opfile;
+            opfile.open(file_name);
+            opfile << "soc,power_kW" << std::endl;
+            const int N = 1000;
+            const double h = ( socVsP2_temperature_aware.xmax() - socVsP2_temperature_aware.xmin() ) / N;
+            for( int i = 0; i < N; i++ )
+            {
+                const double x = socVsP2_temperature_aware.xmin() + i*h + 0.5*h;
+                const double y = socVsP2_temperature_aware.eval( x );
+                opfile << x << "," << y << std::endl;
+            }
+            // Close the file
+            opfile.close();
+            __builtin_debugtrap();
+        }
+        #endif
+            
+        
+        //  --------------------------------------------------------
+        //  Saving the result in the 'return_value' data structure.
+        //  --------------------------------------------------------
+        return_value.emplace( ev_evse_pair, socVsP2_temperature_aware );
+    }
+    
+    return return_value;
 }
 
 void factory_SOC_vs_P2::write_charge_profile(const std::string& output_path) const

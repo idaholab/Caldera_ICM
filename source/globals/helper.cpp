@@ -147,10 +147,39 @@ lin_reg_slope_yinter  linear_regression::weighted(const std::vector<xy_point>& p
 
 
 
-std::ostream& operator<<(std::ostream& out, line_segment& z)
+//##########################################################
+//                      line_segment
+//##########################################################
+
+
+std::ostream& operator<<(std::ostream& out, const line_segment& z)
 {
-    out << z.x_LB << "," << z.a*z.x_LB + z.b << std::endl;
-    out << z.x_UB << "," << z.a*z.x_UB + z.b << std::endl;
+    out << "LineSeg:LB:" << z.x_LB << "," << z.y_LB();
+    out <<        ";UB:" << z.x_UB << "," << z.y_UB();
+    return out;
+}
+
+
+//##########################################################
+//                      SOC_vs_P2
+//##########################################################
+
+SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
+                     const double& zero_slope_threshold)
+    : curve{ curve }, 
+    zero_slope_threshold{ zero_slope_threshold }
+{
+}
+
+
+std::ostream& operator<<(std::ostream& out, const SOC_vs_P2& x)
+{
+    out << "SOC_vs_P2: [zero_slope_threshold:" << x.zero_slope_threshold << ",n_curves:" << x.curve.size() << ",curve:";
+    for( const auto& lineseg : x.curve )
+    {
+        out << "{" << lineseg << "}";
+    }
+    out << "]";
     return out;
 }
 
