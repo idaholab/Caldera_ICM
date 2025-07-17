@@ -61,6 +61,11 @@ public:
     static lin_reg_slope_yinter  weighted(const std::vector<xy_point>& points);
 };
 
+
+//##########################################################
+//                      line_segment
+//##########################################################
+
 struct line_segment
 {
     // y = a*x + b
@@ -69,24 +74,66 @@ struct line_segment
     double a;
     double b;
    
-       const double y_UB() const {return this->a*this->x_UB + this->b;}
-    const double y_LB() const {return this->a*this->x_LB + this->b;}
-    const double y(const double x) const {return this->a*x + this->b;}
+    const double y(const double x) const { return this->a*x + this->b; }
+    const double y_LB() const { return this->y(this->x_LB); }
+    const double y_UB() const { return this->y(this->x_UB); }
     
-       bool operator<(const line_segment& rhs) const
-       {
-           return this->x_LB < rhs.x_LB;
-       }
+    bool operator<(const line_segment& rhs) const
+    {
+        return this->x_LB < rhs.x_LB;
+    }
 
     bool operator<(line_segment& rhs) const
-       {
-           return this->x_LB < rhs.x_LB;
-       }
+    {
+        return this->x_LB < rhs.x_LB;
+    }
 
     line_segment(const double x_LB, const double x_UB, const double a, const double b)
         : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
 };
-std::ostream& operator<<(std::ostream& out, line_segment& x);
+std::ostream& operator<<(std::ostream& out, const line_segment& x);
+
+
+
+//##########################################################
+//                      SOC_vs_P2
+//##########################################################
+
+struct SOC_vs_P2
+{
+    const std::vector<line_segment> curve;
+    const double zero_slope_threshold;
+
+    SOC_vs_P2() : curve(std::vector<line_segment>()), zero_slope_threshold(0.0) {}
+    SOC_vs_P2(const std::vector<line_segment>& curve,
+              const double& zero_slope_threshold);
+    
+    double eval( const double x ) const
+    {
+        for( const line_segment& ls : curve )
+        {
+            if( x >= ls.x_LB && x <= ls.x_UB )
+            {
+                return ls.y(x);
+            }
+        }
+        std::cout << "ERROR in 'SOC_vs_P2::eval'. x out of range." << std::endl;
+        exit(1);
+        return 0.0;
+    }
+    
+    double xmin() const
+    {
+        return this->curve.at(0).x_LB;
+    }
+    
+    double xmax() const
+    {
+        return this->curve.at(this->curve.size()-1).x_UB;
+    }
+};
+std::ostream& operator<<(std::ostream& out, const SOC_vs_P2& x);
+
 
 
 //#############################################################################

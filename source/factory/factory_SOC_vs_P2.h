@@ -6,11 +6,18 @@
 
 #include "EV_EVSE_inventory.h"
 
-#include "helper.h"                 // line_segment, 
+#include "helper.h"                 // line_segment,SOC_vs_P2 
+
+#include "temperature_aware_profiles.h"
 
 typedef double c_rate;
 typedef double SOC;
 typedef double power;
+
+
+#define TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING 0   
+
+
 
 enum class point_type
 {
@@ -31,15 +38,6 @@ struct bat_objfun_constraints
     double b;
 };
 
-struct SOC_vs_P2
-{
-    const std::vector<line_segment> curve;
-    const double zero_slope_threshold;
-
-    SOC_vs_P2() : curve(std::vector<line_segment>()), zero_slope_threshold(0.0) {}
-    SOC_vs_P2(const std::vector<line_segment>& curve,
-              const double& zero_slope_threshold);
-};
 
 typedef std::map<c_rate, std::map<SOC, std::pair<power, point_type> >, std::greater<c_rate> > curves_grouping;
 
@@ -89,6 +87,7 @@ private:
 
     const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
     const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > TA_DCFC_curves;
     const SOC_vs_P2 error_case_curve; // <-- empty data structure the reference to which is returned in error cases.
 
     const create_dcPkW_from_soc load_LMO_charge();
@@ -97,6 +96,11 @@ private:
 
     const std::unordered_map<EV_type, SOC_vs_P2 > load_L1_L2_curves();
     const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves( const double c_rate_scale_factor = 1.0 );
+    
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_temperature_aware_DCFC_curves( 
+                                                                                                                const double c_rate_scale_factor,
+                                                                                                                const int n_curves,
+                                                                                                                const double starting_battery_temperature_C );
 
 public:
     factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
