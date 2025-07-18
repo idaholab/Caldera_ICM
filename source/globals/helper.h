@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <string>
+#include <iomanip>
 
 struct pair_hash
 {
@@ -104,6 +105,11 @@ struct line_segment
         this->x_LB = x0;
         this->x_UB = x1;
     }
+    
+    void write_to_file( std::ostream& fout ) const
+    {
+        fout << "line_segment,x_LB,x_UB,a,b," << std::setprecision(16) << this->x_LB << "," << this->x_UB << "," << this->a << "," << this->b << std::endl;
+    }
 };
 std::ostream& operator<<(std::ostream& out, const line_segment& x);
 
@@ -144,6 +150,15 @@ struct SOC_vs_P2
     double xmax() const
     {
         return this->curve.at(this->curve.size()-1).x_UB;
+    }
+    
+    void write_to_file( std::ostream& fout ) const
+    {
+        fout << "SOC_vs_P2,n_line_segments,zero_slope_threshold," << this->curve.size()  << "," << std::setprecision(16) << this->zero_slope_threshold << std::endl;
+        for( const line_segment& ls : this->curve )
+        {
+            ls.write_to_file( fout );
+        }
     }
 };
 std::ostream& operator<<(std::ostream& out, const SOC_vs_P2& x);

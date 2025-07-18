@@ -471,4 +471,111 @@ class TemperatureAwareProfiles
     }
 };
 
+
+
+
+
+
+struct temperature_aware_profiles_data_store
+{
+    public:
+    
+    std::vector< double > start_temperature_C_vec; // in Celsius
+    std::vector< double > start_soc_vec;   // in 0 to 100 format.
+    std::map< std::pair< double, double >, SOC_vs_P2 > temperatureSOCpair_to_power_profile_map;
+    
+    temperature_aware_profiles_data_store() {}
+    
+    void add( const double start_temperature_C, const double start_soc, const SOC_vs_P2& profile )
+    {
+        temperatureSOCpair_to_power_profile_map.emplace( std::make_pair(start_temperature_C,start_soc), profile );
+        
+        // Insert the temperature and SOC for key-look-up.
+        start_temperature_C_vec.push_back(start_temperature_C);
+        start_soc_vec.push_back(start_soc);
+        
+        // Sort the vectors to ensure they remain in ascending order.
+        std::sort(start_temperature_C_vec.begin(), start_temperature_C_vec.end());
+        std::sort(start_soc_vec.begin(), start_soc_vec.end());    
+    }
+    
+    // Checks to be sure the data store is 'complete', a.k.a. it has a profile
+    // for every possible pair in (start_temperature_C_vec x start_soc_vec).
+    bool complete()
+    {
+        for( const double temperature : start_temperature_C_vec )
+        {
+            for( const double soc : start_soc_vec )
+            {
+                if( temperatureSOCpair_to_power_profile_map.find( std::make_pair(temperature,soc) ) == temperatureSOCpair_to_power_profile_map.end() )
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    SOC_vs_P2 lookup_profile( const double start_temperature_C, const double start_soc )
+    {
+        // Find the profile whose starting temperature is nearest to 'start_temperature_C'
+        // and whose starting SOC is nearest to 'start_soc'.
+        auto nearest_temperature_iterator = std::min_element(
+            this->start_temperature_C_vec.begin(),
+            this->start_temperature_C_vec.end(),
+            [start_temperature_C] ( const double a, const double b ) {
+                return std::abs(a - start_temperature_C) < std::abs(b - start_temperature_C);
+            }
+        );
+        auto nearest_soc_iterator = std::min_element(
+            this->start_soc_vec.begin(),
+            this->start_soc_vec.end(),
+            [start_soc] ( const double a, const double b ) {
+                return std::abs(a - start_soc) < std::abs(b - start_soc);
+            }
+        );
+        if( nearest_temperature_iterator == this->start_temperature_C_vec.end() || nearest_soc_iterator == this->start_soc_vec.end() )
+        {
+            // ERROR
+            std::cout << "ERROR finding nearest in 'temperature_aware_profiles_data_store::lookup_profile'" << std::endl;
+            exit(1);
+        }
+        
+        // Get the key values
+        const double nearest_temperature_C = *nearest_temperature_iterator;
+        const double nearest_soc = *nearest_soc_iterator;
+        
+        // Return the profile.
+        return temperatureSOCpair_to_power_profile_map.at( std::make_pair(nearest_temperature_C,nearest_soc) );
+    }
+    
+    void write_to_file( std::ostream& fout ) const
+    {
+        // TODO
+    }
+    
+    void output_to_cache_file( const std::string filename ) const
+    {
+        std::ofstream opfile;
+        opfile.open(filename);
+        this->write_to_file( opfile );
+        opfile.close();
+        return;
+    }
+    
+    void load_from_cache_file( const std::string filename )
+    {
+        // TODO - UNDER CONSTRUCTION
+        return;
+    }
+};
+
+
+
+
+
+
+
+
+
 } // end namespace temperature_aware
