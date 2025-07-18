@@ -90,6 +90,20 @@ struct line_segment
 
     line_segment(const double x_LB, const double x_UB, const double a, const double b)
         : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
+    
+    line_segment( const std::pair<double,double> x0y0, std::pair<double,double> x1y1 )
+        : x_LB(0), x_UB(0), a(0), b(0)
+    {
+        const double x0 = x0y0.first;
+        const double x1 = x1y1.first;
+        const double y0 = x0y0.second;
+        const double y1 = x1y1.second;
+        
+        this->a = (y1-y0)/(x1-x0);
+        this->b = y0 - this->a*x0;
+        this->x_LB = x0;
+        this->x_UB = x1;
+    }
 };
 std::ostream& operator<<(std::ostream& out, const line_segment& x);
 

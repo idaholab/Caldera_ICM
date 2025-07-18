@@ -1234,7 +1234,7 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
         const int max_power_level_index_at_current_SOC_and_temperature,
         const double current_temperature_C,
         const double current_temperature_grad,
-        const double min_temperature_C,
+        const double min_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
         const double max_temperature_C
     ) -> int {
         // Approaching the max temperature threshold:
@@ -1292,9 +1292,11 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
     std::vector<double> max_charging_power_kW_at_each_SOC_pts = {0,219,224,238,156,131,5,0};
     temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
     // For ngp_hyundai_ioniq_5_longrange_awd:  
-    const double min_temperature_C = 39;
+    const double min_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
+                                         //             the minimum allowed temperature; it's okay for the battery to be colder).
     const double max_temperature_C = 49;
     
+
 
     // ---------------------------------------------------------------------------------------------------
     // Step 2: For each (EV_type, EVSE_type) pair, compute the corresponding temperature-aware profile.
@@ -1312,11 +1314,11 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
         // Other parameters
         const double time_step_sec = 5;
         const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
-        const double start_soc = 0;               // <---------------------------------------------------------------- TODO: We technically should be doing this simulation
+        const double start_soc = 34;               // <---------------------------------------------------------------- TODO: We technically should be doing this simulation
                                                   //                                                                         for each individual charge event since we won't
                                                   //                                                                         know the start_SOC until the specific charge event and
                                                   //                                                                         that affects the temperature and actual power profile curve!!
-        const double end_soc = 100;
+        const double end_soc = 96;
         const double start_temperature_C = starting_battery_temperature_C;
         
     
