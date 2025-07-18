@@ -281,7 +281,7 @@ class TemperatureAwareProfiles
                                                                const double start_soc,
                                                                const double end_soc,
                                                                const double start_temperature_C,
-                                                               const double min_temperature_C,
+                                                               const double min_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
                                                                const double max_temperature_C,
                                                                const int start_power_level_index,
                                                                const double update_power_level_delay_sec,
@@ -291,7 +291,7 @@ class TemperatureAwareProfiles
                                                                              const int max_power_level_index_at_current_temperature,
                                                                              const double current_temperature_C,
                                                                              const double current_temperature_grad,
-                                                                             const double min_temperature_C,
+                                                                             const double min_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
                                                                              const double max_temperature_C
                                                                          )> update_power_level_index_callback )
     {
@@ -409,24 +409,60 @@ class TemperatureAwareProfiles
         const SOC_vs_P2 result_SOCvsP2 = [&] () {
             std::vector<line_segment> curve;
             double zero_slope_threshold = 1e-8;  // <------------------------------- TODO: Does this value matter???
+            
+            //
+            // Add an initial line segment that does minimal power until 'start_soc'
+            // so the final curve always starts at soc=0.
+            //
+            if( soc_vec.at(0) > 0.0 )
+            {
+                const SOC_vs_P2 lowest_curve = power_profiles_sorted_low_to_high.at(0);
+                
+                const double x0 = 0.0;
+                const double y0 = lowest_curve.eval( 0.0 );
+                
+                const double x1 = soc_vec.at(0);
+                const double y1 = power_kW_vec.at(0);
+                
+                const line_segment ls( std::make_pair(x0,y0), std::make_pair(x1,y1) );
+
+                curve.push_back(ls);
+            }
+            
+            //
+            // Loop through each timestep and add that line_segment to the curve.
+            //
             for( int i = 0; i < time_sec_vec.size()-1; i++ )
             {
                 const double x0 = soc_vec.at(i);
-                const double x1 = soc_vec.at(i+1);
-                
                 const double y0 = power_kW_vec.at(i);
+                
+                const double x1 = soc_vec.at(i+1);
                 const double y1 = power_kW_vec.at(i+1);
                 
-                const double a = (y1-y0)/(x1-x0);
-                const double b = y0 - a*x0;
-                
-                const double x_LB = x0;
-                const double x_UB = x1;
-                
-                const line_segment ls(x_LB, x_UB, a, b);
+                const line_segment ls( std::make_pair(x0,y0), std::make_pair(x1,y1) );
                 
                 curve.push_back(ls);
             }
+            
+            //
+            // Add a final line segment to take the curve to 100% SOC (if needed)
+            //
+            if( soc_vec.at( soc_vec.size()-1 ) < 100.0 )
+            {
+                const SOC_vs_P2 lowest_curve = power_profiles_sorted_low_to_high.at(0);
+                
+                const double x0 = soc_vec.at( soc_vec.size()-1 );
+                const double y0 = power_kW_vec.at( soc_vec.size()-1 );
+                
+                const double x1 = 100.0;
+                const double y1 = lowest_curve.eval( 100.0 );
+                
+                const line_segment ls( std::make_pair(x0,y0), std::make_pair(x1,y1) );
+                
+                curve.push_back(ls);
+            }
+            
             SOC_vs_P2 result_SOCvsP2( curve, zero_slope_threshold );
             return result_SOCvsP2;
         }();

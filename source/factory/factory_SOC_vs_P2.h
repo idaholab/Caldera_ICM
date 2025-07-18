@@ -15,7 +15,7 @@ typedef double SOC;
 typedef double power;
 
 
-#define TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING 0   
+#define TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING 0
 
 
 
