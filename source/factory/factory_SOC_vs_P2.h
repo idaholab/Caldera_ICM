@@ -14,11 +14,9 @@ typedef double c_rate;
 typedef double SOC;
 typedef double power;
 
-
-#define TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING 0
 #define TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING_V2 0
 
-
+static std::map< std::string, std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > > TA_DCFC_CURVES_V2_CACHE;
 
 enum class point_type
 {
@@ -88,7 +86,6 @@ private:
 
     const std::unordered_map<EV_type, SOC_vs_P2 > L1_L2_curves;
     const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > DCFC_curves;
-    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > TA_DCFC_curves;
     const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > TA_DCFC_curves_v2;
     const SOC_vs_P2 error_case_curve; // <-- empty data structure the reference to which is returned in error cases.
 
@@ -99,12 +96,7 @@ private:
     const std::unordered_map<EV_type, SOC_vs_P2 > load_L1_L2_curves();
     const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves( const double c_rate_scale_factor = 1.0 );
     
-    const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_temperature_aware_DCFC_curves( 
-                                                                                                                const double max_c_rate_scale_factor,
-                                                                                                                const int n_curve_levels,
-                                                                                                                const double starting_battery_temperature_C );
-    
-    const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > load_temperature_aware_DCFC_curves_v2( 
+    const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >& load_temperature_aware_DCFC_curves_v2( 
                                                                                                                             const double max_c_rate_scale_factor,
                                                                                                                             const int n_curve_levels,
                                                                                                                             const double min_start_temperature_C,
@@ -112,8 +104,7 @@ private:
                                                                                                                             const double start_temperature_step,
                                                                                                                             const double min_start_SOC,
                                                                                                                             const double max_start_SOC,
-                                                                                                                            const double start_SOC_step,
-                                                                                                                            const std::string cache_file_name );
+                                                                                                                            const double start_SOC_step );
 public:
     factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
                        const double c_rate_scale_factor = 1.0 );
