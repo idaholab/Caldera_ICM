@@ -516,7 +516,7 @@ struct temperature_aware_profiles_data_store
         return true;
     }
     
-    SOC_vs_P2 lookup_profile( const double start_temperature_C, const double start_soc )
+    const SOC_vs_P2& lookup_profile( const double start_temperature_C, const double start_soc ) const
     {
         // Find the profile whose starting temperature is nearest to 'start_temperature_C'
         // and whose starting SOC is nearest to 'start_soc'.
