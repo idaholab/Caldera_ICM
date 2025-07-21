@@ -281,8 +281,8 @@ class TemperatureAwareProfiles
                                                                const double start_soc,
                                                                const double end_soc,
                                                                const double start_temperature_C,
-                                                               const double min_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
-                                                               const double max_temperature_C,
+                                                               const double lower_bound_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
+                                                               const double upper_bound_temperature_C,
                                                                const int start_power_level_index,
                                                                const double update_power_level_delay_sec,
                                                                const std::string output_file_name,
@@ -291,13 +291,13 @@ class TemperatureAwareProfiles
                                                                              const int max_power_level_index_at_current_temperature,
                                                                              const double current_temperature_C,
                                                                              const double current_temperature_grad,
-                                                                             const double min_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
-                                                                             const double max_temperature_C
+                                                                             const double lower_bound_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
+                                                                             const double upper_bound_temperature_C
                                                                          )> update_power_level_index_callback )
     {
-        if( min_temperature_C >= max_temperature_C )
+        if( lower_bound_temperature_C >= upper_bound_temperature_C )
         {
-            std::cout << "Error: Something is wrong with the min_temperature_C and max_temperature_C." << std::endl;
+            std::cout << "Error: Something is wrong with the lower_bound_temperature_C and upper_bound_temperature_C." << std::endl;
             exit(0);
         }
         
@@ -363,8 +363,8 @@ class TemperatureAwareProfiles
                                                                  max_power_level_index,
                                                                  temperature_C,
                                                                  temperature_grad,
-                                                                 min_temperature_C,
-                                                                 max_temperature_C );
+                                                                 lower_bound_temperature_C,
+                                                                 upper_bound_temperature_C );
                 
                 time_since_power_level_update_sec = 0.0;
             }
@@ -551,11 +551,17 @@ struct temperature_aware_profiles_data_store
     
     void write_to_file( std::ostream& fout ) const
     {
-        // TODO
+        // TODO - UNDER CONSTRUCTION
+        std::cout << "UNDER CONSTRUCTION" << std::endl;
+        exit(1);
     }
     
     void output_to_cache_file( const std::string filename ) const
     {
+        // TODO - UNDER CONSTRUCTION
+        std::cout << "UNDER CONSTRUCTION" << std::endl;
+        exit(1);
+        
         std::ofstream opfile;
         opfile.open(filename);
         this->write_to_file( opfile );
@@ -566,7 +572,8 @@ struct temperature_aware_profiles_data_store
     void load_from_cache_file( const std::string filename )
     {
         // TODO - UNDER CONSTRUCTION
-        return;
+        std::cout << "UNDER CONSTRUCTION" << std::endl;
+        exit(1);
     }
 };
 
