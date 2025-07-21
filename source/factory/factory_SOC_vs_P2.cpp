@@ -795,9 +795,6 @@ factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const 
     LTO_charge{ this->load_LTO_charge() },
     L1_L2_curves{ this->load_L1_L2_curves() },
     DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
-#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
-    , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor, 20, 10.0 ) }
-#endif
 #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING_V2
     , TA_DCFC_curves_v2{ this->load_temperature_aware_DCFC_curves_v2( c_rate_scale_factor, // const double max_c_rate_scale_factor,
                                                                       20,                  // const int n_curve_levels, 
@@ -830,18 +827,22 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
-#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING_V2
     else if (level == EVSE_level::DCFC)
     {
         const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
 
-        if (this->TA_DCFC_curves.find(key) != this->TA_DCFC_curves.end())
+        if (this->TA_DCFC_curves_v2.find(key) != this->TA_DCFC_curves_v2.end())
         {
-            return this->TA_DCFC_curves.at(key);
+            const temperature_aware::temperature_aware_profiles_data_store& ta_data_store = this->TA_DCFC_curves_v2.at(key);
+            
+            const double start_temperature_C = 5.0;   // <--- TODO TODO TODO: These need to be passed in!
+            const double start_soc = 5.0;             // <--- TODO TODO TODO: These need to be passed in!
+            return ta_data_store.lookup_profile( start_temperature_C, start_soc );
         }
         else
         {
-            ASSERT(false, "Error: [TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING IS TRUE] P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
+            ASSERT(false, "Error: [TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING_V2 IS TRUE] P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
             return this->error_case_curve;
         }
     }
@@ -1434,7 +1435,8 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves_v2(
                     //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
                     //  ----------------------------------------------------------------------
                     #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING_V2
-                    if( ev_evse_pair.first == "bev250_350kW" && ev_evse_pair.second == "xfc_350" )   
+                    if( ev_evse_pair.first == "bev250_350kW" && ev_evse_pair.second == "xfc_350" )
+                    //if( ev_evse_pair.first == "bev150_ld1_50kW" && ev_evse_pair.second == "xfc_350" )
                     {
                         std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
                         std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
