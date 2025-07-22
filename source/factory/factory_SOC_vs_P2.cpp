@@ -810,8 +810,10 @@ factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const 
 }
 
 
-const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV, 
-                                                         const EVSE_type& EVSE) const
+const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves( const EV_type& EV, 
+                                                          const EVSE_type& EVSE,
+                                                          const double charge_start_battery_temperature_C,
+                                                          const double charge_start_SOC ) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 
@@ -835,10 +837,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
         if (this->TA_DCFC_curves.find(key) != this->TA_DCFC_curves.end())
         {
             const temperature_aware::temperature_aware_profiles_data_store& ta_data_store = this->TA_DCFC_curves.at(key);
-            
-            const double start_temperature_C = 5.0;   // <--- TODO TODO TODO: These need to be passed in!
-            const double start_soc = 5.0;             // <--- TODO TODO TODO: These need to be passed in!
-            return ta_data_store.lookup_profile( start_temperature_C, start_soc );
+            return ta_data_store.lookup_profile( charge_start_battery_temperature_C, charge_start_SOC );
         }
         else
         {
@@ -1403,6 +1402,42 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
                                                                                                 start_temperature_C,
                                                                                                 start_soc );
                     
+                    
+                    //  ----------------------------------------------------------------------
+                    //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                    //  ----------------------------------------------------------------------
+                    const bool CONDITIONS_FOR_TESTING_OUTPUT = (
+                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                        TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
+                        ev_evse_pair.first == "bev250_350kW" &&
+                        ev_evse_pair.second == "xfc_350" &&
+                        std::fabs( start_temperature_C - 4.0 ) < 1e-12 &&
+                        std::fabs( start_soc - 6.0 ) < 1e-12
+                        #else
+                        false
+                        #endif
+                    );
+                    // ( ev_evse_pair.first == "bev150_ld1_50kW" && ev_evse_pair.second == "xfc_350" )
+                    
+                    
+                    //  ----------------------------------------------------------------------
+                    //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                    //  ----------------------------------------------------------------------
+                    const std::string tmp_output_filename_for_testing = [&] () {
+                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                        if( CONDITIONS_FOR_TESTING_OUTPUT )
+                        {
+                            return std::string("TAP_TEMPORARY_output_for_testing.csv");
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+                        #else
+                            return std::string("");
+                        #endif
+                    }();
+                    
                     const SOC_vs_P2 socVsP2_temperature_aware = temperature_aware::TemperatureAwareProfiles::generate_temperature_aware_power_profile(
                                                                             power_profiles_sorted_low_to_high,        // const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high,
                                                                             temperature_grad_model,                   // const temperature_gradient_model& temperature_grad_model,
@@ -1416,11 +1451,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
                                                                             sim_upper_bound_battery_temperature_C,    // const double upper_bound_temperature_C,
                                                                             start_power_level_index,                  // const int start_power_level_index,
                                                                             time_step_sec*3,                          // const double update_power_level_delay_sec,
-                                                                            #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                                                                                std::string("TAP_TEMPORARY_output_for_testing.csv"),      // const std::string output_file_name,
-                                                                            #else
-                                                                                std::string(""),      // const std::string output_file_name,
-                                                                            #endif
+                                                                            tmp_output_filename_for_testing,          // const std::string output_file_name,
                                                                             update_power_level_index_callback_v4   // std::function<int(
                                                                                                                    //               const int current_power_level_index,
                                                                                                                    //               const int max_power_level_index_at_current_temperature,
@@ -1435,11 +1466,11 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
                     //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
                     //  ----------------------------------------------------------------------
                     #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                    if( ev_evse_pair.first == "bev250_350kW" && ev_evse_pair.second == "xfc_350" )
-                    //if( ev_evse_pair.first == "bev150_ld1_50kW" && ev_evse_pair.second == "xfc_350" )
+                    if( CONDITIONS_FOR_TESTING_OUTPUT )
                     {
                         std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
-                        std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
+                        //std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
+                        std::cout << "    start_temperature_C: " << start_temperature_C << "  start_soc: " << start_soc << std::endl;
                         
                         //
                         // Plot these results to see if you think it's doing it right!!
@@ -1458,7 +1489,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
                         }
                         // Close the file
                         opfile.close();
-                        __builtin_debugtrap();
+                        //__builtin_debugtrap();
                     }
                     #endif
                     

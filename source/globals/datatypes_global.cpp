@@ -467,9 +467,17 @@ stop_charging_criteria::stop_charging_criteria(stop_charging_decision_metric dec
 }
 
 
-charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, SupplyEquipmentId SE_id_, vehicle_id_type vehicle_id_, EV_type vehicle_type,
-                                     double arrival_unix_time_, double departure_unix_time_, double arrival_SOC_, double departure_SOC_, 
-                                     stop_charging_criteria stop_charge_, control_strategy_enums control_enums_)
+charge_event_data::charge_event_data( int charge_event_id_,
+                                      int SE_group_id_,
+                                      SupplyEquipmentId SE_id_,
+                                      vehicle_id_type vehicle_id_,
+                                      EV_type vehicle_type,
+                                      double arrival_unix_time_,
+                                      double departure_unix_time_,
+                                      double arrival_SOC_,
+                                      double departure_SOC_, 
+                                      stop_charging_criteria stop_charge_,
+                                      control_strategy_enums control_enums_ )
 { 
     this->charge_event_id = charge_event_id_;
     this->SE_group_id = SE_group_id_;
@@ -480,6 +488,7 @@ charge_event_data::charge_event_data(int charge_event_id_, int SE_group_id_, Sup
     this->departure_unix_time = departure_unix_time_;
     this->arrival_SOC = arrival_SOC_;
     this->departure_SOC = departure_SOC_;
+    this->arrival_battery_temperature_C = DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C;
     this->stop_charge = stop_charge_;
     this->control_enums = control_enums_;
 }
