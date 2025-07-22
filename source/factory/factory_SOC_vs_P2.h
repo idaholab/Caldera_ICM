@@ -109,8 +109,11 @@ public:
     factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
                        const double c_rate_scale_factor = 1.0 );
 
-    const SOC_vs_P2& get_SOC_vs_P2_curves(const EV_type& EV, 
-                                          const EVSE_type& EVSE) const;
+    const SOC_vs_P2& get_SOC_vs_P2_curves( const EV_type& EV, 
+                                           const EVSE_type& EVSE,
+                                           const double charge_start_battery_temperature_C,
+                                           const double charge_start_SOC    // <-- In percent a.k.a. 45% SOC is 45.0.
+                                      ) const;
 
     void write_charge_profile(const std::string& output_path) const;
 };
