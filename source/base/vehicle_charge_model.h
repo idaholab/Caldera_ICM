@@ -17,12 +17,18 @@ class vehicle_charge_model
 private:
     charge_event_data charge_event;
     EV_type EV; 
-    double arrival_unix_time, depart_unix_time, arrival_soc, requested_depart_soc;
+    
+    double arrival_unix_time;
+    double depart_unix_time;
+    double arrival_soc;
+    double requested_depart_soc;
+    
     int charge_event_id;
     
     stop_charging_decision_metric decision_metric;
     stop_charging_mode soc_mode;
     stop_charging_mode depart_time_mode;
+    
     double soc_block_charging_max_undershoot_percent;
     double depart_time_block_charging_max_undershoot_percent;
     
@@ -31,8 +37,12 @@ private:
     
     battery bat;
     
-    double target_P2_kW, soc_of_full_battery, prev_soc_t1;
-    bool charge_has_completed_, charge_needs_met_;
+    double target_P2_kW;
+    double soc_of_full_battery;
+    double prev_soc_t1;
+    
+    bool charge_has_completed_;
+    bool charge_needs_met_;
     
     vehicle_charge_model& operator=(const vehicle_charge_model& obj) = default;
     vehicle_charge_model(const vehicle_charge_model& obj) = default;

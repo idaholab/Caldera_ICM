@@ -142,9 +142,18 @@ struct debug_data
 
 class integrate_X_through_time
 {
+
 private:
-    double X, target_ref_X, target_deadband, off_deadband;
-    bool X_has_been_set, target_set_while_turning_off, pos_and_neg_transitions_are_unique;
+    
+    double X;
+    double target_ref_X;
+    double target_deadband;
+    double off_deadband;
+    
+    bool X_has_been_set;
+    bool target_set_while_turning_off;
+    bool pos_and_neg_transitions_are_unique;
+    
     transition_state trans_state;
     
     std::vector<transition_status> debug_trans_status_vec;

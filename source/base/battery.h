@@ -32,10 +32,16 @@ private:
     calculate_E1_energy_limit  get_E1_limits_discharging;
     integrate_X_through_time   get_next_P2;
     
-    double battery_size_kWh, soc, soc_to_energy, target_P2_kW;
+    double battery_size_kWh;
+    double soc;
+    double soc_to_energy;
+    double target_P2_kW;
+    
     double zero_slope_threshold_bat_eff_vs_P2;
     bool will_never_discharge;
-    double soc_of_full_battery, soc_of_empty_battery;
+    
+    double soc_of_full_battery;
+    double soc_of_empty_battery;
 
     line_segment bat_eff_vs_P2_charging;
     line_segment bat_eff_vs_P2_discharging;
@@ -44,7 +50,8 @@ private:
     
 public:
     // Debugging
-    double max_E1_limit, min_E1_limit;
+    double min_E1_limit;
+    double max_E1_limit;
     bool print_debug_info;
 
     battery( const vehicle_charge_model_inputs& inputs );

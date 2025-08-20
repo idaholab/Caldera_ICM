@@ -63,7 +63,7 @@ algorithm_P2_vs_soc::algorithm_P2_vs_soc( const vehicle_charge_model_inputs& inp
     prev_exp_val{ -1 },
     exp_term{ std::exp(this->prev_exp_val) },
     recalc_exponent_threshold{ 0.00000001 },
-    zero_slope_threshold_P2_vs_soc{ inputs.SOCP_factory.get_SOC_vs_P2_curves(inputs.EV, inputs.EVSE).zero_slope_threshold },
+    zero_slope_threshold_P2_vs_soc{ inputs.SOCP_factory.get_SOC_vs_P2_curves( inputs.EV, inputs.EVSE, inputs.CE.arrival_battery_temperature_C, inputs.CE.arrival_SOC ).zero_slope_threshold },
     segment_is_flat_P2_vs_soc{ false },
     P2_vs_soc_segments_changed{ false }
 {
@@ -597,7 +597,7 @@ calculate_E1_energy_limit::calculate_E1_energy_limit( const battery_charge_mode&
     : mode{ mode },
     P2_vs_puVrms{ inputs.VP_factory.get_puVrms_vs_P2(inputs.EVSE, inputs.SE_P2_limit_kW) },
     max_P2kW_error_before_reappling_P2kW_limit_to_P2_vs_soc_segments{ 0.5 },
-    orig_P2_vs_soc_segments{ inputs.SOCP_factory.get_SOC_vs_P2_curves(inputs.EV, inputs.EVSE).curve }
+    orig_P2_vs_soc_segments{ inputs.SOCP_factory.get_SOC_vs_P2_curves( inputs.EV, inputs.EVSE, inputs.CE.arrival_battery_temperature_C, inputs.CE.arrival_SOC ).curve }
 {
     bool are_battery_losses = true;
     if (this->mode == battery_charge_mode::charging)

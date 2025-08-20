@@ -40,9 +40,19 @@ vehicle_charge_model* factory_EV_charge_model::alloc_get_EV_charge_model(const c
     {
         final_bat_size_kWh = this->inventory.get_EV_inventory().at(EV).get_usable_battery_size_kWh();
     }
-    vehicle_charge_model_inputs inputs{ event, EV, EVSE, SE_P2_limit_kW, final_bat_size_kWh,
-        this->charging_transitions_obj, this->puVrms_vs_P2_obj, this->SOC_vs_P2_obj, this->P2_vs_battery_eff_obj };
+    vehicle_charge_model_inputs inputs{
+        event,
+        EV,
+        EVSE,
+        SE_P2_limit_kW,
+        final_bat_size_kWh,
+        this->charging_transitions_obj,
+        this->puVrms_vs_P2_obj,
+        this->SOC_vs_P2_obj,
+        this->P2_vs_battery_eff_obj
+    };
 
+    // The corresponding "delete" is done in 'supply_equipment_load::get_next' when the charge is completed.
     return new vehicle_charge_model(inputs);
 }
 
