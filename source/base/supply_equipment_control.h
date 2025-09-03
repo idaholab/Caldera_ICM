@@ -131,6 +131,9 @@ public:
 //=========================================
 //        ES200 Control Strategy
 //=========================================
+// To Steven: Start here 2
+// To Steven: Implement the FLAT control strategy here
+// To Steven: For the FLAT control strategy, you probably donot need any parameters
 
 class ES200_control_strategy
 {
@@ -141,6 +144,8 @@ private:
 public:
     ES200_control_strategy(){};
     ES200_control_strategy(manage_L2_control_strategy_parameters* params_);
+    // To Steven: update_parameters_for_CE is called when new a new CE starts in a summply equipement and the new CE has the ES200 control.
+    // To Steven: target_P3kW_ is the max power level the charge event can occur.
     void update_parameters_for_CE(double target_P3kW_);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
@@ -286,6 +291,11 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 //       supply_equipment_control
 //=========================================
 
+// To Steven: Start here 1
+// To Steven: Each supply_equipment will its own supply_equipment_control object.
+// To Steven: This class is not well written in terms of memory usage as we have every control_strategy object available in this class. A better way would be is to have an abstract class and derive the control objects and have a loose coupling with pointers to the right control_strategy object. This way whenever a new charge event occurs we can dynamically change it to the control object. Moreover, we can make all supply_equipment_control share the same control_strategy object with const function call (thread safety) if possible and significantly reduce the memory usage for large scale simulations.
+// To Steve: This is a future todo and no need to worry about it in the SmartChargeEV project
+
 class supply_equipment_control
 {
 private:
@@ -294,8 +304,11 @@ private:
     ES100_control_strategy ES100A_obj;
     ES100_control_strategy ES100B_obj;
     ES110_control_strategy ES110_obj;
+
+    // To Steven: The framework for ES200 and ES300 already exists but controls were never implemented for them aka. current dummy controls. We can use this to add newer controls for SmartChargeEV.  
     ES200_control_strategy ES200_obj;
     ES300_control_strategy ES300_obj;
+
     ES400_control_strategy ES400_obj;
     ES500_control_strategy ES500_obj;
     
@@ -305,8 +318,11 @@ private:
     VS200_control_strategy VS200C_obj;
     VS300_control_strategy VS300_obj;
     
+    // To Steven: L2_control_enums specify which control strategy is currently active
     control_strategy_enums L2_control_enums;
     charge_event_P3kW_limits P3kW_limits;
+
+    // To Steven: charge_status contains most things you need to know about the charge event
     CE_status charge_status;
     
     double prev_pu_Vrms, target_P3kW;    
@@ -332,6 +348,8 @@ public:
     std::string get_external_control_strategy();
     L2_control_strategies_enum  get_L2_ES_control_strategy();
     L2_control_strategies_enum  get_L2_VS_control_strategy();
+
+    // To Steven: This is called one time a new charge event starts
     void update_parameters_for_CE( supply_equipment_load& SE_load );
     
     void set_ensure_pev_charge_needs_met_for_ext_control_strategy( const bool ensure_pev_charge_needs_met );
