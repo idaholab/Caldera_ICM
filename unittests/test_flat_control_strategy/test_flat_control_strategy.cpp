@@ -286,7 +286,7 @@ std::vector<charge_event_data> get_charge_events(const std::string& CE_file_path
     return data;
 }
 
-void run_icm_simulation( const std::string& input_path,
+int run_icm_simulation(  const std::string& input_path,
                          const std::string& output_path,
                          const std::string& CE_file_path,
                          const std::string& SE_file_path,
@@ -376,49 +376,102 @@ void run_icm_simulation( const std::string& input_path,
     }
 
     file.close();
+    
+    
+    
+    // *********************************************************
+    // Check the results and return the appropriate error code.
+    // *********************************************************
+    
+    // A vector of tuples, (one for each non-overlapping charge event)
+    //     containing:  start_time_hrs, end_time_hrs, expected_max_power_level_kW
+    std::vector< std::tuple<double,double,double> > correct_solution_data;
+    correct_solution_data.push_back( std::make_tuple( 1.0, 11.0, 5.992855 ) );
+    correct_solution_data.push_back( std::make_tuple( 13.0, 23.0, 9.233100 ) );
+    
+    int num_errors = 0;
+    
+    for( const std::tuple<double,double,double>& startHr_endHr_expectedpwr_tuple : correct_solution_data )
+    {
+        const double start_hr = std::get<0>(startHr_endHr_expectedpwr_tuple);
+        const double end_hr = std::get<1>(startHr_endHr_expectedpwr_tuple);
+        const double expected_power_kW = std::get<2>(startHr_endHr_expectedpwr_tuple);
+        
+        // Loop over all the hours and find the max power level during the charge event period.
+        double max_power_level_found = -1000.0;
+        for( int i = 0; i < simulation_time_vec_hrs.size(); i++ )
+        {
+            if( simulation_time_vec_hrs.at(i) >= start_hr && simulation_time_vec_hrs.at(i) <= end_hr )
+            {
+                if( home_power_vec_kW.at(i) > max_power_level_found )
+                {
+                    max_power_level_found = home_power_vec_kW.at(i);
+                }
+            }
+        }
+        
+        if( fabs( expected_power_kW - max_power_level_found ) > 1e-5 )
+        {
+            std::cout << "---" << std::endl;
+            std::cout << "expected_power_kW:      " << expected_power_kW << std::endl;
+            std::cout << "max_power_level_found:  " << max_power_level_found << std::endl;
+            std::cout << "---" << std::endl;
+            num_errors++;
+        }
+    }
+
+    return num_errors;
 }
 
 int main(int argc, char* argv[])
 {
     std::string sim_folder, control_mode;
-    try {
-        cxxopts::Options options("run_icm", "Run Caldera ICM to generate aggregate EV charging profiles");
+    if( argc == 1 )
+    {
+        sim_folder = "inout";
+        control_mode = "FLAT";
+    }
+    else
+    {
+        try {
+            cxxopts::Options options("run_icm", "Run Caldera ICM to generate aggregate EV charging profiles");
 
-        options.add_options()
-            ("i,io-folder", "Input Output Folder", cxxopts::value<std::string>())
-            ("c,control-mode", "Control mode", cxxopts::value<std::string>())
-            ("h,help", "Print usage");
+            options.add_options()
+                ("i,io-folder", "Input Output Folder", cxxopts::value<std::string>())
+                ("c,control-mode", "Control mode", cxxopts::value<std::string>())
+                ("h,help", "Print usage");
 
-        auto result = options.parse(argc, argv);
+            auto result = options.parse(argc, argv);
 
-        if (result.count("help")) {
-            std::cout << options.help() << std::endl;
-            return 0;
-        }
+            if (result.count("help")) {
+                std::cout << options.help() << std::endl;
+                return 0;
+            }
 
-        // Check if mandatory option is provided
-        if (!result.count("io-folder")) {
-            std::cerr << "Error: --io-folder is required.\n";
-            std::cerr << options.help() << std::endl;
+            // Check if mandatory option is provided
+            if (!result.count("io-folder")) {
+                std::cerr << "Error: --io-folder is required.\n";
+                std::cerr << options.help() << std::endl;
+                return 1;
+            }
+            
+            // Check if mandatory option is provided
+            if (!result.count("control-mode")) {
+                std::cerr << "Error: --control-mode is required.\n";
+                std::cerr << options.help() << std::endl;
+                return 1;
+            }
+
+            sim_folder = result["io-folder"].as<std::string>();
+            std::cout << "Using folder: " << sim_folder << std::endl;
+
+            control_mode = result["control-mode"].as<std::string>();
+            std::cout << "Using control mode: " << control_mode << std::endl;
+
+        } catch (const cxxopts::exceptions::exception& e) {
+            std::cerr << "Error parsing options: " << e.what() << std::endl;
             return 1;
         }
-        
-        // Check if mandatory option is provided
-        if (!result.count("control-mode")) {
-            std::cerr << "Error: --control-mode is required.\n";
-            std::cerr << options.help() << std::endl;
-            return 1;
-        }
-
-        sim_folder = result["io-folder"].as<std::string>();
-        std::cout << "Using folder: " << sim_folder << std::endl;
-
-        control_mode = result["control-mode"].as<std::string>();
-        std::cout << "Using control mode: " << control_mode << std::endl;
-
-    } catch (const cxxopts::exceptions::exception& e) {
-        std::cerr << "Error parsing options: " << e.what() << std::endl;
-        return 1;
     }
  
     // ICM
@@ -462,8 +515,11 @@ int main(int argc, char* argv[])
         ensure_pev_charge_needs_met
     };
 
-    run_icm_simulation(input_path, output_path, CE_file_path, SE_file_path, icm_inputs, control_mode);
-
-    return 0;
+    //
+    // Returns error code if the results are wrong.
+    //
+    const int error_code = run_icm_simulation(input_path, output_path, CE_file_path, SE_file_path, icm_inputs, control_mode);
+    std::cout << "error_code: " << error_code << std::endl;
+    return error_code;
 }
 
