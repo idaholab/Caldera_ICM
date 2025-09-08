@@ -225,7 +225,7 @@ double ES110_control_strategy::get_P3kW_setpoint(double prev_unix_time, double n
 
 //===============================================================================================
 //===============================================================================================
-//                                 ES200 Control Strategy
+//                                 ES200 Control Strategy        ["FLAT" strategy]
 //===============================================================================================
 //===============================================================================================
 // Constructor. For the FLAT control strategy,
@@ -234,27 +234,34 @@ ES200_control_strategy::ES200_control_strategy( manage_L2_control_strategy_param
 {
     this->params = params_;
     this->cur_P3kW_setpoint = 0;
-    
-    std::cout << "FLAG 00 in 'ES200_control_strategy::ES200_control_strategy'" << std::endl;
 }
 
-// This is called whenever a new CE is loaded. So target_P3kW_ should have the P3 value that'll make the profile flat.
-// For an idea of what paramters we can have in this, refer to ES100_control_strategy::update_parameters_for_CE, 
-void ES200_control_strategy::update_parameters_for_CE( double target_P3kW_ )
-{    
-    // Calculate the target_P3kW_ for FLAT control and set it here.
-    // To Steven: Some idea to calculate it, target_P3kW_ is the max power, pass in pev_charge_profile
-    //            (ref ES100_control_strategy::update_parameters_for_CE) and calculate how long it takes
-    //            to charge in max power.
-    // To Steven: pass in CE_status& charge_status, CE_status has now_unix_time and departure_unix_time.
-    //            Based on dwell_time and charge_time_with_max_power, calculate the target_FLAT_power.
-    // To Steven: Eg. If dwell_time is 2 hours and charge_time_with_max_power is 1 hour, then
-    //                target_FLAT_power = (charge_time_with_max_power*target_FLAT_power/dwell_time)
-
-    this->target_P3kW = target_P3kW_;
-    this->cur_P3kW_setpoint = 0;
+// This is called whenever a new CE is loaded.
+// 'this->target_P3kW' is set to the P3 value that'll make the profile flat.
+void ES200_control_strategy::update_parameters_for_CE( const double max_P3kW,
+                                                       const CE_status& charge_status,
+                                                       const pev_charge_profile& charge_profile )
+{
+    // Here, we calculate the target_P3kW for the FLAT control.
+    // (1) we compute the time to charge assuming we charged at full-speed.
+    // (2) We determine our dwell time
+    // (3) We set the power level based on the ratio between dwell_time and min_time_to_charge.
+    //           e.g. if min_time_to_charge is 1 hour, and max_P3kW is 10 kW, but our dwell time
+    //                is 2 hours, then we charge at  max_P3kW*((1 hr)/(2 hr)) = 10.0*(1/2) = 5 kW.
     
-    std::cout << "FLAG 01 in 'ES200_control_strategy::update_parameters_for_CE'" << std::endl;
+    // Compute the minimum time it takes to charge based on the max power.
+    const pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC( max_P3kW, charge_status.arrival_SOC, charge_status.departure_SOC);
+    const double min_time_to_charge_sec = 3600 * Z.total_charge_time_hrs;
+    
+    // Find the dwell time
+    const double dwell_time_sec = charge_status.departure_unix_time - charge_status.arrival_unix_time;
+    
+    // Use ratio between min-time and dwell-time to compute the flat power level.
+    const double flat_P3kW = fmin( max_P3kW, max_P3kW*(min_time_to_charge_sec/dwell_time_sec) );
+    
+    this->target_P3kW = flat_P3kW;
+    this->cur_P3kW_setpoint = 0;
+    //std::cout << "flat_P3kW: " << flat_P3kW << std::endl;
 }
 
 // To Steven: I think no need to change below as we have set the right target_P3kW at the start of the charge event.
@@ -263,8 +270,6 @@ double ES200_control_strategy::get_P3kW_setpoint( double prev_unix_time,
 {    
     this->cur_P3kW_setpoint = this->target_P3kW;
     return this->cur_P3kW_setpoint;
-    
-    std::cout << "FLAG 02 in 'ES200_control_strategy::get_P3kW_setpoint'" << std::endl;
 }
 
 
@@ -952,7 +957,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             this->ES110_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, charge_profile);
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
-            this->ES200_obj.update_parameters_for_CE(this->target_P3kW);
+            this->ES200_obj.update_parameters_for_CE( this->target_P3kW, this->charge_status, charge_profile );
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
             this->ES300_obj.update_parameters_for_CE(this->target_P3kW);
