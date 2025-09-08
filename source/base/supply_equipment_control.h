@@ -142,12 +142,15 @@ private:
     double target_P3kW, cur_P3kW_setpoint;
     
 public:
+    
     ES200_control_strategy(){};
-    ES200_control_strategy(manage_L2_control_strategy_parameters* params_);
-    // To Steven: update_parameters_for_CE is called when new a new CE starts in a summply equipement and the new CE has the ES200 control.
+    ES200_control_strategy( manage_L2_control_strategy_parameters* params_ );
+    
+    // To Steven: update_parameters_for_CE is called when new a new CE starts in a supply equipment and the new CE has the ES200 control.
     // To Steven: target_P3kW_ is the max power level the charge event can occur.
-    void update_parameters_for_CE(double target_P3kW_);
-    double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
+    void update_parameters_for_CE( double target_P3kW_ );
+    double get_P3kW_setpoint( double prev_unix_time,
+                              double now_unix_time );
 };
 
 
