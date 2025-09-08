@@ -1,0 +1,5 @@
+SE_id,SE_type,lon,lat,node_id,SE_group,location_type
+1,xfc_350,-77.6195,37.5042,1,1,public
+2,L2_17280,-77.4439,37.5414,home,250,destination
+3,L2_17280,-77.3922,37.522,home,250,home
+4,L2_17280,-77.4689,37.4969,home,250,work

@@ -217,39 +217,64 @@ double ES110_control_strategy::get_P3kW_setpoint(double prev_unix_time, double n
 }
 
 
+
+
+
+
+
+
 //===============================================================================================
 //===============================================================================================
 //                                 ES200 Control Strategy
 //===============================================================================================
 //===============================================================================================
-// To Steven: Start here 3
-// To Steven: Implement the FLAT control strategy here
-// To Steven: For the FLAT control strategy, you probably donot need any parameters
-ES200_control_strategy::ES200_control_strategy(manage_L2_control_strategy_parameters* params_)
+// Constructor. For the FLAT control strategy,
+// there probably doesn't need to be any paramters.
+ES200_control_strategy::ES200_control_strategy( manage_L2_control_strategy_parameters* params_ )
 {
     this->params = params_;
     this->cur_P3kW_setpoint = 0;
+    
+    std::cout << "FLAG 00 in 'ES200_control_strategy::ES200_control_strategy'" << std::endl;
 }
 
-// To Steven: This is called whenever a new CE is loaded. So target_P3kW_ should have the P3 value that'll make the profile flat.
-// To Steven: You can change the parameters to this function, refer to ES100_control_strategy::update_parameters_for_CE, 
-void ES200_control_strategy::update_parameters_for_CE(double target_P3kW_)
+// This is called whenever a new CE is loaded. So target_P3kW_ should have the P3 value that'll make the profile flat.
+// For an idea of what paramters we can have in this, refer to ES100_control_strategy::update_parameters_for_CE, 
+void ES200_control_strategy::update_parameters_for_CE( double target_P3kW_ )
 {    
-    // To Steven: Calculate the target_P3kW_ for FLAT control and set it here.
-    // To Steven: Some idea to calculate it, target_P3kW_ is the max power, pass in pev_charge_profile (ref ES100_control_strategy::update_parameters_for_CE) and calculate how long it takes to charge in max power.
-    // To Steven: pass in CE_status& charge_status, CE_status has now_unix_time and departure_unix_time. Based on dwell_time and charge_time_with_max_power, calculate the target_FLAT_power.
-    // To Steven: Eg. If dwell_time is 2 hours and charge_time_with_max_power is 1 hour, then target_FLAT_power = (charge_time_with_max_power/dwell_time)*target_FLAT_power
+    // Calculate the target_P3kW_ for FLAT control and set it here.
+    // To Steven: Some idea to calculate it, target_P3kW_ is the max power, pass in pev_charge_profile
+    //            (ref ES100_control_strategy::update_parameters_for_CE) and calculate how long it takes
+    //            to charge in max power.
+    // To Steven: pass in CE_status& charge_status, CE_status has now_unix_time and departure_unix_time.
+    //            Based on dwell_time and charge_time_with_max_power, calculate the target_FLAT_power.
+    // To Steven: Eg. If dwell_time is 2 hours and charge_time_with_max_power is 1 hour, then
+    //                target_FLAT_power = (charge_time_with_max_power*target_FLAT_power/dwell_time)
 
     this->target_P3kW = target_P3kW_;
     this->cur_P3kW_setpoint = 0;
+    
+    std::cout << "FLAG 01 in 'ES200_control_strategy::update_parameters_for_CE'" << std::endl;
 }
 
 // To Steven: I think no need to change below as we have set the right target_P3kW at the start of the charge event.
-double ES200_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time)
+double ES200_control_strategy::get_P3kW_setpoint( double prev_unix_time,
+                                                  double now_unix_time )
 {    
     this->cur_P3kW_setpoint = this->target_P3kW;
     return this->cur_P3kW_setpoint;
+    
+    std::cout << "FLAG 02 in 'ES200_control_strategy::get_P3kW_setpoint'" << std::endl;
 }
+
+
+
+
+
+
+
+
+
 
 
 //===============================================================================================
