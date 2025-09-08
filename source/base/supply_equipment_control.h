@@ -128,12 +128,9 @@ public:
 };
 
 
-//=========================================
-//        ES200 Control Strategy
-//=========================================
-// To Steven: Start here 2
-// To Steven: Implement the FLAT control strategy here
-// To Steven: For the FLAT control strategy, you probably donot need any parameters
+//------------------------------------------------------------
+//        ES200 Control Strategy        ["FLAT" strategy]
+//------------------------------------------------------------
 
 class ES200_control_strategy
 {
@@ -146,9 +143,17 @@ public:
     ES200_control_strategy(){};
     ES200_control_strategy( manage_L2_control_strategy_parameters* params_ );
     
-    // To Steven: update_parameters_for_CE is called when new a new CE starts in a supply equipment and the new CE has the ES200 control.
-    // To Steven: target_P3kW_ is the max power level the charge event can occur.
-    void update_parameters_for_CE( double target_P3kW_ );
+    // Called when new a new CE starts on a supply equipment and the new CE has the ES200 control.
+    // Paramters:
+    //     'max_P3kW': the maximum power level that this charge event supports.
+    //     'charge_status': The charge_status object from the supply_equipment_control object.
+    //     'charge_profile': The charge profile object from the SE_load object when
+    //                       'supply_equipment_control::update_parameters_for_CE' gets called,
+    //                        before this function gets called.
+    void update_parameters_for_CE( const double max_P3kW,
+                                   const CE_status& charge_status,
+                                   const pev_charge_profile& charge_profile );
+    
     double get_P3kW_setpoint( double prev_unix_time,
                               double now_unix_time );
 };
@@ -294,10 +299,17 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 //       supply_equipment_control
 //=========================================
 
-// To Steven: Start here 1
-// To Steven: Each supply_equipment will its own supply_equipment_control object.
-// To Steven: This class is not well written in terms of memory usage as we have every control_strategy object available in this class. A better way would be is to have an abstract class and derive the control objects and have a loose coupling with pointers to the right control_strategy object. This way whenever a new charge event occurs we can dynamically change it to the control object. Moreover, we can make all supply_equipment_control share the same control_strategy object with const function call (thread safety) if possible and significantly reduce the memory usage for large scale simulations.
-// To Steve: This is a future todo and no need to worry about it in the SmartChargeEV project
+// Each supply_equipment has its own supply_equipment_control object.
+// NOTE: This class is not currently well written in terms of memory usage
+//       since we have every control_strategy object available in this class.
+// FUTURE WORK: A better way would be to have an abstract class and derive
+//              the control objects and have a loose coupling with pointers
+//              to the right control_strategy object. This way whenever a new
+//              charge event occurs we can dynamically change it to the control
+//              object. Moreover, we can make all supply_equipment_control share
+//              the same control_strategy object with const function call
+//              (thread safety) if possible and significantly reduce the memory
+//              usage for large scale simulations.
 
 class supply_equipment_control
 {
@@ -308,10 +320,10 @@ private:
     ES100_control_strategy ES100B_obj;
     ES110_control_strategy ES110_obj;
 
-    // To Steven: The framework for ES200 and ES300 already exists but controls were never implemented for them aka. current dummy controls. We can use this to add newer controls for SmartChargeEV.  
+    // The 'FLAT' control strategy.
     ES200_control_strategy ES200_obj;
+    
     ES300_control_strategy ES300_obj;
-
     ES400_control_strategy ES400_obj;
     ES500_control_strategy ES500_obj;
     
