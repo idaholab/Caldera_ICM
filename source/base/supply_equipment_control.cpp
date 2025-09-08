@@ -55,7 +55,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100A_getUniformRandomNumber_0to1();
         
-        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
+        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3" && randomization_method != "M4")
         {
             std::cout << "CALDERA ERROR A0.  Look in ES100_control_strategy::update_parameters_for_CE." << std::endl;
             return;
@@ -72,7 +72,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100B_getUniformRandomNumber_0to1();
         
-        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
+        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3" && randomization_method != "M4")
         {
             std::cout << "CALDERA ERROR A1.  Look in ES100_control_strategy::update_parameters_for_CE." << std::endl;
             return;
@@ -119,11 +119,11 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         // This case is for cases where the charge event is completely disjoint
         // from the TofU period (a.k.a. no overlap at all between the charge event and the TofU).
         
-        if( randomization_method == "M1" || randomization_method == "M2" )
+        if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M4" )
         {
             this->charge_start_unix_time = arrival_unix_time;
         }
-        else
+        else if( randomization_method == "M3" )
         {
             if( min_time_to_charge_sec > departure_unix_time - arrival_unix_time )
             {
@@ -133,6 +133,11 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
             {
                 this->charge_start_unix_time = w*arrival_unix_time + (1-w)*(departure_unix_time - min_time_to_charge_sec);
             }
+        }
+        else
+        {
+            // Throw an error.
+            throw std::runtime_error("Error: This else-block shouldn't happen. [1]");
         }
     }
     else
@@ -189,7 +194,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
             else
             {
                 // Throw an error.
-                throw std::runtime_error("Error: This else-block shouldn't happen.");
+                throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
             }
             
             return randomly_adjusted_start_TofU_unix_time;
