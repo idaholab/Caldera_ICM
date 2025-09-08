@@ -40,7 +40,9 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
    
     std::string randomization_method;
     double beginning_of_TofU_rate_period__time_from_midnight_sec, end_of_TofU_rate_period__time_from_midnight_sec;
-    double M1_delay_period_sec, w;
+    double M1_delay_period_sec;
+    double M4_delay_period_sec;
+    double w;
     
     if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
     {
@@ -50,6 +52,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
         end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
+        M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100A_getUniformRandomNumber_0to1();
         
         if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
@@ -66,6 +69,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
         end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
+        M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100B_getUniformRandomNumber_0to1();
         
         if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
@@ -96,69 +100,124 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     
     // Fixes TOU rate period when end TOU is smaller than start TOU. i.e intra day TOU. e.g. (8, -6) aka (8, 18)
     if (end_of_TofU_rate_period_unix_time < beginning_of_TofU_rate_period_unix_time)
+    {
         end_of_TofU_rate_period_unix_time += 24.0 * 3600;
+    }
   
     //-----------------------------------------
     //  Calculate this->charge_start_unix_time
     //-----------------------------------------
     
-    bool TofU_start_in_park = (arrival_unix_time <= beginning_of_TofU_rate_period_unix_time) && (beginning_of_TofU_rate_period_unix_time <= departure_unix_time);
-    bool TofU_end_in_park = (arrival_unix_time <= end_of_TofU_rate_period_unix_time) && (end_of_TofU_rate_period_unix_time <= departure_unix_time);
-    bool park_start_in_TofU = (beginning_of_TofU_rate_period_unix_time <= arrival_unix_time) && (arrival_unix_time <= end_of_TofU_rate_period_unix_time);
-    bool park_in_current_TofU = TofU_start_in_park || TofU_end_in_park || park_start_in_TofU;
-    bool park_in_next_TofU = 3600*24 + beginning_of_TofU_rate_period_unix_time < departure_unix_time;
+    const bool TofU_start_in_park = (arrival_unix_time <= beginning_of_TofU_rate_period_unix_time) && (beginning_of_TofU_rate_period_unix_time <= departure_unix_time);
+    const bool TofU_end_in_park = (arrival_unix_time <= end_of_TofU_rate_period_unix_time) && (end_of_TofU_rate_period_unix_time <= departure_unix_time);
+    const bool park_start_in_TofU = (beginning_of_TofU_rate_period_unix_time <= arrival_unix_time) && (arrival_unix_time <= end_of_TofU_rate_period_unix_time);
+    const bool park_in_current_TofU = TofU_start_in_park || TofU_end_in_park || park_start_in_TofU;
+    const bool park_in_next_TofU = 3600*24 + beginning_of_TofU_rate_period_unix_time < departure_unix_time;
 
     if(!park_in_current_TofU && !park_in_next_TofU)
     {
-        if(randomization_method == "M1" || randomization_method == "M2")
+        // This case is for cases where the charge event is completely disjoint
+        // from the TofU period (a.k.a. no overlap at all between the charge event and the TofU).
+        
+        if( randomization_method == "M1" || randomization_method == "M2" )
+        {
             this->charge_start_unix_time = arrival_unix_time;
+        }
         else
         {
-            if(min_time_to_charge_sec > departure_unix_time - arrival_unix_time)
+            if( min_time_to_charge_sec > departure_unix_time - arrival_unix_time )
+            {
                 this->charge_start_unix_time = arrival_unix_time;
+            }
             else
+            {
                 this->charge_start_unix_time = w*arrival_unix_time + (1-w)*(departure_unix_time - min_time_to_charge_sec);
+            }
         }
     }
     else
     {
+        // This case is for when there's at least some overlap
+        // between the charge event and the TofU period.
+        
         //------------------------------------------------------------------
         //  Pick Between Current and Next TofU Window (if Park is in both)
         //------------------------------------------------------------------
         
+        // If the charge event is only overlapping with the next TofU,
+        // then we shift 'beginning_of_TofU_rate_period_unix_time' and 'end_of_TofU_rate_period_unix_time'
+        // to refer to the next-day TofU period instead of today's TofU period.
         if(!park_in_current_TofU && park_in_next_TofU)
         {
             beginning_of_TofU_rate_period_unix_time += 24*3600;
             end_of_TofU_rate_period_unix_time += 24*3600;
         }
         
-        //--------------------------------------------
-        //        Calcualte random_unix_time
-        //--------------------------------------------
+        //---------------------------------------------------------------
+        //        Calculate randomly_adjusted_start_TofU_unix_time
+        //---------------------------------------------------------------
         
-        double random_unix_time;
-        
-        if(randomization_method == "M1")
-            random_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec);
-        
-        else if (randomization_method == "M2" || randomization_method == "M3")
-        {
-            if(min_time_to_charge_sec > end_of_TofU_rate_period_unix_time - beginning_of_TofU_rate_period_unix_time)
-                random_unix_time = beginning_of_TofU_rate_period_unix_time;
+        // We randomly adjsut the start of the TofU period
+        // for this specific charge event so that each charge event
+        // has a slightly different start of the TofU (so they don't
+        // all start at the same time).
+        const double randomly_adjusted_start_TofU_unix_time = [&] () {
+            double randomly_adjusted_start_TofU_unix_time;
+            if(randomization_method == "M1")
+            {
+                // The start of the TofU is adjusted just a little bit (for the ASAP case)
+                randomly_adjusted_start_TofU_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec);
+            }
+            else if (randomization_method == "M2" || randomization_method == "M3")
+            {
+                // The start of the TofU is adjusted randomly anywhere between the very beginning to as-late-as-possible.
+                if( min_time_to_charge_sec > end_of_TofU_rate_period_unix_time - beginning_of_TofU_rate_period_unix_time )
+                {
+                    randomly_adjusted_start_TofU_unix_time = beginning_of_TofU_rate_period_unix_time;
+                }
+                else
+                {
+                    randomly_adjusted_start_TofU_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(end_of_TofU_rate_period_unix_time - min_time_to_charge_sec);
+                }
+            }
+            else if( randomization_method == "M4" )
+            {
+                // The start of TofU is adjusted to as-late-as-possible (with a small buffer).
+                const double min_time_to_charge_plus_random_buffer = min_time_to_charge_sec + w*M4_delay_period_sec;
+                randomly_adjusted_start_TofU_unix_time = end_of_TofU_rate_period_unix_time - min_time_to_charge_plus_random_buffer;
+            }    
             else
-                random_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(end_of_TofU_rate_period_unix_time - min_time_to_charge_sec);
-        }
+            {
+                // Throw an error.
+                throw std::runtime_error("Error: This else-block shouldn't happen.");
+            }
+            
+            return randomly_adjusted_start_TofU_unix_time;
+        }();
+        
+        
         
         //--------------------------------------------
         //    Ensure Charge will Fit Inside Park
         //--------------------------------------------
         
-        if(random_unix_time < arrival_unix_time)
+        if(randomly_adjusted_start_TofU_unix_time < arrival_unix_time)
+        {
+            // If we arrive after the TofU period started, then just start charging as soon as we arrive.
             this->charge_start_unix_time = arrival_unix_time;
-        else if(departure_unix_time - min_time_to_charge_sec < random_unix_time)
+        }
+        else if(departure_unix_time - min_time_to_charge_sec < randomly_adjusted_start_TofU_unix_time)
+        {
+            // If the last-chance-to-start-charging falls before the beginning of the TofU, then just start as late as possible
+            // (so we overlap with the TofU as much as possible).
             this->charge_start_unix_time = departure_unix_time - min_time_to_charge_sec;
+        }
         else
-            this->charge_start_unix_time = random_unix_time;
+        {
+            // In this case, the charge-event-duration is shorter than the TofU duration, so we just
+            // start at the begining of the TofU (as soon as possible, after the randomly-adjusted start of the TofU)
+            this->charge_start_unix_time = randomly_adjusted_start_TofU_unix_time;
+        }
     }
 }
 
