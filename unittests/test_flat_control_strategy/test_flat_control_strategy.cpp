@@ -519,7 +519,14 @@ int main(int argc, char* argv[])
     // Returns error code if the results are wrong.
     //
     const int error_code = run_icm_simulation(input_path, output_path, CE_file_path, SE_file_path, icm_inputs, control_mode);
-    std::cout << "error_code: " << error_code << std::endl;
+    if( error_code != 0 )
+    {
+        std::cout << "error_code: " << error_code << std::endl;
+    }
+    else
+    {
+        std::cout << "Success. Code: " << error_code << std::endl;
+    }
     return error_code;
 }
 
