@@ -116,7 +116,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
 
     if(!park_in_current_TofU && !park_in_next_TofU)
     {
-        // This case is for cases where the charge event is completely disjoint
+        // This case is where the charge event is completely disjoint
         // from the TofU period (a.k.a. no overlap at all between the charge event and the TofU).
         
         if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M4" )
@@ -162,7 +162,7 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         //        Calculate randomly_adjusted_start_TofU_unix_time
         //---------------------------------------------------------------
         
-        // We randomly adjsut the start of the TofU period
+        // We randomly adjust the start of the TofU period
         // for this specific charge event so that each charge event
         // has a slightly different start of the TofU (so they don't
         // all start at the same time).

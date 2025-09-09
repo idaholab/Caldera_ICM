@@ -7,3 +7,5 @@ charge_event_id,SE_id,pev_id,pev_type,start_time,end_time_chg,end_time_prk,dest_
 6,6,6,bev300_300kW,14.0,_,18.0,public,0.1,0.9,NA,NA,NA
 7,7,7,bev300_300kW,11.5,_,15.5,public,0.1,0.9,NA,NA,NA
 8,8,8,bev300_300kW,9.0,_,18.0,public,0.1,0.9,NA,NA,NA
+9,9,9,bev300_300kW,16.5,_,18.0,public,0.2,0.25,NA,NA,NA
+10,10,10,bev300_300kW,9.0,_,10.5,public,0.2,0.25,NA,NA,NA
