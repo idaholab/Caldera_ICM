@@ -208,18 +208,18 @@ std::vector<charge_event_data> get_charge_events(const std::string& CE_file_path
         "FLAT"
     };
 
-    // if( possible_control_modes.find(control_strategy) == possible_control_modes.end() )
-    // {
-    //     std::cerr << "Control mode not valid. Has to be one of: ";
-    //     std::cerr << "{ ";
-    //     for( int i = 0; i < possible_control_modes.size(); i++ )
-    //     {
-    //         const std::string& pcm = possible_control_modes.at(i);
-    //         std::cerr << pcm;
-    //         if( i < possible_control_modes.size()-1 ) std::cerr << ", ";
-    //     }
-    //     std::cerr << " }" << std::endl;
-    // }
+    if( std::find(possible_control_modes.begin(), possible_control_modes.end(), control_strategy) == possible_control_modes.end() )
+    {
+        std::cerr << "Control mode not valid. Has to be one of: ";
+        std::cerr << "{ ";
+        for( int i = 0; i < possible_control_modes.size(); i++ )
+        {
+            const std::string& pcm = possible_control_modes.at(i);
+            std::cerr << pcm;
+            if( i < possible_control_modes.size()-1 ) std::cerr << ", ";
+        }
+        std::cerr << " }" << std::endl;
+    }
 
     if (control_strategy == "ASAP")
     {
