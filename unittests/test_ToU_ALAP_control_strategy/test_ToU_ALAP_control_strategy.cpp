@@ -519,8 +519,6 @@ int run_icm_simulation(  const std::string& input_path,
     std::cout << "" << std::endl;
     
     return num_errors;
-    
-    return 0;
 }
 
 int main(int argc, char* argv[])
