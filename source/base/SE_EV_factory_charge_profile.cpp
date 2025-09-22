@@ -166,11 +166,11 @@ double factory_charge_profile_library::get_min_P3kW( const EV_EVSE_inventory& in
 
     if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L1 )
     {
-        min_P3kW = 0.8*max_P3kW;    
+        min_P3kW = 0.66; // <--- Minimum for L1 charging to keep a charge event active. ( 6 amps * 110 volts = 660 W )
     }
     else if( inventory.get_EVSE_inventory().at(pev_SE.se_type).get_level() == EVSE_level::L2 )
     {
-        min_P3kW = 0.5*max_P3kW;
+        min_P3kW = 1.44; // <-- Minimum value for L2 to keep a charge event active. ( 6 amps * 240 volts = 1440 W )
     }
     else
     {

@@ -1,3 +1,11 @@
 charge_event_id,SE_id,pev_id,pev_type,start_time,end_time_chg,end_time_prk,dest_type,soc_i,soc_f,ES_strategy,VS_strategy,Ext_strategy
-1,2,1,bev300_400kW,1.0,_,11.0,public,0.104286,0.662211,NA,NA,NA
-2,3,2,bev300_300kW,13.0,_,23.0,public,0.052643,0.914376,NA,NA,NA
+1,1,1,bev300_400kW,9.0,_,13.0,public,0.20,0.25,NA,NA,NA
+2,2,2,bev300_300kW,14.0,_,18.0,public,0.20,0.25,NA,NA,NA
+3,3,3,bev300_300kW,11.5,_,15.5,public,0.20,0.25,NA,NA,NA
+4,4,4,bev300_300kW,9.0,_,18.0,public,0.20,0.25,NA,NA,NA
+5,5,5,bev300_300kW,9.0,_,13.0,public,0.1,0.9,NA,NA,NA
+6,6,6,bev300_300kW,14.0,_,18.0,public,0.1,0.9,NA,NA,NA
+7,7,7,bev300_300kW,11.5,_,15.5,public,0.1,0.9,NA,NA,NA
+8,8,8,bev300_300kW,9.0,_,18.0,public,0.1,0.9,NA,NA,NA
+9,9,9,bev300_300kW,16.5,_,18.0,public,0.2,0.25,NA,NA,NA
+10,10,10,bev300_300kW,9.0,_,10.5,public,0.2,0.25,NA,NA,NA

@@ -333,14 +333,17 @@ private:
     VS200_control_strategy VS200C_obj;
     VS300_control_strategy VS300_obj;
     
-    // To Steven: L2_control_enums specify which control strategy is currently active
+    // 'L2_control_enums' specifies which control strategy is currently active
     control_strategy_enums L2_control_enums;
+    
+    // 'P3kW_limits' has the lower and upper limits for the charging speed.
     charge_event_P3kW_limits P3kW_limits;
 
-    // To Steven: charge_status contains most things you need to know about the charge event
+    // 'charge_status' contains details of the charge event
     CE_status charge_status;
     
-    double prev_pu_Vrms, target_P3kW;    
+    double prev_pu_Vrms;
+    double target_P3kW;
     bool must_charge_for_remainder_of_park;
     
     const get_base_load_forecast& baseLD_forecaster;

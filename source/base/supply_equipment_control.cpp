@@ -325,13 +325,13 @@ void ES200_control_strategy::update_parameters_for_CE( const double max_P3kW,
     
     this->target_P3kW = flat_P3kW;
     this->cur_P3kW_setpoint = 0;
-    //std::cout << "flat_P3kW: " << flat_P3kW << std::endl;
 }
 
-// To Steven: I think no need to change below as we have set the right target_P3kW at the start of the charge event.
 double ES200_control_strategy::get_P3kW_setpoint( double prev_unix_time,
                                                   double now_unix_time )
-{    
+{
+    // no need to change this for the control strategy since we already set the
+    // right target_P3kW at the start of the charge event.
     this->cur_P3kW_setpoint = this->target_P3kW;
     return this->cur_P3kW_setpoint;
 }
@@ -648,16 +648,21 @@ VS100_control_strategy::VS100_control_strategy(manage_L2_control_strategy_parame
 }
 
 
-void VS100_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
+void VS100_control_strategy::update_parameters_for_CE( const double max_nominal_S3kVA_ )
 {
     this->max_nominal_S3kVA = max_nominal_S3kVA_;
     this->prev_P3kW_setpoint = 0;
 }
 
 
-double VS100_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time, double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS100_control_strategy::get_P3kW_setpoint( const double prev_unix_time,
+                                                  const double now_unix_time,
+                                                  const double pu_Vrms,
+                                                  const double pu_Vrms_SS,
+                                                  const double target_P3kW )
 {
-    double max_delta_kW_per_min, percP;
+    double max_delta_kW_per_min;
+    double percP;
     
     const VS100_L2_parameters& X = this->params->get_VS100();
     double puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -701,9 +706,15 @@ void VS200_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
 }
 
 
-double VS200_control_strategy::get_Q3kVAR_setpoint(double prev_unix_time, double now_unix_time, double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS200_control_strategy::get_Q3kVAR_setpoint( const double prev_unix_time,
+                                                    const double now_unix_time,
+                                                    const double pu_Vrms,
+                                                    const double pu_Vrms_SS,
+                                                    const double target_P3kW )
 {
-    double max_delta_kVAR_per_min, percQ, puV;
+    double max_delta_kVAR_per_min;
+    double percQ;
+    double puV;
     
     if(this->L2_CS_enum == L2_control_strategies_enum::VS200_A)
     {
@@ -768,7 +779,9 @@ void VS300_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
 }
 
 
-double VS300_control_strategy::get_Q3kVAR_setpoint(double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS300_control_strategy::get_Q3kVAR_setpoint( const double pu_Vrms,
+                                                    const double pu_Vrms_SS,
+                                                    const double target_P3kW )
 {
     const VS300_L2_parameters& X = this->params->get_VS300();
     double puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -1037,8 +1050,8 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
 }
 
 
-void supply_equipment_control::execute_control_strategy( const double prev_unix_time,
-                                                         const double now_unix_time,    
+void supply_equipment_control::execute_control_strategy( const double prev_unix_time,   // <--- NOTE: At the top of this function, 'prev_unix_time' is the same as 'this->charge_status.now_unix_time'.
+                                                         const double now_unix_time,    // <---       and 'now_unix_time' here is set to the next timestep, different from 'this->charge_status.now_unix_time'.
                                                          const double pu_Vrms,
                                                          supply_equipment_load& SE_load )
 {
@@ -1053,7 +1066,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     // there is currently not a control strategy using the pu_Vrms_SS value.  
     // Calling this function keeps the raw_puV_data up to date.
     this->LPF.add_raw_data_value(pu_Vrms);
-    double pu_Vrms_SS = this->LPF.get_filtered_value();
+    const double pu_Vrms_SS = this->LPF.get_filtered_value();
     this->prev_pu_Vrms = pu_Vrms;
     
     //--------------------------------------
@@ -1083,9 +1096,9 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     
     double min_time_to_complete_charge_hrs;
     SE_load.get_time_to_complete_active_charge_hrs(100000, pev_is_connected_to_SE, min_time_to_complete_charge_hrs);
-
-    double charge_priority = 3600*min_time_to_complete_charge_hrs / (this->charge_status.departure_unix_time - this->charge_status.now_unix_time);
-    charge_priority = std::min({charge_priority, 1.0});
+    
+    const double ratio_of_min_time_to_charge_over_time_remaining = 3600*min_time_to_complete_charge_hrs / (this->charge_status.departure_unix_time - this->charge_status.now_unix_time);
+    const double charge_priority = std::fmin(ratio_of_min_time_to_charge_over_time_remaining, 1.0);
     
     double P3kW_LB = charge_priority * this->P3kW_limits.max_P3kW;
     
@@ -1099,7 +1112,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
         P3kW_LB = this->P3kW_limits.max_P3kW;
     }
     
-    if(charge_priority > 0.97)
+    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 + 1e-10 )
     {
         this->must_charge_for_remainder_of_park = true;
     }
@@ -1121,6 +1134,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------
     //      Energy Shifting
     //-----------------------------
+    
     double P3kW_setpoint = this->target_P3kW;
     bool is_charging = true;
     
@@ -1144,6 +1158,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
         }
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
         {
+            P3kW_LB = this->P3kW_limits.min_P3kW;
             P3kW_setpoint = this->ES200_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
@@ -1152,7 +1167,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
         }
         else if (this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES400)
         {
-            P3kW_LB = 0.0;
+            P3kW_LB = 0.0;  // <---- TODO TODO TODO:  Should we change this to 'this->P3kW_limits.min_P3kW' ?? (or, 1.44 kW minimum).
             P3kW_setpoint = this->ES400_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
@@ -1195,7 +1210,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     {
         P3kW_setpoint = P3kW_LB;
     }
-    
+        
     //------------------------------
     // Voltage Supporting via QkVAR 
     //------------------------------

@@ -307,14 +307,31 @@ int run_icm_simulation(  const std::string& input_path,
     double prev_unix_time_sec = start_unix_time_sec;
     double now_unix_time_sec = start_unix_time_sec + timestep_sec;
     std::map<grid_node_id_type, double> pu_Vrms;
-    pu_Vrms.emplace("home", 1.0);
-    pu_Vrms.emplace("work", 1.0);
-    pu_Vrms.emplace("destination", 1.0);
+    
+    const int n_node_ids = 12;
+    //const int n_node_ids = 1;
+    std::vector< std::string > node_ids_strings_arr;
+    for( int i = 1; i <= n_node_ids; i++ )
+    {
+        std::stringstream node_id_name_ss;
+        node_id_name_ss << "home" << i;
+        node_ids_strings_arr.push_back( node_id_name_ss.str() );
+    }
+    
+    for( const auto& nodeidstr : node_ids_strings_arr )
+    {
+        pu_Vrms.emplace(nodeidstr, 1.0);
+    }
     
     std::map<grid_node_id_type, std::pair<double, double> > PQ_vals;
 
     std::vector<double> simulation_time_vec_hrs, home_power_vec_kW, work_power_vec_kW, destination_power_vec_kW, total_power_vec_kW;
-    double home_power_kW, work_power_kW, destination_power_kW, total_power_kW;
+    double total_power_kW;
+    std::map< std::string, std::vector<double> > individual_nodeids_data;
+    for( const auto& nodeidstr : node_ids_strings_arr )
+    {
+        individual_nodeids_data[ nodeidstr ] = std::vector<double>();
+    }
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -324,7 +341,6 @@ int run_icm_simulation(  const std::string& input_path,
         {
             std::cout << "simulation time: " <<  now_unix_time_sec/3600.0 << " In Day: " <<  now_unix_time_sec/(24*3600.0);
 
-            
             auto current_time = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = current_time - start_time;
             double time_taken_sec = elapsed.count();
@@ -337,20 +353,19 @@ int run_icm_simulation(  const std::string& input_path,
             std::cout << " Time taken: " << time_taken_sec/60.0 << " minutes";
             std::cout << " Est time rem.: " << estimated_time_remaining_sec/60.0 << " minutes" << std::endl;
 
-        }   
-
+        }
+        
         PQ_vals = icm.get_charging_power(prev_unix_time_sec, now_unix_time_sec, pu_Vrms);
 
-        home_power_kW = PQ_vals["home"].first;
-        work_power_kW = PQ_vals["work"].first;
-        destination_power_kW = PQ_vals["destination"].first;
-        total_power_kW = home_power_kW + work_power_kW + destination_power_kW;
-
-        simulation_time_vec_hrs.push_back(now_unix_time_sec/3600.0);
-        home_power_vec_kW.push_back(home_power_kW);
-        work_power_vec_kW.push_back(work_power_kW);
-        destination_power_vec_kW.push_back(destination_power_kW);
+        total_power_kW = 0.0;
+        for( const auto& nodeidstr : node_ids_strings_arr )
+        {
+            total_power_kW += PQ_vals.at(nodeidstr).first;
+            
+            individual_nodeids_data.at( nodeidstr ).push_back( PQ_vals.at(nodeidstr).first );
+        }
         total_power_vec_kW.push_back(total_power_kW);
+        simulation_time_vec_hrs.push_back(now_unix_time_sec/3600.0);
         
         prev_unix_time_sec = now_unix_time_sec;
         now_unix_time_sec += timestep_sec;
@@ -364,15 +379,38 @@ int run_icm_simulation(  const std::string& input_path,
     }
 
     // header
-    file << "simulation_time_hrs,total_kW,home_kW,work_kW,destination_kW" << std::endl;
+    file << "simulation_time_hrs,total_kW,";
+    for( int j = 1; j <= n_node_ids; j++ )
+    {
+        const std::string& nodeidstr = node_ids_strings_arr.at(j-1);
+        file << nodeidstr;
+        if( j < n_node_ids )
+        {
+            file << ",";
+        }
+        else
+        {
+            file << std::endl;
+        }
+    }
 
     for(size_t i = 0; i < simulation_time_vec_hrs.size(); i++)
     {
-        file << std::to_string(simulation_time_vec_hrs[i]) << ",";
-        file << std::to_string(total_power_vec_kW[i]) << ",";
-        file << std::to_string(home_power_vec_kW[i]) << ",";
-        file << std::to_string(work_power_vec_kW[i]) << ",";
-        file << std::to_string(destination_power_vec_kW[i]) << std::endl;
+        file << std::to_string(simulation_time_vec_hrs.at(i)) << ",";
+        file << std::to_string(total_power_vec_kW.at(i)) << ",";
+        for( int j = 1; j <= n_node_ids; j++ )
+        {
+            const std::string& nodeidstr = node_ids_strings_arr.at(j-1);
+            file << std::to_string(individual_nodeids_data.at(nodeidstr).at(i));
+            if( j < n_node_ids )
+            {
+                file << ",";
+            }
+            else
+            {
+                file << std::endl;
+            }
+        }
     }
 
     file.close();
@@ -385,40 +423,93 @@ int run_icm_simulation(  const std::string& input_path,
     
     // A vector of tuples, (one for each non-overlapping charge event)
     //     containing:  start_time_hrs, end_time_hrs, expected_max_power_level_kW
-    std::vector< std::tuple<double,double,double> > correct_solution_data;
-    correct_solution_data.push_back( std::make_tuple( 1.0, 11.0, 5.992855 ) );
-    correct_solution_data.push_back( std::make_tuple( 13.0, 23.0, 9.233100 ) );
+    std::map< std::string, std::tuple<double,double,double> > correct_solution_data;
+    correct_solution_data[ node_ids_strings_arr.at(0) ] = std::make_tuple(  9.01666666667,  12.9666666667,   1.44080691979 );   // actual if min possible is 0 kW:  1.343283
+    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 14.0166666667,   17.9666666667,   1.44080691979 );   // actual if min possible is 0 kW:  1.338331
+    correct_solution_data[ node_ids_strings_arr.at(2) ] = std::make_tuple( 11.5166666667,   15.4666666667,   1.44080691979 );   // actual if min possible is 0 kW:  1.338331
+    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple(  9.01666666667,  12.9666666667,   1.44080691979 );   // actual if min possible is 0 kW:  0.595296
+    correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple(  9.01666666667,  13.0166666667,  11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(5) ] = std::make_tuple( 14.0166666667,   18.0166666667,  11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 11.5166666667,   15.5166666667,  11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple(  9.01666666667,  18.0166666667,   9.512707 );
+    correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 16.5166666667,   18.0166666667,   3.566408 );
+    correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple(  9.01666666667,  10.5166666667,   3.566408 );
     
     int num_errors = 0;
     
-    for( const std::tuple<double,double,double>& startHr_endHr_expectedpwr_tuple : correct_solution_data )
+    std::cout << "" << std::endl;
+    
+    for( const auto& key_value_pair : correct_solution_data )
     {
-        const double start_hr = std::get<0>(startHr_endHr_expectedpwr_tuple);
-        const double end_hr = std::get<1>(startHr_endHr_expectedpwr_tuple);
-        const double expected_power_kW = std::get<2>(startHr_endHr_expectedpwr_tuple);
+        const std::string& nodeidstr = key_value_pair.first;
+        const std::tuple<double,double,double>& expectedstartHrEndHrPwr_tuple = key_value_pair.second;
         
+        const double expected_start_hr = std::get<0>(expectedstartHrEndHrPwr_tuple);
+        const double expected_end_hr = std::get<1>(expectedstartHrEndHrPwr_tuple);
+        const double expected_power_kW = std::get<2>(expectedstartHrEndHrPwr_tuple);
+    
         // Loop over all the hours and find the max power level during the charge event period.
-        double max_power_level_found = -1000.0;
+        double found_max_power_level = -9999.0;
+        double found_start_time_hrs = -9999.0;
+        double found_end_time_hrs = -9999.0;
         for( int i = 0; i < simulation_time_vec_hrs.size(); i++ )
         {
-            if( simulation_time_vec_hrs.at(i) >= start_hr && simulation_time_vec_hrs.at(i) <= end_hr )
+            const double power_level_kW_this_timestep = individual_nodeids_data.at(nodeidstr).at(i);
+            
+            if( power_level_kW_this_timestep > 1e-8 )
             {
-                if( home_power_vec_kW.at(i) > max_power_level_found )
+                // Record the start time if we haven't already.
+                if( found_start_time_hrs < 0 )
                 {
-                    max_power_level_found = home_power_vec_kW.at(i);
+                    found_start_time_hrs = simulation_time_vec_hrs.at(i);
                 }
+                
+                // Update the end time.
+                found_end_time_hrs = simulation_time_vec_hrs.at(i);
+            }
+            
+            // Update the max power level seen so far.
+            if( power_level_kW_this_timestep > found_max_power_level )
+            {
+                found_max_power_level = power_level_kW_this_timestep;
             }
         }
+    
+        std::cout << std::setprecision(12) << "Node id: " << nodeidstr
+                  << "   found_start_time_hrs:  " << found_start_time_hrs
+                  << "   found_end_time_hrs:    " << found_end_time_hrs 
+                  << "   found_max_power_level: " << found_max_power_level << std::endl;
+    
         
-        if( fabs( expected_power_kW - max_power_level_found ) > 1e-5 )
+        if( fabs( expected_start_hr - found_start_time_hrs ) > 1e-5 )
+        {
+            std::cout << "---" << std::endl;
+            std::cout << "expected_start_hr:      " << expected_start_hr << std::endl;
+            std::cout << "found_start_time_hrs:   " << found_start_time_hrs << std::endl;
+            std::cout << "---" << std::endl;
+            num_errors++;
+        }
+        
+        if( fabs( expected_end_hr - found_end_time_hrs ) > 1e-5 )
+        {
+            std::cout << "---" << std::endl;
+            std::cout << "expected_end_hr:      " << expected_end_hr << std::endl;
+            std::cout << "found_end_time_hrs:   " << found_end_time_hrs << std::endl;
+            std::cout << "---" << std::endl;
+            num_errors++;
+        }
+        
+        if( fabs( expected_power_kW - found_max_power_level ) > 1e-5 )
         {
             std::cout << "---" << std::endl;
             std::cout << "expected_power_kW:      " << expected_power_kW << std::endl;
-            std::cout << "max_power_level_found:  " << max_power_level_found << std::endl;
+            std::cout << "found_max_power_level:  " << found_max_power_level << std::endl;
             std::cout << "---" << std::endl;
             num_errors++;
         }
     }
+    
+    std::cout << "" << std::endl;
 
     return num_errors;
 }
@@ -527,6 +618,7 @@ int main(int argc, char* argv[])
     {
         std::cout << "Success. Code: " << error_code << std::endl;
     }
+    
     return error_code;
 }
 
