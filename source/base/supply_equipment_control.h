@@ -100,7 +100,12 @@ class ES100_control_strategy
 private:
     L2_control_strategies_enum L2_CS_enum;
     manage_L2_control_strategy_parameters* params;
-    double target_P3kW, cur_P3kW_setpoint, charge_start_unix_time;
+    double target_P3kW;
+    double cur_P3kW_setpoint;
+    double charge_start_unix_time;
+    
+    double primary_target_P3kW;    // <-- Used for TOU_FLAT
+    double secondary_target_P3kW;  // <-- Used for TOU_FLAT
     
 public:
     ES100_control_strategy(){};

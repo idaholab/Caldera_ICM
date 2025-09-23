@@ -9,16 +9,12 @@
 // ------ local helper function --------
 double compute_flat_power_level( const double max_power_kW,
                                  const double time_to_charge_at_max_power_seconds,
-                                 const double arrival_unix_time,
-                                 const double departure_unix_time )
+                                 const double dwell_time_sec )
 {
     // Here, we calculate the power level needed to charge for the entire given dwell period.
     // We set the power level based on the ratio between dwell_time and min_time_to_charge.
     //           e.g. if min_time_to_charge is 1 hour, and max_P3kW is 10 kW, but our dwell time
     //                is 2 hours, then we charge at  max_P3kW*((1 hr)/(2 hr)) = 10.0*(1/2) = 5 kW.
-    
-    // Find the dwell time
-    const double dwell_time_sec = departure_unix_time - arrival_unix_time;
     
     // Use ratio between min-time and dwell-time to compute the flat power level.
     const double flat_P3kW = fmin( max_power_kW, max_power_kW*(time_to_charge_at_max_power_seconds/dwell_time_sec) );
@@ -53,6 +49,8 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
                                                        const pev_charge_profile& charge_profile)
 {
     this->target_P3kW = target_P3kW_;
+    this->primary_target_P3kW = target_P3kW_;
+    this->secondary_target_P3kW = target_P3kW_;
     this->cur_P3kW_setpoint = 0;
     
     //--------------------------
@@ -181,7 +179,9 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
             this->charge_start_unix_time = arrival_unix_time;
             
             // Compute the FLAT power level (as-slow-as-possible) for the dwell period that does not overlap with the TOU.
-            const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.arrival_unix_time, charge_status.departure_unix_time );
+            const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
+            this->primary_target_P3kW = flat_P3kW;
+            this->secondary_target_P3kW = flat_P3kW;
             this->target_P3kW = flat_P3kW;
         }
         else
@@ -307,15 +307,33 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
             {
                 // If we have enough time in the TOU to complete the charge event, then we do that (as-slow-as-possible-overlapping-TOU)
                 this->charge_start_unix_time = overlapping_TOU_start_unix_time;
-                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, overlapping_TOU_start_unix_time, overlapping_TOU_end_unix_time );
+                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, overlapping_TOU_end_unix_time - overlapping_TOU_start_unix_time );
+                this->primary_target_P3kW = flat_P3kW;
+                this->secondary_target_P3kW = flat_P3kW;
                 this->target_P3kW = flat_P3kW;    
             }
             else
             {
-                // Otherwise, we just set the power level as-slow-as-possible over the entire dwell period.
+                // // Otherwise, we just set the power level as-slow-as-possible over the entire dwell period.
+                // this->charge_start_unix_time = arrival_unix_time;
+                // const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
+                // this->primary_target_P3kW = flat_P3kW;
+                // this->secondary_target_P3kW = flat_P3kW;
+                // this->target_P3kW = flat_P3kW;
+                
+                //
+                // SECOND APPROACH:  Two power levels: one for overlappping-with-TOU, and otherwise.
+                //
                 this->charge_start_unix_time = arrival_unix_time;
-                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.arrival_unix_time, charge_status.departure_unix_time );
-                this->target_P3kW = flat_P3kW;
+                const double overlapping_TOU_powerlevel_kW = target_P3kW_;
+                const double outside_TOU_powerlevel_kW = [&] () {
+                    const double outside_TOU_time_sec = (charge_status.departure_unix_time - charge_status.arrival_unix_time)  - overlapping_TOU_total_time_sec;
+                    const double outside_TOU_powerlevel_kW = compute_flat_power_level( target_P3kW_, (min_time_to_charge_sec - overlapping_TOU_total_time_sec), outside_TOU_time_sec );
+                    return outside_TOU_powerlevel_kW;
+                }();
+                this->primary_target_P3kW = overlapping_TOU_powerlevel_kW;
+                this->secondary_target_P3kW = outside_TOU_powerlevel_kW;
+                this->target_P3kW = this->primary_target_P3kW;
             }
         }
     }
@@ -325,7 +343,47 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
 double ES100_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time)
 {
     if(now_unix_time >= this->charge_start_unix_time)
-        this->cur_P3kW_setpoint = this->target_P3kW;
+    {
+        double beginning_of_TofU_rate_period__time_from_midnight_sec;
+        double end_of_TofU_rate_period__time_from_midnight_sec;
+        const double time_ahead_of_midnight_sec = fmod(now_unix_time, 24.0*3600.0);
+        std::string randomization_method;
+        
+        if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
+        {
+            const ES100_L2_parameters& X = this->params->get_ES100_A();
+            beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
+            end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
+            randomization_method = X.randomization_method;
+        }
+        else if(this->L2_CS_enum == L2_control_strategies_enum::ES100_B)
+        {
+            const ES100_L2_parameters& X = this->params->get_ES100_B();
+            beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
+            end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
+            randomization_method = X.randomization_method;
+        }
+        
+        if( randomization_method == "M5" )
+        {
+            if( time_ahead_of_midnight_sec >= beginning_of_TofU_rate_period__time_from_midnight_sec && time_ahead_of_midnight_sec < end_of_TofU_rate_period__time_from_midnight_sec )
+            {
+                // The power level during the TOU period.
+                this->target_P3kW = this->primary_target_P3kW;
+                this->cur_P3kW_setpoint = this->primary_target_P3kW;    
+            }
+            else
+            {
+                // The power level outside of the TOU period.
+                this->target_P3kW = this->secondary_target_P3kW;
+                this->cur_P3kW_setpoint = this->secondary_target_P3kW;
+            }
+        }
+        else
+        {
+            this->cur_P3kW_setpoint = this->target_P3kW;
+        }
+    }
     
     return this->cur_P3kW_setpoint;
 }
@@ -412,7 +470,7 @@ void ES200_control_strategy::update_parameters_for_CE( const double max_P3kW,
     const pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC( max_P3kW, charge_status.arrival_SOC, charge_status.departure_SOC);
     const double min_time_to_charge_sec = 3600 * Z.total_charge_time_hrs;
     
-    const double flat_P3kW = compute_flat_power_level( max_P3kW, min_time_to_charge_sec, charge_status.arrival_unix_time, charge_status.departure_unix_time );
+    const double flat_P3kW = compute_flat_power_level( max_P3kW, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
     
     this->target_P3kW = flat_P3kW;
     this->cur_P3kW_setpoint = 0;
