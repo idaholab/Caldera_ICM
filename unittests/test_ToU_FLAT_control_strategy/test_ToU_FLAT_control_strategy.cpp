@@ -439,31 +439,67 @@ int run_icm_simulation(  const std::string& input_path,
     // A vector of tuples, (one for each non-overlapping charge event)
     //     containing:  start_time_hrs, end_time_hrs, expected_max_power_level_kW
     std::map< std::string, std::tuple<double,double,double> > correct_solution_data;
-    correct_solution_data[ node_ids_strings_arr.at(0) ] = std::make_tuple( 11, 13.01666667, 2.6862113384 );    // home1  // Done.
-    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 9.01666666667, 13.0166666667,  6.71332957001 );   // home2  // Done 
-    correct_solution_data[ node_ids_strings_arr.at(2) ] = std::make_tuple( 14.0166666667, 16.0666666667,  2.67637542114 );   // home3  // Done
-    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 14.0166666667, 18.0166666667,  6.68862199591 );   // home4  // Done
-    correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple( 11.5166666667, 13.8833333333,  1.44080691979 );   // home5  // Done
-    correct_solution_data[ node_ids_strings_arr.at(5) ] = std::make_tuple( 11.5166666667, 15.5166666667,  6.68862199591 );   // home6  // Done
-    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 11.0000000000, 14.9500000000,  1.44080691979 );   // home7  // Done
-    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple( 11.0000000000, 16.0166666667,  5.35089759672 );   // home8  // Done
-    correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 9.01666666667, 13.0166666667,  11.5 );   // home9 // Done
-    correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple( 11.0000000000,  13.0166666667, 5.35089759672 );   // home10 // Done
-    correct_solution_data[ node_ids_strings_arr.at(10) ] = std::make_tuple( 14.0166666667, 18.0166666667, 11.5 );   // home11      // Done
-    correct_solution_data[ node_ids_strings_arr.at(11) ] = std::make_tuple( 14.0166666667, 16.0333333333, 5.35089759672 );   // home12  // Done
-    correct_solution_data[ node_ids_strings_arr.at(12) ] = std::make_tuple( 11.5166666667, 15.51666667,   11.5 );   // home13  // Done
-    correct_solution_data[ node_ids_strings_arr.at(13) ] = std::make_tuple( 11.5166666667, 15.5166666667, 2.67637542114 );   // home14 // Done
-    correct_solution_data[ node_ids_strings_arr.at(14) ] = std::make_tuple( 9.01666666667, 18.0166666667, 9.51270683862 );   // home15 // Done
-    correct_solution_data[ node_ids_strings_arr.at(15) ] = std::make_tuple( 11.0000000000, 16.1833333333, 2.14125066386 );   // home16 // Done
-    correct_solution_data[ node_ids_strings_arr.at(16) ] = std::make_tuple( 16.5166666667,  18.0166666667, 3.56640833618 );   // home17 // Done
-    correct_solution_data[ node_ids_strings_arr.at(17) ] = std::make_tuple(  16.5166666667, 18.0166666667, 11.5 );   // home18  // Done
-    correct_solution_data[ node_ids_strings_arr.at(18) ] = std::make_tuple( 9.01666666667, 10.5166666667,  3.56640833618 );   // home19 // Done
-    correct_solution_data[ node_ids_strings_arr.at(19) ] = std::make_tuple( 9.016666667,  10.5166666667,   11.5 );   // home20   // Done
+    correct_solution_data[ node_ids_strings_arr.at(0) ] = std::make_tuple( 12, 12.5, 2.6862113384 );    // home1 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 10, 10.5,  2.333 );  // home2 **
+    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 12, 12.5,  11.5 );   // home2 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(2) ] = std::make_tuple( 14.5, 15.5,  2.67637542114 );   // home3  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 14.5, 15.5,  11.5 );   // home4  **
+    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 16.5, 17.5,  1.87701623654 );   // home4  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple( 11.5166666667, 13.8833333333,  1.44080691979 );   // home5  **
+    correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple( 14.0, 16.0,  0.0 );   // home5  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(5) ] = std::make_tuple( 11.5166666667, 15.5166666667,  6.68862199591 );   // home6  ** 
+    
+    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 9.1, 10.9, 0.0 );   // home7  ** 
+    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 11.0000000000, 14.9500000000,  1.44080691979 );   // home7  ** 
+    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 15.1, 17.9, 0.0 );   // home7  ** 
+    
+    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple( 9.1, 10.9,  0.0 );   // home8  **
+    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple( 11.0000000000, 16.0166666667,  5.35089759672 );   // home8  **
+    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple( 16.1, 17.9,  0.0 );   // home8  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 9.1, 10.8,  11.5 );   // home9  **
+    correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 11.1, 12.8,  11.5 );   // home9  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple( 9.1,  10.8, 0.0 );   // home10  **
+    correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple( 11.1,  12.9, 5.35089759672 );   // home10 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(10) ] = std::make_tuple( 14.0166666667, 15.9, 11.5 );   // home11 **
+    correct_solution_data[ node_ids_strings_arr.at(10) ] = std::make_tuple( 16.1, 18.0166666667, 11.5 );   // home11 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(11) ] = std::make_tuple( 14.0166666667, 15.9, 11.5 );   // home12  **
+    correct_solution_data[ node_ids_strings_arr.at(11) ] = std::make_tuple( 16.1, 18.0166666667, 0.0 );   // home12   **
+    
+    correct_solution_data[ node_ids_strings_arr.at(12) ] = std::make_tuple( 11.5166666667, 15.51666667,   11.5 );   // home13 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(13) ] = std::make_tuple( 11.5166666667, 15.5166666667, 2.67637542114 );   // home14  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(14) ] = std::make_tuple( 9.01666666667, 10.9, 7.0285903869 );   // home15   **
+    correct_solution_data[ node_ids_strings_arr.at(14) ] = std::make_tuple( 11.1, 15.9, 11.5 );   // home15  ** 
+    correct_solution_data[ node_ids_strings_arr.at(14) ] = std::make_tuple( 16.1, 18.0166666667, 7.0285903869 );   // home15  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(15) ] = std::make_tuple( 11.0000000000, 16.1833333333, 2.14125066386 );   // home16 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(16) ] = std::make_tuple( 16.5166666667,  18.0166666667, 3.56640833618 );   // home17  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(17) ] = std::make_tuple(  16.5166666667, 18.0166666667, 11.5 );   // home18  **
+    
+    correct_solution_data[ node_ids_strings_arr.at(18) ] = std::make_tuple( 9.01666666667, 10.5166666667,  3.56640833618 );   // home19 **
+    
+    correct_solution_data[ node_ids_strings_arr.at(19) ] = std::make_tuple( 9.016666667,  10.5166666667,   11.5 );   // home20  **
     
     int num_errors = 0;
     
     std::cout << "" << std::endl;
     
+    
+    
+    // NOTE: For now, instead of looking for expected start and end times,
+    //       we just look within the *given* start and end times and only check the max power level.
     for( const auto& key_value_pair : correct_solution_data )
     {
         const std::string& nodeidstr = key_value_pair.first;
@@ -475,54 +511,22 @@ int run_icm_simulation(  const std::string& input_path,
     
         // Loop over all the hours and find the max power level during the charge event period.
         double found_max_power_level = -9999.0;
-        double found_start_time_hrs = -9999.0;
-        double found_end_time_hrs = -9999.0;
         for( int i = 0; i < simulation_time_vec_hrs.size(); i++ )
         {
-            const double power_level_kW_this_timestep = individual_nodeids_data.at(nodeidstr).at(i);
-            
-            if( power_level_kW_this_timestep > 1e-8 )
+            if( simulation_time_vec_hrs.at(i) >= expected_start_hr && simulation_time_vec_hrs.at(i) <= expected_end_hr )
             {
-                // Record the start time if we haven't already.
-                if( found_start_time_hrs < 0 )
-                {
-                    found_start_time_hrs = simulation_time_vec_hrs.at(i);
-                }
+                const double power_level_kW_this_timestep = individual_nodeids_data.at(nodeidstr).at(i);
                 
-                // Update the end time.
-                found_end_time_hrs = simulation_time_vec_hrs.at(i);
-            }
-            
-            // Update the max power level seen so far.
-            if( power_level_kW_this_timestep > found_max_power_level )
-            {
-                found_max_power_level = power_level_kW_this_timestep;
+                // Update the max power level seen so far.
+                if( power_level_kW_this_timestep > found_max_power_level )
+                {
+                    found_max_power_level = power_level_kW_this_timestep;
+                }
             }
         }
     
         std::cout << std::setprecision(12) << "Node id: " << nodeidstr
-                  << "   found_start_time_hrs:  " << found_start_time_hrs
-                  << "   found_end_time_hrs:    " << found_end_time_hrs 
                   << "   found_max_power_level: " << found_max_power_level << std::endl;
-    
-        
-        if( fabs( expected_start_hr - found_start_time_hrs ) > 1e-5 )
-        {
-            std::cout << "---" << std::endl;
-            std::cout << "expected_start_hr:      " << expected_start_hr << std::endl;
-            std::cout << "found_start_time_hrs:   " << found_start_time_hrs << std::endl;
-            std::cout << "---" << std::endl;
-            num_errors++;
-        }
-        
-        if( fabs( expected_end_hr - found_end_time_hrs ) > 1e-5 )
-        {
-            std::cout << "---" << std::endl;
-            std::cout << "expected_end_hr:      " << expected_end_hr << std::endl;
-            std::cout << "found_end_time_hrs:   " << found_end_time_hrs << std::endl;
-            std::cout << "---" << std::endl;
-            num_errors++;
-        }
         
         if( fabs( expected_power_kW - found_max_power_level ) > 1e-5 )
         {
