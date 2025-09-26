@@ -61,7 +61,7 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
     double departure_unix_time = charge_status.departure_unix_time;
 
     pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
-    double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
+    const double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
 
     //--------------------
     //  M1,M2,M3,M4,M5 key:
@@ -1252,7 +1252,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     const double charge_priority = std::fmin(ratio_of_min_time_to_charge_over_time_remaining, 1.0);
     double P3kW_LB = this->P3kW_limits.min_P3kW;
     
-    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 - 1e-10 )
+    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 + 1e-10 )
     {
         this->must_charge_for_remainder_of_park = true;
     }
