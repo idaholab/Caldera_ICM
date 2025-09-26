@@ -1244,13 +1244,15 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------
     
     double min_time_to_complete_charge_hrs;
+
+    // TODO: Check if this function gives accurate values at final few timesteps, There might be a bug here related to FLAT strategy where 
     SE_load.get_time_to_complete_active_charge_hrs(100000, pev_is_connected_to_SE, min_time_to_complete_charge_hrs);
     
     const double ratio_of_min_time_to_charge_over_time_remaining = 3600*min_time_to_complete_charge_hrs / (this->charge_status.departure_unix_time - this->charge_status.now_unix_time);
     const double charge_priority = std::fmin(ratio_of_min_time_to_charge_over_time_remaining, 1.0);
     double P3kW_LB = this->P3kW_limits.min_P3kW;
     
-    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 + 1e-10 )
+    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 - 1e-10 )
     {
         this->must_charge_for_remainder_of_park = true;
     }
@@ -1260,10 +1262,14 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------------------------------------------
     if(this->L2_control_enums.ext_control_strategy != "NA")
     {    
-        if(this->must_charge_for_remainder_of_park && this->ensure_pev_charge_needs_met_for_ext_control_strategy)
+        if(this->ensure_pev_charge_needs_met_for_ext_control_strategy)
         {
-            SE_load.set_target_acP3_kW(100000);
-            SE_load.set_target_acQ3_kVAR(0);
+            // This is especially for ALAP strategy and other ext control strategy, have little more buffer and not respect this->must_charge_for_remainder_of_park which has tighter buffer.
+            if (charge_priority > 0.97)
+            {    
+                SE_load.set_target_acP3_kW(100000);
+                SE_load.set_target_acQ3_kVAR(0);
+            }
         }
     
         return;
