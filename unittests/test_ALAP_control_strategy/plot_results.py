@@ -14,7 +14,7 @@ ToU_start_hrs = 11.0
 ToU_end_hrs = 16.0
 
 df = pd.read_csv(
-    "inout/icm/outputs/TOU_FLAT_charging_profile.csv",
+    "inout/icm/outputs/ALAP_charging_profile.csv",
     keep_default_na = False,
     index_col = False
 )
@@ -52,7 +52,7 @@ for i in range(0,len(CE_df)):
 time_hrs = df["simulation_time_hrs"].to_numpy()
 
 fig_size = (11,6)
-n_tests = 20
+n_tests = 10
 
 for charge_event_i in range(1,n_tests+1):
     
@@ -78,24 +78,14 @@ for charge_event_i in range(1,n_tests+1):
     bar_height = energy_kW.max()*1.45
     plt.bar(bar_x_center, bar_height, width=bar_width, align='center', color="yellow", alpha=0.6)
 
-    # # The power profile.
-    # ax1.plot(time_hrs,energy_kW)
-    # ax1.set_title("Charge event: "+node_id_name)
-    # ax1.set_xlabel("Time (hrs)")
-    # ax1.set_ylabel("Power (kW)")
-    # ax1.set_xlim((8.0,19.0))
-    # 
-    # ax1.legend(["Power Profile (kW)","Time-of-Use","Dwell Period"],loc="upper right")
-    # 
-    
     # The power profile.
-    ax1.plot(time_hrs,energy_kW,linewidth=4)
-    ax1.set_title("GTC_FLAT strategy example.  Charge event: "+node_id_name)
+    ax1.plot(time_hrs,energy_kW)
+    ax1.set_title("Charge event: "+node_id_name)
     ax1.set_xlabel("Time (hrs)")
     ax1.set_ylabel("Power (kW)")
     ax1.set_xlim((8.0,19.0))
     
-    ax1.legend(["Power Profile (kW)","Good-to-Charge Period","Dwell Period"],loc="upper right")
+    ax1.legend(["Power Profile (kW)","Time-of-Use","Dwell Period"],loc="upper right")
     
     fig.savefig("figs/fig_"+node_id_name+".png")
 

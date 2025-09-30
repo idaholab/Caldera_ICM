@@ -7,3 +7,6 @@ add_subdirectory(test_datatypes)
 add_subdirectory(test_flat_control_strategy)
 add_subdirectory(test_ToU_ALAP_control_strategy)
 add_subdirectory(test_ToU_FLAT_control_strategy)
+
+add_subdirectory(test_ASAP_control_strategy)
+add_subdirectory(test_ALAP_control_strategy)
