@@ -626,6 +626,6 @@ int main(int argc, char* argv[])
         std::cout << "Success. Code: " << error_code << std::endl;
     }
     
-    return 0; //return error_code;
+    return error_code;
 }
 
