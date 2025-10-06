@@ -66,10 +66,10 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
     //--------------------
     //  M1,M2,M3,M4,M5 key:
     // ------------------
-    // M1: ASAP case, with small buffer at the start.
-    // M2: TOU random. (and start at beginning of dwell otherwise)
-    // M3: TOU random. (and Dwell-Period-Random otherwise)
-    // M4: ALAP case, with a small buffer at the end.
+    // M1: TOU_ASAP case, with small buffer at the start.
+    // M2: TOU_random. (and start at beginning of dwell otherwise)
+    // M3: TOU_random. (and Dwell-Period-Random otherwise)
+    // M4: TOU_ALAP case, with a small buffer at the end.
     // M5: FLAT within the TOU period.
     //--------------------
     const std::set<std::string> set_of_all_randomization_methods({"M1","M2","M3","M4","M5"});
@@ -78,7 +78,7 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
     double beginning_of_TofU_rate_period__time_from_midnight_sec, end_of_TofU_rate_period__time_from_midnight_sec;
     double M1_delay_period_sec;
     double M4_delay_period_sec;
-    double w;
+    double w, w2;
     
     if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
     {
@@ -90,7 +90,8 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
         M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100A_getUniformRandomNumber_0to1();
-        
+        w2 = this->params->ES100A_getUniformRandomNumber_0to1();
+
         if(set_of_all_randomization_methods.find(randomization_method) == set_of_all_randomization_methods.end())
         {
             std::cout << "CALDERA ERROR A0.  Look in ES100_control_strategy::update_parameters_for_CE." << std::endl;
@@ -107,6 +108,7 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
         M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100B_getUniformRandomNumber_0to1();
+        w2 = this->params->ES100B_getUniformRandomNumber_0to1();
         
         if(set_of_all_randomization_methods.find(randomization_method) == set_of_all_randomization_methods.end())
         {
@@ -165,7 +167,16 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
             // there is no overlap with the TOU (if the charge time is less than the dwell time.)
             if( min_time_to_charge_sec < departure_unix_time - arrival_unix_time )
             {
-                this->charge_start_unix_time = w*arrival_unix_time + (1-w)*(departure_unix_time - min_time_to_charge_sec);
+                const double earliest_start_time = arrival_unix_time;
+                const double latest_start_time = departure_unix_time - min_time_to_charge_sec;
+                if( latest_start_time < earliest_start_time )
+                {
+                    this->charge_start_unix_time = earliest_start_time;
+                }
+                else
+                {
+                    this->charge_start_unix_time = earliest_start_time + w*(latest_start_time - earliest_start_time);
+                }
             }
             else
             {
@@ -191,7 +202,7 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
         }
     }
     else
-    {
+    {        
         // This case is for when there's at least some overlap
         // between the charge event and the TofU period.
         
@@ -208,106 +219,134 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
             end_of_TofU_rate_period_unix_time += 24*3600;
         }
         
-        //---------------------------------------------------------------
-        //        Calculate randomly_adjusted_start_TofU_unix_time
-        //---------------------------------------------------------------
+        //---------------------------------------------------------------------------
+        //        Calculate the start and end of the overlap between dwell and TOU
+        //---------------------------------------------------------------------------
         
-        // We randomly adjust the start of the TofU period
-        // for this specific charge event so that each charge event
-        // has a slightly different start of the TofU (so they don't
-        // all start at the same time).
-        const double randomly_adjusted_start_TofU_unix_time = [&] () {
-            double randomly_adjusted_start_TofU_unix_time;
-            if(randomization_method == "M1")
+        // **************************************
+        // Using random number 'w' in this block.
+        // **************************************
+        const double randomly_adjusted_beginning_of_TofU_period = [&] () {
+            if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M3"  )
             {
-                // The start of the TofU is adjusted just a little bit (for the ASAP case)
-                randomly_adjusted_start_TofU_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec);
+                const double buffer_period_start = beginning_of_TofU_rate_period_unix_time;
+                const double buffer_period_end = fmin( end_of_TofU_rate_period_unix_time, beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec );
+                const double randomly_adjusted_beginning_of_TofU_period = buffer_period_start + w*(buffer_period_end - buffer_period_start);
+                return randomly_adjusted_beginning_of_TofU_period;
             }
-            else if (randomization_method == "M2" || randomization_method == "M3")
-            {
-                // The start of the TofU is adjusted randomly anywhere between the very beginning to as-late-as-possible.
-                if( min_time_to_charge_sec > end_of_TofU_rate_period_unix_time - beginning_of_TofU_rate_period_unix_time )
-                {
-                    randomly_adjusted_start_TofU_unix_time = beginning_of_TofU_rate_period_unix_time;
-                }
-                else
-                {
-                    randomly_adjusted_start_TofU_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(end_of_TofU_rate_period_unix_time - min_time_to_charge_sec);
-                }
-            }
-            else if( randomization_method == "M4" )
-            {
-                // The start of TofU is adjusted to as-late-as-possible (with a small buffer).
-                const double min_time_to_charge_plus_random_buffer = min_time_to_charge_sec + w*M4_delay_period_sec;
-                randomly_adjusted_start_TofU_unix_time = end_of_TofU_rate_period_unix_time - min_time_to_charge_plus_random_buffer;
-            }    
-            else if( randomization_method == "M5" )
-            {
-                // 'M5' is for as-slow-as-possible-overlapping-TOU.
-            
-                //  Just return the actual start of the TOU.
-                randomly_adjusted_start_TofU_unix_time = beginning_of_TofU_rate_period_unix_time;
-                
-                // // but we still want a small buffer
-                // randomly_adjusted_start_TofU_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec);
-            }    
             else
             {
-                // Throw an error.
-                throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
+                return beginning_of_TofU_rate_period_unix_time;
             }
-            
-            return randomly_adjusted_start_TofU_unix_time;
+        }();
+        const double randomly_adjusted_end_of_TofU_period = [&] () {
+            if( randomization_method == "M4" )
+            {
+                const double buffer_period_start = fmax( end_of_TofU_rate_period_unix_time - M4_delay_period_sec, beginning_of_TofU_rate_period_unix_time );
+                const double buffer_period_end = end_of_TofU_rate_period_unix_time;
+                const double randomly_adjusted_end_of_TofU_period = buffer_period_start + w*(buffer_period_end - buffer_period_start);
+                return randomly_adjusted_end_of_TofU_period;
+            }
+            else
+            {
+                return end_of_TofU_rate_period_unix_time;
+            }
         }();
         
+        const double overlap_start = fmax( randomly_adjusted_beginning_of_TofU_period, charge_status.arrival_unix_time );
+        const double overlap_end = fmax( overlap_start, fmin( randomly_adjusted_end_of_TofU_period, charge_status.departure_unix_time ) );
+        const double overlap_duration_sec = overlap_end - overlap_start;
         
+        //-------------------------------------------------------------------------
+        //    Select the actual time to start, based on 'randomization_method'.
+        //-------------------------------------------------------------------------
         
-        //--------------------------------------------
-        //    Ensure Charge will Fit Inside Park
-        //--------------------------------------------
+        // ***************************************
+        // Using random number 'w2' in this block.
+        // ***************************************
         
         if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M3" || randomization_method == "M4" )
         {
-        
-            if(randomly_adjusted_start_TofU_unix_time < arrival_unix_time)
+            if( min_time_to_charge_sec < overlap_duration_sec )
             {
-                // If we arrive after the TofU period started, then just start charging as soon as we arrive.
-                this->charge_start_unix_time = arrival_unix_time;
-            }
-            else if(departure_unix_time - min_time_to_charge_sec < randomly_adjusted_start_TofU_unix_time)
-            {
-                // If the last-chance-to-start-charging falls before the beginning of the TofU, then just start as late as possible
-                // (so we overlap with the TofU as much as possible).
-                this->charge_start_unix_time = departure_unix_time - min_time_to_charge_sec;
+                // *************************************************
+                // The charge can fit within the overlapping period.
+                // *************************************************
+                
+                if( randomization_method == "M1" )
+                {
+                    // TOU_ASAP [small buffer dealt with when computing 'overlap_start' above]
+                    this->charge_start_unix_time = overlap_start;
+                }
+                else if( randomization_method == "M2" || randomization_method == "M3" )
+                {
+                    // TOU_random.
+                    this->charge_start_unix_time = overlap_start + w2*((overlap_end - min_time_to_charge_sec) - overlap_start);
+                }
+                else if( randomization_method == "M4" )
+                {
+                    // TOU_ALAP case, with a small buffer at the end. [small buffer dealt with when computing 'overlap_end' above]
+                    this->charge_start_unix_time = overlap_end - min_time_to_charge_sec;
+                }
+                else if( randomization_method == "M5" )
+                {
+                    // FLAT within the TOU period. <--- we deal with this in a different if-block (see below).
+                    // Throw an error.
+                    throw std::runtime_error("Error: This if-block shouldn't happen. [3132]");
+                }
+                else
+                {
+                    // Throw an error.
+                    throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
+                }    
             }
             else
             {
-                // In this case, the charge-event-duration is shorter than the TofU duration, so we just
-                // start at the begining of the TofU (as soon as possible, after the randomly-adjusted start of the TofU)
-                this->charge_start_unix_time = randomly_adjusted_start_TofU_unix_time;
+                // *************************************************
+                // The charge can't fit within the overlapping period.
+                // *************************************************
+                
+                if( randomization_method == "M1" )
+                {
+                    // TOU_ASAP
+                    this->charge_start_unix_time = fmax( overlap_end - min_time_to_charge_sec, arrival_unix_time );
+                }
+                else if( randomization_method == "M2" || randomization_method == "M3" )
+                {
+                    // TOU_random.
+                    const double min_possible_time_to_start = fmax( overlap_end - min_time_to_charge_sec, arrival_unix_time );
+                    const double max_possible_time_to_start = fmin( departure_unix_time - min_time_to_charge_sec, overlap_start );
+                    this->charge_start_unix_time = min_possible_time_to_start + w2*(max_possible_time_to_start - min_possible_time_to_start);
+                }
+                else if( randomization_method == "M4" )
+                {
+                    // TOU_ALAP case
+                    this->charge_start_unix_time = fmin( departure_unix_time - min_time_to_charge_sec, overlap_start );
+                }
+                else if( randomization_method == "M5" )
+                {
+                    // FLAT within the TOU period. <--- we deal with this in a different if-block (see below).
+                    // Throw an error.
+                    throw std::runtime_error("Error: This if-block shouldn't happen. [42332]");
+                }
+                else
+                {
+                    // Throw an error.
+                    throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
+                }    
             }
-        
         }
         else if( randomization_method == "M5" )
         {
-            const double overlapping_TOU_start_unix_time = [&] () {
-                if( TofU_start_in_park ) return beginning_of_TofU_rate_period_unix_time;
-                else return arrival_unix_time;
-            }();
+            // ---------------------
+            //       TOU_FLAT
+            // ---------------------
             
-            const double overlapping_TOU_end_unix_time = [&] () {
-                if( TofU_end_in_park ) return end_of_TofU_rate_period_unix_time;
-                else return departure_unix_time;
-            }();
-            
-            // Look at 'min_time_to_charge_sec' and dwell-time and how much overlap we have with the TOU to determine the power level and charge duration.
-            const double overlapping_TOU_total_time_sec = (overlapping_TOU_end_unix_time - overlapping_TOU_start_unix_time);
-            
-            if( min_time_to_charge_sec < overlapping_TOU_total_time_sec )
+            if( min_time_to_charge_sec < overlap_duration_sec )
             {
                 // If we have enough time in the TOU to complete the charge event, then we do that (as-slow-as-possible-overlapping-TOU)
-                this->charge_start_unix_time = overlapping_TOU_start_unix_time;
-                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, overlapping_TOU_end_unix_time - overlapping_TOU_start_unix_time );
+                this->charge_start_unix_time = overlap_start;
+                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, overlap_end - overlap_start );
                 this->primary_target_P3kW = flat_P3kW;
                 this->secondary_target_P3kW = flat_P3kW;
                 this->target_P3kW = flat_P3kW;    
@@ -316,7 +355,7 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
             {
                 // // Otherwise, we just set the power level as-slow-as-possible over the entire dwell period.
                 // this->charge_start_unix_time = arrival_unix_time;
-                // const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
+                // const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, departure_unix_time - arrival_unix_time );
                 // this->primary_target_P3kW = flat_P3kW;
                 // this->secondary_target_P3kW = flat_P3kW;
                 // this->target_P3kW = flat_P3kW;
@@ -327,14 +366,19 @@ void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
                 this->charge_start_unix_time = arrival_unix_time;
                 const double overlapping_TOU_powerlevel_kW = target_P3kW_;
                 const double outside_TOU_powerlevel_kW = [&] () {
-                    const double outside_TOU_time_sec = (charge_status.departure_unix_time - charge_status.arrival_unix_time)  - overlapping_TOU_total_time_sec;
-                    const double outside_TOU_powerlevel_kW = compute_flat_power_level( target_P3kW_, (min_time_to_charge_sec - overlapping_TOU_total_time_sec), outside_TOU_time_sec );
+                    const double outside_TOU_time_sec = (departure_unix_time - arrival_unix_time) - overlap_duration_sec;
+                    const double outside_TOU_powerlevel_kW = compute_flat_power_level( target_P3kW_, (min_time_to_charge_sec - overlap_duration_sec), outside_TOU_time_sec );
                     return outside_TOU_powerlevel_kW;
                 }();
                 this->primary_target_P3kW = overlapping_TOU_powerlevel_kW;
                 this->secondary_target_P3kW = outside_TOU_powerlevel_kW;
                 this->target_P3kW = this->primary_target_P3kW;
             }
+        }
+        else
+        {
+            // Throw an error.
+            throw std::runtime_error("Error: This else-block shouldn't happen. [3]");
         }
     }
 }

@@ -58,24 +58,24 @@ L2_control_strategy_parameters get_L2_control_strategy_parameters()
     const double end_of_TofU_rate_period__time_from_midnight_hrs = 5;
     const std::string randomization_method = "M1";
     const double M1_delay_period_hrs = 0.25;
-    const int random_seed = 100;
+    const int random_seed = 234235;
      
     ES100_L2_parameters ES100_A;
     ES100_A.beginning_of_TofU_rate_period__time_from_midnight_hrs = 11.0;        // <------------ ToU start time (24-hrs format)
     ES100_A.end_of_TofU_rate_period__time_from_midnight_hrs = 16.0;              // <------------ ToU end time (24-hrs format)
-    ES100_A.randomization_method = "M1";
+    ES100_A.randomization_method = "M2";     // <------------------------------------------------ This was changed to "M2".
     ES100_A.M1_delay_period_hrs = 0.25;
-    ES100_A.random_seed = 100;
+    ES100_A.random_seed = random_seed;
 
     ES100_L2_parameters ES100_B;
     ES100_B.beginning_of_TofU_rate_period__time_from_midnight_hrs = -1;
     ES100_B.end_of_TofU_rate_period__time_from_midnight_hrs = 5;
     ES100_B.randomization_method = "M2";
     ES100_B.M1_delay_period_hrs = 0.25;
-    ES100_B.random_seed = 100;
+    ES100_B.random_seed = random_seed;
     
     ES110_L2_parameters ES110;
-    ES110.random_seed = 100;
+    ES110.random_seed = random_seed;
 
     ES200_L2_parameters ES200;
     ES200.weight_factor_to_calculate_valley_fill_target = 0.0;
@@ -206,7 +206,9 @@ std::vector<charge_event_data> get_charge_events(const std::string& CE_file_path
         "ASAP",
         "ALAP",
         "TOU_ALAP",
-        "FLAT"
+        "TOU_FLAT",
+        "FLAT",
+        "TOU_RANDOM"
     };
 
     if( std::find(possible_control_modes.begin(), possible_control_modes.end(), control_strategy) == possible_control_modes.end() )
@@ -243,10 +245,24 @@ std::vector<charge_event_data> get_charge_events(const std::string& CE_file_path
         control_enums.VS_control_strategy = L2_control_strategies_enum::NA;     // "VS" stands for "voltage support"
         control_enums.ext_control_strategy = "NA";
     }
+    else if(control_strategy == "TOU_FLAT" )
+    {
+        control_enums.inverter_model_supports_Qsetpoint = false;
+        control_enums.ES_control_strategy = L2_control_strategies_enum::ES100_A;
+        control_enums.VS_control_strategy = L2_control_strategies_enum::NA;     // "VS" stands for "voltage support"
+        control_enums.ext_control_strategy = "NA";
+    }
     else if (control_strategy == "FLAT")
     {
         control_enums.inverter_model_supports_Qsetpoint = false;
         control_enums.ES_control_strategy = L2_control_strategies_enum::ES200;  // "ES" stands for "Energy Shifting".
+        control_enums.VS_control_strategy = L2_control_strategies_enum::NA;     // "VS" stands for "voltage support"
+        control_enums.ext_control_strategy = "NA";
+    }
+    else if( control_strategy == "TOU_RANDOM" )
+    {
+        control_enums.inverter_model_supports_Qsetpoint = false;
+        control_enums.ES_control_strategy = L2_control_strategies_enum::ES100_A;
         control_enums.VS_control_strategy = L2_control_strategies_enum::NA;     // "VS" stands for "voltage support"
         control_enums.ext_control_strategy = "NA";
     }
@@ -316,9 +332,24 @@ int run_icm_simulation(  const std::string& input_path,
     double now_unix_time_sec = start_unix_time_sec + timestep_sec;
     std::map<grid_node_id_type, double> pu_Vrms;
     
-    const int n_node_ids = 12;
+    const std::vector<int> node_ids_to_test = [&] () {
+        std::vector<int> node_ids_to_test = {
+            1,
+            2,
+            3,4,5,6,
+            7,
+            8,9,10,11,12,13,14,15,16,17,18,19,20,
+            21,
+            22,23,
+            24,
+            25,26,27,28,29,30
+        };
+        std::sort(node_ids_to_test.begin(), node_ids_to_test.end());
+        return node_ids_to_test;
+    }();
+
     std::vector< std::string > node_ids_strings_arr;
-    for( int i = 1; i <= n_node_ids; i++ )
+    for( const int i : node_ids_to_test )
     {
         std::stringstream node_id_name_ss;
         node_id_name_ss << "home" << i;
@@ -359,7 +390,6 @@ int run_icm_simulation(  const std::string& input_path,
 
             std::cout << " Time taken: " << time_taken_sec/60.0 << " minutes";
             std::cout << " Est time rem.: " << estimated_time_remaining_sec/60.0 << " minutes" << std::endl;
-
         }   
 
         PQ_vals = icm.get_charging_power(prev_unix_time_sec, now_unix_time_sec, pu_Vrms);
@@ -387,11 +417,11 @@ int run_icm_simulation(  const std::string& input_path,
 
     // header
     file << "simulation_time_hrs,total_kW,";
-    for( int j = 1; j <= n_node_ids; j++ )
+    for( int j = 0; j < node_ids_strings_arr.size(); j++ )
     {
-        const std::string& nodeidstr = node_ids_strings_arr.at(j-1);
+        const std::string& nodeidstr = node_ids_strings_arr.at(j);
         file << nodeidstr;
-        if( j < n_node_ids )
+        if( j+1 < node_ids_strings_arr.size() )
         {
             file << ",";
         }
@@ -405,11 +435,11 @@ int run_icm_simulation(  const std::string& input_path,
     {
         file << std::to_string(simulation_time_vec_hrs.at(i)) << ",";
         file << std::to_string(total_power_vec_kW.at(i)) << ",";
-        for( int j = 1; j <= n_node_ids; j++ )
+        for( int j = 0; j < node_ids_strings_arr.size(); j++ )
         {
-            const std::string& nodeidstr = node_ids_strings_arr.at(j-1);
+            const std::string& nodeidstr = node_ids_strings_arr.at(j);
             file << std::to_string(individual_nodeids_data.at(nodeidstr).at(i));
-            if( j < n_node_ids )
+            if( j+1 < node_ids_strings_arr.size() )
             {
                 file << ",";
             }
@@ -422,37 +452,158 @@ int run_icm_simulation(  const std::string& input_path,
 
     file.close();
     
+    int num_errors = 0;
     
-    
+#define DO_TEST_CHECKS 1
+#if DO_TEST_CHECKS
     // *********************************************************
     // Check the results and return the appropriate error code.
     // *********************************************************
     
     // A vector of tuples, (one for each non-overlapping charge event)
     //     containing:  start_time_hrs, end_time_hrs, expected_max_power_level_kW
-    std::map< std::string, std::tuple<double,double,double> > correct_solution_data;
-    correct_solution_data[ node_ids_strings_arr.at(0) ] = std::make_tuple( 9, 9.48333333333, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 14, 14.4833333333, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(2) ] = std::make_tuple( 11.5, 11.9833333333, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 9, 9.48333333333,        11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple(  9, 13.01666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(5) ] = std::make_tuple( 14, 18.01666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 11.5, 15.51666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple(  9, 16.45, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 16.5, 16.9833333333,        11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple( 9,  9.48333333333,        11.5 );
+    std::map< std::pair<std::string,int>, std::tuple<double,double,double> > correct_solution_data;
     
-    int num_errors = 0;
+    // These are the same scenarios, but the specific values are different
+    // becasue they are randomly distributed throughout the overlap region
+    correct_solution_data[ std::make_pair(std::string("home1"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home2"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home3"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home4"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home5"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home6"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home7"),0) ] = std::make_tuple( 11.0, 13.0, 11.5 );
+    
+    // These are the same scenarios, but the specific values are different
+    // becasue they are randomly distributed throughout the overlap region
+    correct_solution_data[ std::make_pair(std::string("home8"),0) ] = std::make_tuple(  11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home9"),0) ] = std::make_tuple(  11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home10"),0) ] = std::make_tuple( 11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home11"),0) ] = std::make_tuple( 11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home12"),0) ] = std::make_tuple( 11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home13"),0) ] = std::make_tuple( 11.5, 15.5, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home14"),0) ] = std::make_tuple( 11.5, 15.5, 11.5 );
+    
+    // *******************
+    // *** M2 specific ***
+    // *******************
+    // Because of "M2" since these are outside the overlap region these should all be the same and all ASAP.
+    correct_solution_data[ std::make_pair(std::string("home15"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home16"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home17"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home18"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home19"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home20"),0) ] = std::make_tuple( 16.5, 17.0, 11.5 );
+    
+    // These are the same scenarios, but the specific values are different
+    // becasue they are randomly distributed throughout the overlap region
+    correct_solution_data[ std::make_pair(std::string("home21"),0) ] = std::make_tuple( 14.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home22"),0) ] = std::make_tuple( 14.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home23"),0) ] = std::make_tuple( 14.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home24"),0) ] = std::make_tuple( 14.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home25"),0) ] = std::make_tuple( 14.0, 16.0, 11.5 );
+    
+    // These are the same scenarios, but the specific values are different
+    // becasue they are randomly distributed throughout the overlap region
+    correct_solution_data[ std::make_pair(std::string("home26"),0) ] = std::make_tuple( 11.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home27"),0) ] = std::make_tuple( 11.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home28"),0) ] = std::make_tuple( 11.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home29"),0) ] = std::make_tuple( 11.0, 16.0, 11.5 );
+    correct_solution_data[ std::make_pair(std::string("home30"),0) ] = std::make_tuple( 11.0, 16.0, 11.5 );
     
     std::cout << "" << std::endl;
     
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    
+    // Index of the array to collect values to compare
+    std::map< std::string, int > nodeidstr_to_arrayindex = {
+        {"home1",0},
+        {"home2",0},
+        {"home3",0},
+        {"home4",0},
+        {"home5",0},
+        {"home6",0},
+        {"home7",0},
+        
+        {"home8",1},
+        {"home9",1},
+        {"home10",1},
+        {"home11",1},
+        {"home12",1},
+        {"home13",1},
+        {"home14",1},
+        
+        {"home15",2},
+        {"home16",2},
+        {"home17",2},
+        {"home18",2},
+        {"home19",2},
+        {"home20",2},
+                
+        {"home21",3},
+        {"home22",3},
+        {"home23",3},
+        {"home24",3},
+        {"home25",3},
+
+        {"home26",4},
+        {"home27",4},
+        {"home28",4},
+        {"home29",4},
+        {"home30",4}
+    };
+    
+    std::map< int, std::vector<std::string> > arrayindex_to_vectorofnodeidstrs_map;
+    for( const auto& str_int_pair : nodeidstr_to_arrayindex )
+    {
+        if( arrayindex_to_vectorofnodeidstrs_map.find( str_int_pair.second ) == arrayindex_to_vectorofnodeidstrs_map.end() )
+        {
+            arrayindex_to_vectorofnodeidstrs_map[ str_int_pair.second ] = std::vector<std::string>();
+        }
+        arrayindex_to_vectorofnodeidstrs_map.at( str_int_pair.second ).push_back( str_int_pair.first );
+    }
+    
+    // Index to bool: If true, then all values should be random and all different.
+    std::map< int, bool > arrayindex_to_shouldberandombool = {
+        {0,true},
+        {1,true},
+        {2,false},
+        {3,true},
+        {4,true}
+    };
+    
+    std::vector< std::vector<double> > values_collect_arrays_starttimes = {
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>()
+    };
+    
+    std::vector< std::vector<double> > values_collect_arrays_endtimes = {
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>(),
+        std::vector<double>()
+    };
+    
+    
     for( const auto& key_value_pair : correct_solution_data )
     {
-        const std::string& nodeidstr = key_value_pair.first;
+        const std::string& nodeidstr = key_value_pair.first.first;
+        const int test_id_for_nodeid = key_value_pair.first.second;
         const std::tuple<double,double,double>& expectedstartHrEndHrPwr_tuple = key_value_pair.second;
         
-        const double expected_start_hr = std::get<0>(expectedstartHrEndHrPwr_tuple);
-        const double expected_end_hr = std::get<1>(expectedstartHrEndHrPwr_tuple);
+        const double earliest_start_hr = std::get<0>(expectedstartHrEndHrPwr_tuple);
+        const double latest_end_hr = std::get<1>(expectedstartHrEndHrPwr_tuple);
         const double expected_power_kW = std::get<2>(expectedstartHrEndHrPwr_tuple);
     
         // Loop over all the hours and find the max power level during the charge event period.
@@ -488,19 +639,19 @@ int run_icm_simulation(  const std::string& input_path,
                   << "   found_max_power_level: " << found_max_power_level << std::endl;
     
         
-        if( fabs( expected_start_hr - found_start_time_hrs ) > 1e-5 )
+        if( found_start_time_hrs < earliest_start_hr )
         {
             std::cout << "---" << std::endl;
-            std::cout << "expected_start_hr:      " << expected_start_hr << std::endl;
+            std::cout << "earliest_start_hr:      " << earliest_start_hr << std::endl;
             std::cout << "found_start_time_hrs:   " << found_start_time_hrs << std::endl;
             std::cout << "---" << std::endl;
             num_errors++;
         }
         
-        if( fabs( expected_end_hr - found_end_time_hrs ) > 1e-5 )
+        if( found_end_time_hrs > latest_end_hr )
         {
             std::cout << "---" << std::endl;
-            std::cout << "expected_end_hr:      " << expected_end_hr << std::endl;
+            std::cout << "latest_end_hr:      " << latest_end_hr << std::endl;
             std::cout << "found_end_time_hrs:   " << found_end_time_hrs << std::endl;
             std::cout << "---" << std::endl;
             num_errors++;
@@ -514,7 +665,102 @@ int run_icm_simulation(  const std::string& input_path,
             std::cout << "---" << std::endl;
             num_errors++;
         }
+        
+        values_collect_arrays_starttimes.at( nodeidstr_to_arrayindex.at(nodeidstr) ).push_back(found_start_time_hrs);
+        values_collect_arrays_endtimes.at( nodeidstr_to_arrayindex.at(nodeidstr) ).push_back(found_end_time_hrs);
     }
+    
+    for( const auto& int_vec_pair : arrayindex_to_vectorofnodeidstrs_map )
+    {
+        // Loop through this collection of nodeidstrs and make sure all the values are either the same are all different, as the case may be.
+        const int arrayindex = int_vec_pair.first;
+        std::vector< std::string > array_of_nodeidstrs = int_vec_pair.second;
+        const std::vector<double>& starttimes = values_collect_arrays_starttimes.at( arrayindex );
+        const std::vector<double>& endtimes = values_collect_arrays_endtimes.at( arrayindex );
+        if( arrayindex_to_shouldberandombool.at( arrayindex ) )
+        {
+            // Make sure all the values are different, greater than a tolerance.
+            for( int i = 0; i < starttimes.size(); i++ )
+            {
+                for( int j = 0; j < starttimes.size(); j++ )
+                {
+                    if( i != j )
+                    {
+                        if( fabs( starttimes.at(i) - starttimes.at(j) ) < 1e-8 )
+                        {
+                            std::cout << "Error found when making sure all 'starttimes' are different. i,j: " << i << "," << j << " Comparing nodeidstrs: " << array_of_nodeidstrs.at(i) << ", " << array_of_nodeidstrs.at(j) << std::endl;
+                            num_errors++;
+                        }
+                    }
+                }
+            }
+            for( int i = 0; i < endtimes.size(); i++ )
+            {
+                for( int j = 0; j < endtimes.size(); j++ )
+                {
+                    if( i != j )
+                    {
+                        if( fabs( starttimes.at(i) - starttimes.at(j) ) < 1e-8 )
+                        {
+                            std::cout << "Error found when making sure all 'endtimes' are different. i,j: " << i << "," << j << " Comparing nodeidstrs: " << array_of_nodeidstrs.at(i) << ", " << array_of_nodeidstrs.at(j) << std::endl;
+                            num_errors++;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Make sure all the values are the same, within a tolerance.
+            for( int i = 0; i < starttimes.size(); i++ )
+            {
+                for( int j = 0; j < starttimes.size(); j++ )
+                {
+                    if( i != j )
+                    {
+                        if( fabs( starttimes.at(i) - starttimes.at(j) ) > 1e-9 )
+                        {
+                            std::cout << "Error found when making sure all 'starttimes' are the same. i,j: " << i << "," << j << " Comparing nodeidstrs: " << array_of_nodeidstrs.at(i) << ", " << array_of_nodeidstrs.at(j) << std::endl;
+                            num_errors++;
+                        }
+                    }
+                }
+            }
+            for( int i = 0; i < endtimes.size(); i++ )
+            {
+                for( int j = 0; j < endtimes.size(); j++ )
+                {
+                    if( i != j )
+                    {
+                        if( fabs( starttimes.at(i) - starttimes.at(j) ) > 1e-9 )
+                        {
+                            std::cout << "Error found when making sure all 'endtimes' are the same. i,j: " << i << "," << j << " Comparing nodeidstrs: " << array_of_nodeidstrs.at(i) << ", " << array_of_nodeidstrs.at(j) << std::endl;
+                            num_errors++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    if( num_errors > 0 )
+    {
+        std::cout << "NOTE: Sometimes with certain random seeds there is a chance to get the same value for some, "
+                     "so try other random seeds to find one where all values different, if its actually working." << std::endl;
+    }
+    
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+    // *******
+#else
+    std::cout << "NOT DOING CHECKS BECAUSE 'DO_TEST_CHECKS' is turned off." << std::endl;
+#endif
+    
     
     std::cout << "" << std::endl;
     
@@ -527,7 +773,7 @@ int main(int argc, char* argv[])
     if( argc == 1 )
     {
         sim_folder = "inout";
-        control_mode = "ASAP";
+        control_mode = "TOU_RANDOM";
     }
     else
     {

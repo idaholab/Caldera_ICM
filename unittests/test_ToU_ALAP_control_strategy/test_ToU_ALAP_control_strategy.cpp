@@ -432,13 +432,13 @@ int run_icm_simulation(  const std::string& input_path,
     //     containing:  start_time_hrs, end_time_hrs, expected_max_power_level_kW
     std::map< std::string, std::tuple<double,double,double> > correct_solution_data;
     correct_solution_data[ node_ids_strings_arr.at(0) ] = std::make_tuple( 12.53333333, 13.01666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 15.43333333, 15.91666667, 11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(1) ] = std::make_tuple( 15.3666666667, 15.85, 11.5 );
     correct_solution_data[ node_ids_strings_arr.at(2) ] = std::make_tuple( 15.05,       15.51666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 15.41666667, 15.9,        11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(3) ] = std::make_tuple( 15.3333333333, 15.8166666667,        11.5 );
     correct_solution_data[ node_ids_strings_arr.at(4) ] = std::make_tuple(  9.01666667, 13.01666667, 11.5 );
     correct_solution_data[ node_ids_strings_arr.at(5) ] = std::make_tuple( 14.01666667, 18.01666667, 11.5 );
     correct_solution_data[ node_ids_strings_arr.at(6) ] = std::make_tuple( 11.51666667, 15.51666667, 11.5 );
-    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple(  9.01666667, 16.46666667, 11.5 );
+    correct_solution_data[ node_ids_strings_arr.at(7) ] = std::make_tuple( 10.5666666667, 18.0166666667, 11.5 );
     correct_solution_data[ node_ids_strings_arr.at(8) ] = std::make_tuple( 16.51666667, 17.0,        11.5 );
     correct_solution_data[ node_ids_strings_arr.at(9) ] = std::make_tuple( 9.016666667,  9.5,        11.5 );
     

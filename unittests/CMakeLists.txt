@@ -10,3 +10,6 @@ add_subdirectory(test_ToU_FLAT_control_strategy)
 
 add_subdirectory(test_ASAP_control_strategy)
 add_subdirectory(test_ALAP_control_strategy)
+add_subdirectory(test_ToU_RANDOM_M2_control_strategy)
+add_subdirectory(test_ToU_RANDOM_M3_control_strategy)
+
