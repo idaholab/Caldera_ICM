@@ -177,9 +177,17 @@ pev_charge_profile_result pev_charge_profile_aux::get_pev_charge_profile_result(
     
     if(end.soc < start.soc)
     {
-        std::cout << "ERROR: In pev_charge_profile_aux end_soc less than start_soc." << std::endl;
-        exit(0);
-        obj = get_default_charge_profile_result();
+        std::cout << "WARNING!: In pev_charge_profile_aux end_soc less than start_soc." << std::endl;
+        obj.soc_increase = 0.001;
+        obj.E1_kWh = 0.001;
+        obj.E2_kWh = 0.001;
+        obj.E3_kWh = 0.001;
+        obj.cumQ3_kVARh = 0.001;
+        obj.total_charge_time_hrs = 0.001;
+        obj.incremental_chage_time_hrs = NAN;
+
+        //exit(0);
+        //obj = get_default_charge_profile_result();
     }
     else
     {
