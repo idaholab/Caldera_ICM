@@ -1,17 +1,17 @@
 #include "factory_charging_transitions.h"
 
-#include "battery_integrate_X_in_time.h"        // integrate_X_through_time, transition_goto_next_segment_criteria, transition_of_X_through_time
+#include "battery_integrate_X_in_time.h"		// integrate_X_through_time, transition_goto_next_segment_criteria, transition_of_X_through_time
 
 //###########################################
 //          charging_transitions
 //###########################################
 
 charging_transitions::charging_transitions(const EVSE_level_charging_transitions& charging_transitions_by_EVSE_level,
-                                           const EV_charging_transitions& charging_transitions_by_custom_EV,
-                                           const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE)
-    : charging_transitions_by_EVSE_level{ charging_transitions_by_EVSE_level },
-    charging_transitions_by_custom_EV{ charging_transitions_by_custom_EV },
-    charging_transitions_by_custom_EV_EVSE{ charging_transitions_by_custom_EV_EVSE }
+										   const EV_charging_transitions& charging_transitions_by_custom_EV,
+										   const EV_EVSE_charging_transitions& charging_transitions_by_custom_EV_EVSE)
+	: charging_transitions_by_EVSE_level{ charging_transitions_by_EVSE_level },
+	charging_transitions_by_custom_EV{ charging_transitions_by_custom_EV },
+	charging_transitions_by_custom_EV_EVSE{ charging_transitions_by_custom_EV_EVSE }
 {
 }
 
@@ -21,8 +21,8 @@ charging_transitions::charging_transitions(const EVSE_level_charging_transitions
 //###########################################
 
 factory_charging_transitions::factory_charging_transitions(const EV_EVSE_inventory& inventory,
-                                                           const EV_ramping_map& custom_EV_ramping,
-                                                           const EV_EVSE_ramping_map& custom_EV_EVSE_ramping)
+														   const EV_ramping_map& custom_EV_ramping,
+														   const EV_EVSE_ramping_map& custom_EV_EVSE_ramping)
     : inventory{ inventory },
     custom_EV_ramping{ custom_EV_ramping },
     custom_EV_EVSE_ramping{ custom_EV_EVSE_ramping },
@@ -36,16 +36,16 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
     EVSE_level_charging_transitions transitions_by_EVSE_level;
 
     /*
-    Each transition_of_X_through_time must have at least 3 segments.
+	Each transition_of_X_through_time must have at least 3 segments.
 
-    struct transition_goto_next_segment_criteria
-    {
-        transition_criteria_type criteria_type;
-        double criteria_value;
-        bool inturupt_this_transition_if_target_X_deviation_limit_exceeded;
-        double target_X_deviation_limit_to_interupt_this_transition;
-        double segment_slope_X_per_sec;
-    };
+	struct transition_goto_next_segment_criteria
+	{
+		transition_criteria_type criteria_type;
+		double criteria_value;
+		bool inturupt_this_transition_if_target_X_deviation_limit_exceeded;
+		double target_X_deviation_limit_to_interupt_this_transition;
+		double segment_slope_X_per_sec;
+	};
     */
 
     double X_deadband, target_deadband, off_deadband;
@@ -58,16 +58,16 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
     off_deadband = 0.0001;
 
     goto_next_seg.clear();
-    goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1, false, 0, 0 );
-    goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1, false, 0, 0 );
-    goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 10 );
-    transition_of_X_through_time default_to_pos_inf{ transition_state::moving_toward_pos_inf, X_deadband, goto_next_seg };
+    goto_next_seg.emplace_back( time_delay_sec, 0.1, false, 0, 0 );
+    goto_next_seg.emplace_back( time_delay_sec, 0.1, false, 0, 0 );
+    goto_next_seg.emplace_back( from_final_X, 0, false, 0, 10 );
+    transition_of_X_through_time default_to_pos_inf{ moving_toward_pos_inf, X_deadband, goto_next_seg };
 
     goto_next_seg.clear();
-    goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1, false, 0, 0 );
-    goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1, false, 0, 0 );
-    goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -10 );
-    transition_of_X_through_time default_to_neg_inf{ transition_state::moving_toward_neg_inf, X_deadband, goto_next_seg };
+    goto_next_seg.emplace_back( time_delay_sec, 0.1, false, 0, 0 );
+    goto_next_seg.emplace_back( time_delay_sec, 0.1, false, 0, 0 );
+    goto_next_seg.emplace_back( from_final_X, 0, false, 0, -10 );
+    transition_of_X_through_time default_to_neg_inf{ moving_toward_neg_inf, X_deadband, goto_next_seg };
 
     //================================
     //  All Default V2G Transitions
@@ -87,7 +87,7 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
 
     //---------------------------
     // pos_moving_toward_pos_inf
-    //---------------------------    
+    //---------------------------	
     transition_of_X_through_time pos_moving_toward_pos_inf_obj;
     pos_moving_toward_pos_inf_obj = default_to_pos_inf;
 
@@ -111,7 +111,7 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
 
     //----------------------------------
 
-    transitions_by_EVSE_level.emplace(EVSE_level::L1, [&]() {
+    transitions_by_EVSE_level.emplace(L1, [&]() {
 
         X_deadband = 0.01;
         target_deadband = 0.01;
@@ -121,37 +121,37 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         //     off_to_pos
         //----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 4.95, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.05, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 0.5 );
-        transition_of_X_through_time off_to_pos_obj{ transition_state::off_to_pos, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 4.95, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.05, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 0.5 );
+        transition_of_X_through_time off_to_pos_obj{ off_to_pos, X_deadband, goto_next_seg };
 
         //----------------------
         //     pos_to_off
-        //----------------------        
+        //----------------------		
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.095, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.005, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -50 );
-        transition_of_X_through_time pos_to_off_obj{ transition_state::pos_to_off, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.095, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.005, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -50 );
+        transition_of_X_through_time pos_to_off_obj{ pos_to_off, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_pos_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.12, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.03, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 0.5 );
-        transition_of_X_through_time moving_toward_pos_inf_obj{ transition_state::moving_toward_pos_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.12, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.03, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 0.5 );
+        transition_of_X_through_time moving_toward_pos_inf_obj{ moving_toward_pos_inf, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_neg_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.09, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.01, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -0.5 );
-        transition_of_X_through_time moving_toward_neg_inf_obj{ transition_state::moving_toward_neg_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.09, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.01, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -0.5 );
+        transition_of_X_through_time moving_toward_neg_inf_obj{ moving_toward_neg_inf, X_deadband, goto_next_seg };
 
         //-----------------------
 
@@ -160,7 +160,7 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
             pos_moving_toward_pos_inf_obj, pos_moving_toward_neg_inf_obj, neg_moving_toward_pos_inf_obj, neg_moving_toward_neg_inf_obj };
     }());
     
-    transitions_by_EVSE_level.emplace(EVSE_level::L2, [&]() {
+    transitions_by_EVSE_level.emplace(L2, [&]() {
 
         X_deadband = 0.01;
         target_deadband = 0.01;
@@ -168,39 +168,39 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
 
         //----------------------
         //     off_to_pos
-        //----------------------        
+        //----------------------		
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 4.95, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.05, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 2 );
-        transition_of_X_through_time off_to_pos_obj{ transition_state::off_to_pos, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 4.95, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.05, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 2 );
+        transition_of_X_through_time off_to_pos_obj{ off_to_pos, X_deadband, goto_next_seg };
 
         //----------------------
         //     pos_to_off
         //----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.095, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.005, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -100 );
-        transition_of_X_through_time pos_to_off_obj{ transition_state::pos_to_off, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.095, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.005, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -100 );
+        transition_of_X_through_time pos_to_off_obj{ pos_to_off, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_pos_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.12, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.03, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 2 );
-        transition_of_X_through_time moving_toward_pos_inf_obj{ transition_state::moving_toward_pos_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.12, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.03, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 2 );
+        transition_of_X_through_time moving_toward_pos_inf_obj{ moving_toward_pos_inf, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_neg_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.09, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.01, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -3 );
-        transition_of_X_through_time moving_toward_neg_inf_obj{ transition_state::moving_toward_neg_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.09, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.01, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -3 );
+        transition_of_X_through_time moving_toward_neg_inf_obj{ moving_toward_neg_inf, X_deadband, goto_next_seg };
 
         //-----------------------
 
@@ -209,7 +209,7 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
             pos_moving_toward_pos_inf_obj, pos_moving_toward_neg_inf_obj, neg_moving_toward_pos_inf_obj, neg_moving_toward_neg_inf_obj };
     }());
 
-    transitions_by_EVSE_level.emplace(EVSE_level::DCFC, [&]() {
+    transitions_by_EVSE_level.emplace(DCFC, [&]() {
 
         X_deadband = 0.01;
         target_deadband = 0.01;
@@ -219,37 +219,37 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         //     pos_to_off
         //----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.040, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.010, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -140000 );
-        transition_of_X_through_time pos_to_off_obj{ transition_state::pos_to_off, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.040, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.010, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -140000 );
+        transition_of_X_through_time pos_to_off_obj{ pos_to_off, X_deadband, goto_next_seg };
 
         //----------------------
         //     off_to_pos
-        //----------------------        
+        //----------------------		
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 14.9, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec,  0.1, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 25 );
-        transition_of_X_through_time off_to_pos_obj{ transition_state::off_to_pos, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 14.9, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec,  0.1, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 25 );
+        transition_of_X_through_time off_to_pos_obj{ off_to_pos, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_pos_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.09, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.01, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, 25 );
-        transition_of_X_through_time moving_toward_pos_inf_obj{ transition_state::moving_toward_pos_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.09, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.01, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, 25 );
+        transition_of_X_through_time moving_toward_pos_inf_obj{ moving_toward_pos_inf, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_neg_inf
         //-----------------------
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.09, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.01, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, -25 );
-        transition_of_X_through_time moving_toward_neg_inf_obj{ transition_state::moving_toward_neg_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.09, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.01, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, -25 );
+        transition_of_X_through_time moving_toward_neg_inf_obj{ moving_toward_neg_inf, X_deadband, goto_next_seg };
 
         //--------------------------------
 
@@ -279,10 +279,10 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         ramping_kW_per_sec = custom_charge_ramping.on_to_off_kW_per_sec;
 
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, ramping_kW_per_sec );
-        transition_of_X_through_time pos_to_off_obj{ transition_state::pos_to_off, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, ramping_kW_per_sec );
+        transition_of_X_through_time pos_to_off_obj{ pos_to_off, X_deadband, goto_next_seg };
 
         //----------------------
         //     off_to_pos
@@ -291,10 +291,10 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         ramping_kW_per_sec = custom_charge_ramping.off_to_on_kW_per_sec;
 
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, ramping_kW_per_sec );
-        transition_of_X_through_time off_to_pos_obj{ transition_state::off_to_pos, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, ramping_kW_per_sec );
+        transition_of_X_through_time off_to_pos_obj{ off_to_pos, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_pos_inf
@@ -303,10 +303,10 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         ramping_kW_per_sec = custom_charge_ramping.ramp_up_kW_per_sec;
 
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, ramping_kW_per_sec );
-        transition_of_X_through_time moving_toward_pos_inf_obj{ transition_state::moving_toward_pos_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, ramping_kW_per_sec );
+        transition_of_X_through_time moving_toward_pos_inf_obj{ moving_toward_pos_inf, X_deadband, goto_next_seg };
 
         //-----------------------
         // moving_toward_neg_inf
@@ -315,10 +315,10 @@ const charging_transitions factory_charging_transitions::load_charging_transitio
         ramping_kW_per_sec = custom_charge_ramping.ramp_down_kW_per_sec;
 
         goto_next_seg.clear();
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
-        goto_next_seg.emplace_back( transition_criteria_type::from_final_X, 0, false, 0, ramping_kW_per_sec );
-        transition_of_X_through_time moving_toward_neg_inf_obj{ transition_state::moving_toward_neg_inf, X_deadband, goto_next_seg };
+        goto_next_seg.emplace_back( time_delay_sec, 0.9 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( time_delay_sec, 0.1 * delay_sec, false, 0, 0 );
+        goto_next_seg.emplace_back( from_final_X, 0, false, 0, ramping_kW_per_sec );
+        transition_of_X_through_time moving_toward_neg_inf_obj{ moving_toward_neg_inf, X_deadband, goto_next_seg };
 
         //-----------------------
 
@@ -359,11 +359,11 @@ const integrate_X_through_time& factory_charging_transitions::get_charging_trans
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
     
-    if (level == EVSE_level::L1 || level == EVSE_level::L2)
+    if (level == L1 || level == L2)
     {
         return this->charging_transitions_obj.charging_transitions_by_EVSE_level.at(level);
     }
-    else    // EVSE_level::DCFC
+    else    // DCFC
     {
 
         if (this->charging_transitions_obj.charging_transitions_by_custom_EV_EVSE.count(std::make_pair( EV, EVSE )) > 0)

@@ -77,14 +77,14 @@ public:
                                                             std::vector<pev_charge_profile_result>& charge_profile ) const;
     
     bool operator<(const pev_charge_profile_aux& x) const
-    {
-        return this->setpoint_P3kW < x.setpoint_P3kW;
-    }
+	{
+		return this->setpoint_P3kW < x.setpoint_P3kW;
+	}
 
-    bool operator<(pev_charge_profile_aux& x) const
-    {
-        return this->setpoint_P3kW < x.setpoint_P3kW;
-    }
+	bool operator<(pev_charge_profile_aux& x) const
+	{
+		return this->setpoint_P3kW < x.setpoint_P3kW;
+	}
 };
 
 
@@ -172,7 +172,7 @@ public:
 class pev_charge_profile_library_v2
 {
 private:
-    struct charge_profile_lib_data
+    struct tmp_charge_profile
     {
         std::vector<ac_power_metrics> PkW_profile;
         std::vector<double> soc;
@@ -181,62 +181,35 @@ private:
 
     const EV_EVSE_inventory& inventory;
     
-    // C-rate levels that will allow for power-moderation algorithms to work
-    // (such as, for example, temperature-aware profiles).
-    const std::vector<double> c_rate_scale_factor_levels;
-    
-    // Key:  std::pair<EV_type, EVSE_type>
-    // Value:  A map, with
-    //     key: Index into the 'c_rate_scale_factor_levels' array.
-    //     value:  The 'charge_profile_lib_data'.
-    std::map< std::pair<EV_type, EVSE_type>, std::map< int, charge_profile_lib_data > > PkW_profile;
+    std::map<std::pair<EV_type, EVSE_type>, tmp_charge_profile> PkW_profile;
+
+    void find_index_and_weight( const double soc,
+                                const std::vector<double>& soc_vector,
+                                double& index,
+                                double& weight ) const;
+
+    void find_start_end_indexes_from_start_end_soc( const double start_soc,
+                                                    const double end_soc,
+                                                    const std::vector<double>& soc,
+                                                    double& start_index,
+                                                    double& end_index ) const;
     
 public:  
-    pev_charge_profile_library_v2( const EV_EVSE_inventory& inventory,
-                                   const std::vector<double> c_rate_scale_factor_levels = std::vector<double>({1.0}) );
+    pev_charge_profile_library_v2( const EV_EVSE_inventory& inventory );
     
-    const std::vector<double>& get_c_rate_scale_factor_levels() { return c_rate_scale_factor_levels; }
-    
-    // Call the first  one to add at a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    void add_charge_PkW_profile_to_library( const EV_type pev_type,
-                                            const EVSE_type SE_type,
-                                            const int c_rate_scale_factor_index,
-                                            const double timestep_sec,
-                                            const std::vector<double>& soc,
-                                            const std::vector<ac_power_metrics>& profile );
     void add_charge_PkW_profile_to_library( const EV_type pev_type,
                                             const EVSE_type SE_type,
                                             const double timestep_sec,
                                             const std::vector<double>& soc,
                                             const std::vector<ac_power_metrics>& profile );
 
+    void get_P3kW_charge_profile( const double start_soc,
+                                  const double end_soc,
+                                  const EV_type pev_type,
+                                  const EVSE_type SE_type,
+                                  double& timestep_sec,
+                                  std::vector<double>& P3kW_charge_profile ) const;
     
-    // Call the first  one to get a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    void get_P3kW_charge_profile( const double start_soc,
-                                  const double end_soc,
-                                  const EV_type pev_type,
-                                  const EVSE_type SE_type,
-                                  const int c_rate_scale_factor_index,
-                                  double& timestep_sec,
-                                  std::vector<double>& P3kW_charge_profile ) const;
-    void get_P3kW_charge_profile( const double start_soc,
-                                  const double end_soc,
-                                  const EV_type pev_type,
-                                  const EVSE_type SE_type,
-                                  double& timestep_sec,
-                                  std::vector<double>& P3kW_charge_profile ) const;
-
-
-    // Call the first  one to get a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    void get_all_charge_profile_data( const double start_soc,
-                                      const double end_soc,
-                                      const EV_type pev_type,
-                                      const EVSE_type SE_type,
-                                      const int c_rate_scale_factor_index,
-                                      all_charge_profile_data& return_val ) const;
     void get_all_charge_profile_data( const double start_soc,
                                       const double end_soc,
                                       const EV_type pev_type,

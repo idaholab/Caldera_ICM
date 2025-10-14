@@ -2,7 +2,7 @@
 #ifndef inl_Aux_interface_H
 #define inl_Aux_interface_H
 
-#include "datatypes_global.h"                       // SupplyEquipmentId,  station_charge_event_data, station_status
+#include "datatypes_global.h"                       // SE_id_type,  station_charge_event_data, station_status
 #include "charge_profile_library.h"                 // pev_charge_profile_library
 #include "helper.h"                                 // get_base_load_forecast
 #include "load_EV_EVSE_inventory.h"
@@ -22,13 +22,11 @@ private:
 
 public:
     
-    CP_interface( const std::string& input_path );
-    CP_interface( const std::string& input_path,
-                  std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data );
+    CP_interface(const std::string& input_path);
+    CP_interface(const std::string& input_path, bool save_validation_data);
 
-    pev_charge_profile_library load_CP_library( const EV_EVSE_inventory& inventory ) const;
     pev_charge_profile_library load_CP_library( const EV_EVSE_inventory& inventory,
-                                                std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data ) const;
+                                                const bool save_validation_data ) const;
     
     double get_size_of_CP_library_MB();
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > get_CP_validation_data();
@@ -81,64 +79,27 @@ private:
     
 public:
     // "input_path" is the path to the folder that contains 'EV_inputs.csv' and 'EVSE_inputs.csv'.
-    CP_interface_v2( const std::string& input_path );
-    CP_interface_v2( const std::string& input_path,
-                     const double L1_timestep_sec, 
-                     const double L2_timestep_sec, 
-                     const double HPC_timestep_sec );             
-    // If you want multiple power levels for each EV-EVSE pair, then call this constructor.
-    CP_interface_v2( const std::string& input_path,
-                     const double L1_timestep_sec, 
-                     const double L2_timestep_sec, 
-                     const double HPC_timestep_sec,
-                     const std::vector<double> c_rate_scale_factor_levels );
+    CP_interface_v2(const std::string& input_path);
+    CP_interface_v2(const std::string& input_path,
+                    double L1_timestep_sec, 
+                    double L2_timestep_sec, 
+                    double HPC_timestep_sec, 
+                    EV_ramping_map ramping_by_pevType_only, 
+                    EV_EVSE_ramping_map ramping_by_pevType_seType);
 
-
-    // Call the first  one to create the profile at a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    all_charge_profile_data create_charge_profile_from_model_with_power_level( const double time_step_sec, 
-                                                              const EV_type pev_type, 
-                                                              const EVSE_type SE_type, 
-                                                              const int c_rate_scale_factor_index,
-                                                              const double start_soc, 
-                                                              const double end_soc, 
-                                                              const double target_acP3_kW, 
-                                                              const EV_ramping_map ramping_by_pevType_only, 
-                                                              const EV_EVSE_ramping_map ramping_by_pevType_seType );
-    all_charge_profile_data create_charge_profile_from_model( const double time_step_sec, 
-                                                              const EV_type pev_type, 
-                                                              const EVSE_type SE_type, 
-                                                              const double start_soc, 
-                                                              const double end_soc, 
-                                                              const double target_acP3_kW, 
-                                                              const EV_ramping_map ramping_by_pevType_only, 
-                                                              const EV_EVSE_ramping_map ramping_by_pevType_seType );
+    all_charge_profile_data create_charge_profile_from_model(double time_step_sec, 
+                                                             EV_type pev_type, 
+                                                             EVSE_type SE_type, 
+                                                             double start_soc, 
+                                                             double end_soc, 
+                                                             double target_acP3_kW, 
+                                                             EV_ramping_map ramping_by_pevType_only, 
+                                                             EV_EVSE_ramping_map ramping_by_pevType_seType);
     
-    // Call the first  one to get the profile at a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    std::vector<double> get_P3kW_charge_profile_with_power_level( const double start_soc,
-                                                 const double end_soc,
-                                                 const EV_type pev_type,
-                                                 const EVSE_type SE_type,
-                                                 const int c_rate_scale_factor_index );
-    std::vector<double> get_P3kW_charge_profile( const double start_soc,
-                                                 const double end_soc,
-                                                 const EV_type pev_type,
-                                                 const EVSE_type SE_type );
-    
+    std::vector<double> get_P3kW_charge_profile(double start_soc, double end_soc, EV_type pev_type, EVSE_type SE_type);
     double get_timestep_of_prev_call_sec();
     
-    // Call the first  one to get the profile at a specific power level, by providing 'c_rate_scale_factor_index'.
-    // Call the second one to always assume the highest-index power level.
-    all_charge_profile_data get_all_charge_profile_data_with_power_level( const double start_soc,
-                                                         const double end_soc,
-                                                         const EV_type pev_type,
-                                                         const EVSE_type SE_type,
-                                                         const int c_rate_scale_factor_index );
-    all_charge_profile_data get_all_charge_profile_data( const double start_soc,
-                                                         const double end_soc,
-                                                         const EV_type pev_type,
-                                                         const EVSE_type SE_type );
+    all_charge_profile_data get_all_charge_profile_data(double start_soc, double end_soc, EV_type pev_type, EVSE_type SE_type);
 };
 
 
@@ -149,14 +110,8 @@ private:
 
 public:
     get_baseLD_forecast() {};
-    get_baseLD_forecast( const double data_start_unix_time,
-                         const int data_timestep_sec,
-                         const std::vector<double> actual_load_akW,
-                         const std::vector<double> forecast_load_akW,
-                         const double adjustment_interval_hrs );
-    std::vector<double> get_forecast_akW( const double unix_start_time,
-                                          const int forecast_timestep_mins,
-                                          const double forecast_duration_hrs );
+    get_baseLD_forecast(double data_start_unix_time, int data_timestep_sec, std::vector<double> actual_load_akW, std::vector<double> forecast_load_akW, double adjustment_interval_hrs);
+    std::vector<double> get_forecast_akW(double unix_start_time, int forecast_timestep_mins, double forecast_duration_hrs);
 };
 
 

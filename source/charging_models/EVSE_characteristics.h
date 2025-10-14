@@ -6,7 +6,7 @@
 
 typedef std::string EVSE_type;
 
-enum class EVSE_level
+enum EVSE_level
 {
     L1 = 0, 
     L2 = 1, 
@@ -21,7 +21,7 @@ namespace std {
 
 std::ostream& operator<<(std::ostream& os, const EVSE_level& level);
 
-enum class EVSE_phase
+enum EVSE_phase
 {
     singlephase = 0, 
     threephase = 1
