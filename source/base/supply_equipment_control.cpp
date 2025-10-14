@@ -4,6 +4,29 @@
 #include <random>
 #include <algorithm>                        // min, max
 
+
+
+// ------ local helper function --------
+double compute_flat_power_level( const double max_power_kW,
+                                 const double time_to_charge_at_max_power_seconds,
+                                 const double dwell_time_sec )
+{
+    // Here, we calculate the power level needed to charge for the entire given dwell period.
+    // We set the power level based on the ratio between dwell_time and min_time_to_charge.
+    //           e.g. if min_time_to_charge is 1 hour, and max_P3kW is 10 kW, but our dwell time
+    //                is 2 hours, then we charge at  max_P3kW*((1 hr)/(2 hr)) = 10.0*(1/2) = 5 kW.
+    
+    // Use ratio between min-time and dwell-time to compute the flat power level.
+    const double flat_P3kW = fmin( max_power_kW, max_power_kW*(time_to_charge_at_max_power_seconds/dwell_time_sec) );
+    
+    return flat_P3kW;
+}
+
+
+
+
+
+
 //===============================================================================================
 //===============================================================================================
 //                                 ES100 Control Strategy
@@ -21,9 +44,13 @@ ES100_control_strategy::ES100_control_strategy(L2_control_strategies_enum L2_CS_
 }
 
 
-void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile)
+void ES100_control_strategy::update_parameters_for_CE( double target_P3kW_,
+                                                       const CE_status& charge_status,
+                                                       const pev_charge_profile& charge_profile)
 {
     this->target_P3kW = target_P3kW_;
+    this->primary_target_P3kW = target_P3kW_;
+    this->secondary_target_P3kW = target_P3kW_;
     this->cur_P3kW_setpoint = 0;
     
     //--------------------------
@@ -34,13 +61,24 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     double departure_unix_time = charge_status.departure_unix_time;
 
     pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC(this->target_P3kW, charge_status.now_soc, charge_status.departure_SOC);
-    double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
+    const double min_time_to_charge_sec = 3600*Z.total_charge_time_hrs;
 
     //--------------------
+    //  M1,M2,M3,M4,M5 key:
+    // ------------------
+    // M1: TOU_ASAP case, with small buffer at the start.
+    // M2: TOU_random. (and start at beginning of dwell otherwise)
+    // M3: TOU_random. (and Dwell-Period-Random otherwise)
+    // M4: TOU_ALAP case, with a small buffer at the end.
+    // M5: FLAT within the TOU period.
+    //--------------------
+    const std::set<std::string> set_of_all_randomization_methods({"M1","M2","M3","M4","M5"});
    
     std::string randomization_method;
     double beginning_of_TofU_rate_period__time_from_midnight_sec, end_of_TofU_rate_period__time_from_midnight_sec;
-    double M1_delay_period_sec, w;
+    double M1_delay_period_sec;
+    double M4_delay_period_sec;
+    double w, w2;
     
     if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
     {
@@ -50,9 +88,11 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
         end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
+        M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100A_getUniformRandomNumber_0to1();
-        
-        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
+        w2 = this->params->ES100A_getUniformRandomNumber_0to1();
+
+        if(set_of_all_randomization_methods.find(randomization_method) == set_of_all_randomization_methods.end())
         {
             std::cout << "CALDERA ERROR A0.  Look in ES100_control_strategy::update_parameters_for_CE." << std::endl;
             return;
@@ -66,9 +106,11 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
         beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
         end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
         M1_delay_period_sec = 3600*X.M1_delay_period_hrs;
+        M4_delay_period_sec = M1_delay_period_sec; // <----- TODO: For now we are just making the M4 delay the same as the M1 delay.
         w = this->params->ES100B_getUniformRandomNumber_0to1();
+        w2 = this->params->ES100B_getUniformRandomNumber_0to1();
         
-        if(randomization_method != "M1" && randomization_method != "M2" && randomization_method != "M3")
+        if(set_of_all_randomization_methods.find(randomization_method) == set_of_all_randomization_methods.end())
         {
             std::cout << "CALDERA ERROR A1.  Look in ES100_control_strategy::update_parameters_for_CE." << std::endl;
             return;
@@ -96,69 +138,248 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
     
     // Fixes TOU rate period when end TOU is smaller than start TOU. i.e intra day TOU. e.g. (8, -6) aka (8, 18)
     if (end_of_TofU_rate_period_unix_time < beginning_of_TofU_rate_period_unix_time)
+    {
         end_of_TofU_rate_period_unix_time += 24.0 * 3600;
+    }
   
     //-----------------------------------------
     //  Calculate this->charge_start_unix_time
     //-----------------------------------------
     
-    bool TofU_start_in_park = (arrival_unix_time <= beginning_of_TofU_rate_period_unix_time) && (beginning_of_TofU_rate_period_unix_time <= departure_unix_time);
-    bool TofU_end_in_park = (arrival_unix_time <= end_of_TofU_rate_period_unix_time) && (end_of_TofU_rate_period_unix_time <= departure_unix_time);
-    bool park_start_in_TofU = (beginning_of_TofU_rate_period_unix_time <= arrival_unix_time) && (arrival_unix_time <= end_of_TofU_rate_period_unix_time);
-    bool park_in_current_TofU = TofU_start_in_park || TofU_end_in_park || park_start_in_TofU;
-    bool park_in_next_TofU = 3600*24 + beginning_of_TofU_rate_period_unix_time < departure_unix_time;
+    const bool TofU_start_in_park = (arrival_unix_time <= beginning_of_TofU_rate_period_unix_time) && (beginning_of_TofU_rate_period_unix_time <= departure_unix_time);
+    const bool TofU_end_in_park = (arrival_unix_time <= end_of_TofU_rate_period_unix_time) && (end_of_TofU_rate_period_unix_time <= departure_unix_time);
+    const bool park_start_in_TofU = (beginning_of_TofU_rate_period_unix_time <= arrival_unix_time) && (arrival_unix_time <= end_of_TofU_rate_period_unix_time);
+    const bool park_in_current_TofU = TofU_start_in_park || TofU_end_in_park || park_start_in_TofU;
+    const bool park_in_next_TofU = 3600*24 + beginning_of_TofU_rate_period_unix_time < departure_unix_time;
 
     if(!park_in_current_TofU && !park_in_next_TofU)
     {
-        if(randomization_method == "M1" || randomization_method == "M2")
+        // This case is where the charge event is completely disjoint
+        // from the TofU period (a.k.a. no overlap at all between the charge event and the TofU).
+        
+        if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M4" )
+        {
             this->charge_start_unix_time = arrival_unix_time;
+        }
+        else if( randomization_method == "M3" )
+        {
+            // When "M3" is selected, we randomly select a time within the dwell period when
+            // there is no overlap with the TOU (if the charge time is less than the dwell time.)
+            if( min_time_to_charge_sec < departure_unix_time - arrival_unix_time )
+            {
+                const double earliest_start_time = arrival_unix_time;
+                const double latest_start_time = departure_unix_time - min_time_to_charge_sec;
+                if( latest_start_time < earliest_start_time )
+                {
+                    this->charge_start_unix_time = earliest_start_time;
+                }
+                else
+                {
+                    this->charge_start_unix_time = earliest_start_time + w*(latest_start_time - earliest_start_time);
+                }
+            }
+            else
+            {
+                this->charge_start_unix_time = arrival_unix_time;
+            }
+        }
+        else if( randomization_method == "M5" )
+        {
+            // When "M5" is selected, start at the beginning of the dwell period and set power level
+            // to as-slow-as-possible.
+            this->charge_start_unix_time = arrival_unix_time;
+            
+            // Compute the FLAT power level (as-slow-as-possible) for the dwell period that does not overlap with the TOU.
+            const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
+            this->primary_target_P3kW = flat_P3kW;
+            this->secondary_target_P3kW = flat_P3kW;
+            this->target_P3kW = flat_P3kW;
+        }
         else
         {
-            if(min_time_to_charge_sec > departure_unix_time - arrival_unix_time)
-                this->charge_start_unix_time = arrival_unix_time;
-            else
-                this->charge_start_unix_time = w*arrival_unix_time + (1-w)*(departure_unix_time - min_time_to_charge_sec);
+            // Throw an error.
+            throw std::runtime_error("Error: This else-block shouldn't happen. [1]");
         }
     }
     else
-    {
+    {        
+        // This case is for when there's at least some overlap
+        // between the charge event and the TofU period.
+        
         //------------------------------------------------------------------
         //  Pick Between Current and Next TofU Window (if Park is in both)
         //------------------------------------------------------------------
         
+        // If the charge event is only overlapping with the next TofU,
+        // then we shift 'beginning_of_TofU_rate_period_unix_time' and 'end_of_TofU_rate_period_unix_time'
+        // to refer to the next-day TofU period instead of today's TofU period.
         if(!park_in_current_TofU && park_in_next_TofU)
         {
             beginning_of_TofU_rate_period_unix_time += 24*3600;
             end_of_TofU_rate_period_unix_time += 24*3600;
         }
         
-        //--------------------------------------------
-        //        Calcualte random_unix_time
-        //--------------------------------------------
+        //---------------------------------------------------------------------------
+        //        Calculate the start and end of the overlap between dwell and TOU
+        //---------------------------------------------------------------------------
         
-        double random_unix_time;
-        
-        if(randomization_method == "M1")
-            random_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec);
-        
-        else if (randomization_method == "M2" || randomization_method == "M3")
-        {
-            if(min_time_to_charge_sec > end_of_TofU_rate_period_unix_time - beginning_of_TofU_rate_period_unix_time)
-                random_unix_time = beginning_of_TofU_rate_period_unix_time;
+        // **************************************
+        // Using random number 'w' in this block.
+        // **************************************
+        const double randomly_adjusted_beginning_of_TofU_period = [&] () {
+            if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M3"  )
+            {
+                const double buffer_period_start = beginning_of_TofU_rate_period_unix_time;
+                const double buffer_period_end = fmin( end_of_TofU_rate_period_unix_time, beginning_of_TofU_rate_period_unix_time + M1_delay_period_sec );
+                const double randomly_adjusted_beginning_of_TofU_period = buffer_period_start + w*(buffer_period_end - buffer_period_start);
+                return randomly_adjusted_beginning_of_TofU_period;
+            }
             else
-                random_unix_time = w*beginning_of_TofU_rate_period_unix_time + (1-w)*(end_of_TofU_rate_period_unix_time - min_time_to_charge_sec);
+            {
+                return beginning_of_TofU_rate_period_unix_time;
+            }
+        }();
+        const double randomly_adjusted_end_of_TofU_period = [&] () {
+            if( randomization_method == "M4" )
+            {
+                const double buffer_period_start = fmax( end_of_TofU_rate_period_unix_time - M4_delay_period_sec, beginning_of_TofU_rate_period_unix_time );
+                const double buffer_period_end = end_of_TofU_rate_period_unix_time;
+                const double randomly_adjusted_end_of_TofU_period = buffer_period_start + w*(buffer_period_end - buffer_period_start);
+                return randomly_adjusted_end_of_TofU_period;
+            }
+            else
+            {
+                return end_of_TofU_rate_period_unix_time;
+            }
+        }();
+        
+        const double overlap_start = fmax( randomly_adjusted_beginning_of_TofU_period, charge_status.arrival_unix_time );
+        const double overlap_end = fmax( overlap_start, fmin( randomly_adjusted_end_of_TofU_period, charge_status.departure_unix_time ) );
+        const double overlap_duration_sec = overlap_end - overlap_start;
+        
+        //-------------------------------------------------------------------------
+        //    Select the actual time to start, based on 'randomization_method'.
+        //-------------------------------------------------------------------------
+        
+        // ***************************************
+        // Using random number 'w2' in this block.
+        // ***************************************
+        
+        if( randomization_method == "M1" || randomization_method == "M2" || randomization_method == "M3" || randomization_method == "M4" )
+        {
+            if( min_time_to_charge_sec < overlap_duration_sec )
+            {
+                // *************************************************
+                // The charge can fit within the overlapping period.
+                // *************************************************
+                
+                if( randomization_method == "M1" )
+                {
+                    // TOU_ASAP [small buffer dealt with when computing 'overlap_start' above]
+                    this->charge_start_unix_time = overlap_start;
+                }
+                else if( randomization_method == "M2" || randomization_method == "M3" )
+                {
+                    // TOU_random.
+                    this->charge_start_unix_time = overlap_start + w2*((overlap_end - min_time_to_charge_sec) - overlap_start);
+                }
+                else if( randomization_method == "M4" )
+                {
+                    // TOU_ALAP case, with a small buffer at the end. [small buffer dealt with when computing 'overlap_end' above]
+                    this->charge_start_unix_time = overlap_end - min_time_to_charge_sec;
+                }
+                else if( randomization_method == "M5" )
+                {
+                    // FLAT within the TOU period. <--- we deal with this in a different if-block (see below).
+                    // Throw an error.
+                    throw std::runtime_error("Error: This if-block shouldn't happen. [3132]");
+                }
+                else
+                {
+                    // Throw an error.
+                    throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
+                }    
+            }
+            else
+            {
+                // *************************************************
+                // The charge can't fit within the overlapping period.
+                // *************************************************
+                
+                if( randomization_method == "M1" )
+                {
+                    // TOU_ASAP
+                    this->charge_start_unix_time = fmax( overlap_end - min_time_to_charge_sec, arrival_unix_time );
+                }
+                else if( randomization_method == "M2" || randomization_method == "M3" )
+                {
+                    // TOU_random.
+                    const double min_possible_time_to_start = fmax( overlap_end - min_time_to_charge_sec, arrival_unix_time );
+                    const double max_possible_time_to_start = fmin( departure_unix_time - min_time_to_charge_sec, overlap_start );
+                    this->charge_start_unix_time = min_possible_time_to_start + w2*(max_possible_time_to_start - min_possible_time_to_start);
+                }
+                else if( randomization_method == "M4" )
+                {
+                    // TOU_ALAP case
+                    this->charge_start_unix_time = fmin( departure_unix_time - min_time_to_charge_sec, overlap_start );
+                }
+                else if( randomization_method == "M5" )
+                {
+                    // FLAT within the TOU period. <--- we deal with this in a different if-block (see below).
+                    // Throw an error.
+                    throw std::runtime_error("Error: This if-block shouldn't happen. [42332]");
+                }
+                else
+                {
+                    // Throw an error.
+                    throw std::runtime_error("Error: This else-block shouldn't happen. [2]");
+                }    
+            }
         }
-        
-        //--------------------------------------------
-        //    Ensure Charge will Fit Inside Park
-        //--------------------------------------------
-        
-        if(random_unix_time < arrival_unix_time)
-            this->charge_start_unix_time = arrival_unix_time;
-        else if(departure_unix_time - min_time_to_charge_sec < random_unix_time)
-            this->charge_start_unix_time = departure_unix_time - min_time_to_charge_sec;
+        else if( randomization_method == "M5" )
+        {
+            // ---------------------
+            //       TOU_FLAT
+            // ---------------------
+            
+            if( min_time_to_charge_sec < overlap_duration_sec )
+            {
+                // If we have enough time in the TOU to complete the charge event, then we do that (as-slow-as-possible-overlapping-TOU)
+                this->charge_start_unix_time = overlap_start;
+                const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, overlap_end - overlap_start );
+                this->primary_target_P3kW = flat_P3kW;
+                this->secondary_target_P3kW = flat_P3kW;
+                this->target_P3kW = flat_P3kW;    
+            }
+            else
+            {
+                // // Otherwise, we just set the power level as-slow-as-possible over the entire dwell period.
+                // this->charge_start_unix_time = arrival_unix_time;
+                // const double flat_P3kW = compute_flat_power_level( target_P3kW_, min_time_to_charge_sec, departure_unix_time - arrival_unix_time );
+                // this->primary_target_P3kW = flat_P3kW;
+                // this->secondary_target_P3kW = flat_P3kW;
+                // this->target_P3kW = flat_P3kW;
+                
+                //
+                // SECOND APPROACH:  Two power levels: one for overlappping-with-TOU, and otherwise.
+                //
+                this->charge_start_unix_time = arrival_unix_time;
+                const double overlapping_TOU_powerlevel_kW = target_P3kW_;
+                const double outside_TOU_powerlevel_kW = [&] () {
+                    const double outside_TOU_time_sec = (departure_unix_time - arrival_unix_time) - overlap_duration_sec;
+                    const double outside_TOU_powerlevel_kW = compute_flat_power_level( target_P3kW_, (min_time_to_charge_sec - overlap_duration_sec), outside_TOU_time_sec );
+                    return outside_TOU_powerlevel_kW;
+                }();
+                this->primary_target_P3kW = overlapping_TOU_powerlevel_kW;
+                this->secondary_target_P3kW = outside_TOU_powerlevel_kW;
+                this->target_P3kW = this->primary_target_P3kW;
+            }
+        }
         else
-            this->charge_start_unix_time = random_unix_time;
+        {
+            // Throw an error.
+            throw std::runtime_error("Error: This else-block shouldn't happen. [3]");
+        }
     }
 }
 
@@ -166,7 +387,47 @@ void ES100_control_strategy::update_parameters_for_CE(double target_P3kW_, const
 double ES100_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time)
 {
     if(now_unix_time >= this->charge_start_unix_time)
-        this->cur_P3kW_setpoint = this->target_P3kW;
+    {
+        double beginning_of_TofU_rate_period__time_from_midnight_sec;
+        double end_of_TofU_rate_period__time_from_midnight_sec;
+        const double time_ahead_of_midnight_sec = fmod(now_unix_time, 24.0*3600.0);
+        std::string randomization_method;
+        
+        if(this->L2_CS_enum == L2_control_strategies_enum::ES100_A)
+        {
+            const ES100_L2_parameters& X = this->params->get_ES100_A();
+            beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
+            end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
+            randomization_method = X.randomization_method;
+        }
+        else if(this->L2_CS_enum == L2_control_strategies_enum::ES100_B)
+        {
+            const ES100_L2_parameters& X = this->params->get_ES100_B();
+            beginning_of_TofU_rate_period__time_from_midnight_sec = 3600*X.beginning_of_TofU_rate_period__time_from_midnight_hrs;
+            end_of_TofU_rate_period__time_from_midnight_sec = 3600*X.end_of_TofU_rate_period__time_from_midnight_hrs;
+            randomization_method = X.randomization_method;
+        }
+        
+        if( randomization_method == "M5" )
+        {
+            if( time_ahead_of_midnight_sec >= beginning_of_TofU_rate_period__time_from_midnight_sec && time_ahead_of_midnight_sec < end_of_TofU_rate_period__time_from_midnight_sec )
+            {
+                // The power level during the TOU period.
+                this->target_P3kW = this->primary_target_P3kW;
+                this->cur_P3kW_setpoint = this->primary_target_P3kW;    
+            }
+            else
+            {
+                // The power level outside of the TOU period.
+                this->target_P3kW = this->secondary_target_P3kW;
+                this->cur_P3kW_setpoint = this->secondary_target_P3kW;
+            }
+        }
+        else
+        {
+            this->cur_P3kW_setpoint = this->target_P3kW;
+        }
+    }
     
     return this->cur_P3kW_setpoint;
 }
@@ -217,32 +478,65 @@ double ES110_control_strategy::get_P3kW_setpoint(double prev_unix_time, double n
 }
 
 
-//===============================================================================================
-//===============================================================================================
-//                                 ES200 Control Strategy
-//===============================================================================================
-//===============================================================================================
 
 
-ES200_control_strategy::ES200_control_strategy(manage_L2_control_strategy_parameters* params_)
+
+
+
+
+//===============================================================================================
+//===============================================================================================
+//                                 ES200 Control Strategy        ["FLAT" strategy]
+//===============================================================================================
+//===============================================================================================
+// Constructor. For the FLAT control strategy,
+// there probably doesn't need to be any paramters.
+ES200_control_strategy::ES200_control_strategy( manage_L2_control_strategy_parameters* params_ )
 {
     this->params = params_;
     this->cur_P3kW_setpoint = 0;
 }
 
-
-void ES200_control_strategy::update_parameters_for_CE(double target_P3kW_)
-{    
-    this->target_P3kW = target_P3kW_;
+// This is called whenever a new CE is loaded.
+// 'this->target_P3kW' is set to the P3 value that'll make the profile flat.
+void ES200_control_strategy::update_parameters_for_CE( const double max_P3kW,
+                                                       const CE_status& charge_status,
+                                                       const pev_charge_profile& charge_profile )
+{
+    // Here, we calculate the target_P3kW for the FLAT control.
+    // (1) we compute the time to charge assuming we charged at full-speed.
+    // (2) We determine our dwell time
+    // (3) We set the power level based on the ratio between dwell_time and min_time_to_charge.
+    //           e.g. if min_time_to_charge is 1 hour, and max_P3kW is 10 kW, but our dwell time
+    //                is 2 hours, then we charge at  max_P3kW*((1 hr)/(2 hr)) = 10.0*(1/2) = 5 kW.
+    
+    // Compute the minimum time it takes to charge based on the max power.
+    const pev_charge_profile_result Z = charge_profile.find_result_given_startSOC_and_endSOC( max_P3kW, charge_status.arrival_SOC, charge_status.departure_SOC);
+    const double min_time_to_charge_sec = 3600 * Z.total_charge_time_hrs;
+    
+    const double flat_P3kW = compute_flat_power_level( max_P3kW, min_time_to_charge_sec, charge_status.departure_unix_time - charge_status.arrival_unix_time );
+    
+    this->target_P3kW = flat_P3kW;
     this->cur_P3kW_setpoint = 0;
 }
 
-
-double ES200_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time)
-{    
+double ES200_control_strategy::get_P3kW_setpoint( double prev_unix_time,
+                                                  double now_unix_time )
+{
+    // no need to change this for the control strategy since we already set the
+    // right target_P3kW at the start of the charge event.
     this->cur_P3kW_setpoint = this->target_P3kW;
     return this->cur_P3kW_setpoint;
 }
+
+
+
+
+
+
+
+
+
 
 
 //===============================================================================================
@@ -547,16 +841,21 @@ VS100_control_strategy::VS100_control_strategy(manage_L2_control_strategy_parame
 }
 
 
-void VS100_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
+void VS100_control_strategy::update_parameters_for_CE( const double max_nominal_S3kVA_ )
 {
     this->max_nominal_S3kVA = max_nominal_S3kVA_;
     this->prev_P3kW_setpoint = 0;
 }
 
 
-double VS100_control_strategy::get_P3kW_setpoint(double prev_unix_time, double now_unix_time, double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS100_control_strategy::get_P3kW_setpoint( const double prev_unix_time,
+                                                  const double now_unix_time,
+                                                  const double pu_Vrms,
+                                                  const double pu_Vrms_SS,
+                                                  const double target_P3kW )
 {
-    double max_delta_kW_per_min, percP;
+    double max_delta_kW_per_min;
+    double percP;
     
     const VS100_L2_parameters& X = this->params->get_VS100();
     double puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -600,9 +899,15 @@ void VS200_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
 }
 
 
-double VS200_control_strategy::get_Q3kVAR_setpoint(double prev_unix_time, double now_unix_time, double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS200_control_strategy::get_Q3kVAR_setpoint( const double prev_unix_time,
+                                                    const double now_unix_time,
+                                                    const double pu_Vrms,
+                                                    const double pu_Vrms_SS,
+                                                    const double target_P3kW )
 {
-    double max_delta_kVAR_per_min, percQ, puV;
+    double max_delta_kVAR_per_min;
+    double percQ;
+    double puV;
     
     if(this->L2_CS_enum == L2_control_strategies_enum::VS200_A)
     {
@@ -667,7 +972,9 @@ void VS300_control_strategy::update_parameters_for_CE(double max_nominal_S3kVA_)
 }
 
 
-double VS300_control_strategy::get_Q3kVAR_setpoint(double pu_Vrms, double pu_Vrms_SS, double target_P3kW)
+double VS300_control_strategy::get_Q3kVAR_setpoint( const double pu_Vrms,
+                                                    const double pu_Vrms_SS,
+                                                    const double target_P3kW )
 {
     const VS300_L2_parameters& X = this->params->get_VS300();
     double puV = (X.voltage_LPF.is_active) ? pu_Vrms_SS : pu_Vrms;
@@ -920,7 +1227,7 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
             this->ES110_obj.update_parameters_for_CE(this->target_P3kW, this->charge_status, charge_profile);
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES200)
-            this->ES200_obj.update_parameters_for_CE(this->target_P3kW);
+            this->ES200_obj.update_parameters_for_CE( this->target_P3kW, this->charge_status, charge_profile );
         
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES300)
             this->ES300_obj.update_parameters_for_CE(this->target_P3kW);
@@ -936,8 +1243,8 @@ void supply_equipment_control::update_parameters_for_CE( supply_equipment_load& 
 }
 
 
-void supply_equipment_control::execute_control_strategy( const double prev_unix_time,
-                                                         const double now_unix_time,    
+void supply_equipment_control::execute_control_strategy( const double prev_unix_time,   // <--- NOTE: At the top of this function, 'prev_unix_time' is the same as 'this->charge_status.now_unix_time'.
+                                                         const double now_unix_time,    // <---       and 'now_unix_time' here is set to the next timestep, different from 'this->charge_status.now_unix_time'.
                                                          const double pu_Vrms,
                                                          supply_equipment_load& SE_load )
 {
@@ -952,7 +1259,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     // there is currently not a control strategy using the pu_Vrms_SS value.  
     // Calling this function keeps the raw_puV_data up to date.
     this->LPF.add_raw_data_value(pu_Vrms);
-    double pu_Vrms_SS = this->LPF.get_filtered_value();
+    const double pu_Vrms_SS = this->LPF.get_filtered_value();
     this->prev_pu_Vrms = pu_Vrms;
     
     //--------------------------------------
@@ -981,24 +1288,15 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------
     
     double min_time_to_complete_charge_hrs;
-    SE_load.get_time_to_complete_active_charge_hrs(100000, pev_is_connected_to_SE, min_time_to_complete_charge_hrs);
 
-    double charge_priority = 3600*min_time_to_complete_charge_hrs / (this->charge_status.departure_unix_time - this->charge_status.now_unix_time);
-    charge_priority = std::min({charge_priority, 1.0});
+    // TODO: Check if this function gives accurate values at final few timesteps, There might be a bug here related to FLAT strategy where 
+    SE_load.get_time_to_complete_active_charge_hrs(100000, pev_is_connected_to_SE, min_time_to_complete_charge_hrs);
     
-    double P3kW_LB = charge_priority * this->P3kW_limits.max_P3kW;
+    const double ratio_of_min_time_to_charge_over_time_remaining = 3600*min_time_to_complete_charge_hrs / (this->charge_status.departure_unix_time - this->charge_status.now_unix_time);
+    const double charge_priority = std::fmin(ratio_of_min_time_to_charge_over_time_remaining, 1.0);
+    double P3kW_LB = this->P3kW_limits.min_P3kW;
     
-    if(P3kW_LB < this->P3kW_limits.min_P3kW)
-    {
-        P3kW_LB = this->P3kW_limits.min_P3kW;
-    }
-    
-    if(this->P3kW_limits.max_P3kW < P3kW_LB)
-    {
-        P3kW_LB = this->P3kW_limits.max_P3kW;
-    }
-    
-    if(charge_priority > 0.97)
+    if( ratio_of_min_time_to_charge_over_time_remaining > 1.00 + 1e-10 )
     {
         this->must_charge_for_remainder_of_park = true;
     }
@@ -1008,10 +1306,14 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------------------------------------------
     if(this->L2_control_enums.ext_control_strategy != "NA")
     {    
-        if(this->must_charge_for_remainder_of_park && this->ensure_pev_charge_needs_met_for_ext_control_strategy)
+        if(this->ensure_pev_charge_needs_met_for_ext_control_strategy)
         {
-            SE_load.set_target_acP3_kW(100000);
-            SE_load.set_target_acQ3_kVAR(0);
+            // This is especially for ALAP strategy and other ext control strategy, have little more buffer and not respect this->must_charge_for_remainder_of_park which has tighter buffer.
+            if (charge_priority > 0.97)
+            {    
+                SE_load.set_target_acP3_kW(100000);
+                SE_load.set_target_acQ3_kVAR(0);
+            }
         }
     
         return;
@@ -1020,6 +1322,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     //-----------------------------
     //      Energy Shifting
     //-----------------------------
+    
     double P3kW_setpoint = this->target_P3kW;
     bool is_charging = true;
     
@@ -1051,7 +1354,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
         }
         else if (this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES400)
         {
-            P3kW_LB = 0.0;
+            P3kW_LB = 0.0;  // <---- TODO TODO TODO:  Should we change this to 'this->P3kW_limits.min_P3kW' ?? (or, 1.44 kW minimum).
             P3kW_setpoint = this->ES400_obj.get_P3kW_setpoint(prev_unix_time, now_unix_time);
         }
         else if(this->L2_control_enums.ES_control_strategy == L2_control_strategies_enum::ES500)
@@ -1094,7 +1397,7 @@ void supply_equipment_control::execute_control_strategy( const double prev_unix_
     {
         P3kW_setpoint = P3kW_LB;
     }
-    
+        
     //------------------------------
     // Voltage Supporting via QkVAR 
     //------------------------------
