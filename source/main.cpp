@@ -38,7 +38,7 @@ int main()
 
 	int charge_event_id = 1;
 	int SE_group_id = 1;
-	SupplyEquipmentId  SE_id = 1;
+	SE_id_type  SE_id = 1;
 	vehicle_id_type vehicle_id = 1;
 	EV_type vehicle_type = "bev250_350kW";
 	double arrival_unix_time = 1*3600;

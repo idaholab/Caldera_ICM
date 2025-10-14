@@ -14,7 +14,7 @@ supply_equipment::supply_equipment( const SE_configuration& SE_config,
 }
    
 
-bool supply_equipment::is_SE_with_id( const SupplyEquipmentId SE_id )
+bool supply_equipment::is_SE_with_id( const SE_id_type SE_id )
 {
     return (this->SE_config.SE_id == SE_id);
 }
@@ -200,7 +200,4 @@ void supply_equipment::ES500_set_energy_setpoints( const double e3_setpoint_kWh 
     this->SE_control.ES500_set_energy_setpoints(e3_setpoint_kWh);
 }
 
-void supply_equipment::ES400_set_power_setpoints(const double p3_kW)
-{
-    this->SE_control.ES400_set_power_setpoints(p3_kW);
-}
+    
