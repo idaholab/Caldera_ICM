@@ -60,6 +60,7 @@ public:
     const ES110_L2_parameters& get_ES110();
     const ES200_L2_parameters& get_ES200();
     const ES300_L2_parameters& get_ES300();
+    const ES400_L2_parameters& get_ES400();
     const ES500_L2_parameters& get_ES500();
     
     const VS100_L2_parameters& get_VS100();
@@ -99,12 +100,17 @@ class ES100_control_strategy
 private:
     L2_control_strategies_enum L2_CS_enum;
     manage_L2_control_strategy_parameters* params;
-    double target_P3kW, cur_P3kW_setpoint, charge_start_unix_time;
+    double target_P3kW;
+    double cur_P3kW_setpoint;
+    double charge_start_unix_time;
+    
+    double primary_target_P3kW;    // <-- Used for TOU_FLAT
+    double secondary_target_P3kW;  // <-- Used for TOU_FLAT
     
 public:
     ES100_control_strategy(){};
     ES100_control_strategy(L2_control_strategies_enum L2_CS_enum_, manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
@@ -122,14 +128,14 @@ private:
 public:
     ES110_control_strategy(){};
     ES110_control_strategy(manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, pev_charge_profile* charge_profile);
+    void update_parameters_for_CE(double target_P3kW_, const CE_status& charge_status, const pev_charge_profile& charge_profile);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
 
-//=========================================
-//        ES200 Control Strategy
-//=========================================
+//------------------------------------------------------------
+//        ES200 Control Strategy        ["FLAT" strategy]
+//------------------------------------------------------------
 
 class ES200_control_strategy
 {
@@ -138,10 +144,23 @@ private:
     double target_P3kW, cur_P3kW_setpoint;
     
 public:
+    
     ES200_control_strategy(){};
-    ES200_control_strategy(manage_L2_control_strategy_parameters* params_);
-    void update_parameters_for_CE(double target_P3kW_);
-    double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
+    ES200_control_strategy( manage_L2_control_strategy_parameters* params_ );
+    
+    // Called when new a new CE starts on a supply equipment and the new CE has the ES200 control.
+    // Paramters:
+    //     'max_P3kW': the maximum power level that this charge event supports.
+    //     'charge_status': The charge_status object from the supply_equipment_control object.
+    //     'charge_profile': The charge profile object from the SE_load object when
+    //                       'supply_equipment_control::update_parameters_for_CE' gets called,
+    //                        before this function gets called.
+    void update_parameters_for_CE( const double max_P3kW,
+                                   const CE_status& charge_status,
+                                   const pev_charge_profile& charge_profile );
+    
+    double get_P3kW_setpoint( double prev_unix_time,
+                              double now_unix_time );
 };
 
 
@@ -162,6 +181,34 @@ public:
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
 };
 
+
+//=========================================
+//        ES400 Control Strategy
+//=========================================
+
+class ES400_control_strategy
+{
+private:
+    manage_L2_control_strategy_parameters* params;
+    double target_P3kW;
+    double cur_P3kW_setpoint;
+    double next_P3kW_setpoint;
+    double unix_time_begining_of_next_agg_step;
+    bool updated_P3kW_setpoint_available;
+
+public:
+    ES400_control_strategy() {};
+    ES400_control_strategy(manage_L2_control_strategy_parameters* params_);
+    void update_parameters_for_CE(double target_P3kW_);
+    void get_charging_needs(
+        double unix_time_now,
+        double unix_time_begining_of_next_agg_step
+    );
+    double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
+    void set_power_setpoints(double P3kW_setpoint);
+};
+
+
 //=========================================
 //        ES500 Control Strategy
 //=========================================
@@ -179,7 +226,7 @@ public:
     void update_parameters_for_CE(double target_P3kW_);
     double get_P3kW_setpoint(double prev_unix_time, double now_unix_time);
     
-    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, pev_charge_profile* charge_profile,
+    void get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step_, const pev_charge_profile& charge_profile,
                             const CE_status& charge_status, const charge_event_P3kW_limits& P3kW_limits, const SE_configuration& SE_config,
                             ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void set_energy_setpoints(double e3_setpoint_kWh);
@@ -257,16 +304,32 @@ void enforce_ramping(double prev_unix_time, double now_unix_time, double max_del
 //       supply_equipment_control
 //=========================================
 
+// Each supply_equipment has its own supply_equipment_control object.
+// NOTE: This class is not currently well written in terms of memory usage
+//       since we have every control_strategy object available in this class.
+// FUTURE WORK: A better way would be to have an abstract class and derive
+//              the control objects and have a loose coupling with pointers
+//              to the right control_strategy object. This way whenever a new
+//              charge event occurs we can dynamically change it to the control
+//              object. Moreover, we can make all supply_equipment_control share
+//              the same control_strategy object with const function call
+//              (thread safety) if possible and significantly reduce the memory
+//              usage for large scale simulations.
+
 class supply_equipment_control
 {
 private:
-    SE_configuration SE_config;
+    const SE_configuration SE_config;
     
     ES100_control_strategy ES100A_obj;
     ES100_control_strategy ES100B_obj;
     ES110_control_strategy ES110_obj;
+
+    // The 'FLAT' control strategy.
     ES200_control_strategy ES200_obj;
+    
     ES300_control_strategy ES300_obj;
+    ES400_control_strategy ES400_obj;
     ES500_control_strategy ES500_obj;
     
     VS100_control_strategy VS100_obj;
@@ -275,15 +338,20 @@ private:
     VS200_control_strategy VS200C_obj;
     VS300_control_strategy VS300_obj;
     
+    // 'L2_control_enums' specifies which control strategy is currently active
     control_strategy_enums L2_control_enums;
+    
+    // 'P3kW_limits' has the lower and upper limits for the charging speed.
     charge_event_P3kW_limits P3kW_limits;
+
+    // 'charge_status' contains details of the charge event
     CE_status charge_status;
     
-    double prev_pu_Vrms, target_P3kW;    
+    double prev_pu_Vrms;
+    double target_P3kW;
     bool must_charge_for_remainder_of_park;
     
-    pev_charge_profile* charge_profile;
-    get_base_load_forecast* baseLD_forecaster;
+    const get_base_load_forecast& baseLD_forecaster;
     manage_L2_control_strategy_parameters* manage_L2_control;
     
     LPF_kernel LPF;
@@ -293,16 +361,18 @@ private:
     bool ensure_pev_charge_needs_met_for_ext_control_strategy;
     
 public:
-    supply_equipment_control() {};
+    //supply_equipment_control() : baseLD_forecaster{} {};
     supply_equipment_control( const bool building_charge_profile_library_,
                               const SE_configuration& SE_config_,
-                              get_base_load_forecast* baseLD_forecaster_,
+                              const get_base_load_forecast& baseLD_forecaster_,
                               manage_L2_control_strategy_parameters* manage_L2_control_ );
     
     control_strategy_enums get_control_strategy_enums();
     std::string get_external_control_strategy();
     L2_control_strategies_enum  get_L2_ES_control_strategy();
     L2_control_strategies_enum  get_L2_VS_control_strategy();
+
+    // To Steven: This is called one time a new charge event starts
     void update_parameters_for_CE( supply_equipment_load& SE_load );
     
     void set_ensure_pev_charge_needs_met_for_ext_control_strategy( const bool ensure_pev_charge_needs_met );
@@ -320,6 +390,12 @@ public:
                                    supply_equipment_load& SE_load,
                                    ES500_aggregator_pev_charge_needs& pev_charge_needs);
     void ES500_set_energy_setpoints( const double e3_setpoint_kWh );
+
+    //------------------------
+    //         ES400
+    //------------------------
+    
+    void ES400_set_power_setpoints(const double p3_kW);
 };
 
 #endif

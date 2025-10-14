@@ -5,21 +5,23 @@
 #include "EV_characteristics.h"
 #include "EVSE_characteristics.h"
 
+#include <cstdint>
 #include <vector>
 #include <string>
 
-
+// The ids typedefs
+using StationId = int;
 using vehicle_id_type = int;
-using SE_id_type = int;
+using SupplyEquipmentId = int;
 using grid_node_id_type = std::string;
 
 using process_id = std::string;
 using serialized_protobuf_obj = std::string;
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                Example Code Snippits
-//==================================================================
+//------------------------------------------------------------------
 
 /*                           Execution Time Measurements 
 #include <chrono>
@@ -31,9 +33,9 @@ std::chrono::duration<double> time_diff = end_time - start_time;
 double time_sec = time_diff.count();
 */
 
-//==================================================================
+//------------------------------------------------------------------
 //                timeseries
-//==================================================================
+//------------------------------------------------------------------
 
 
 // TODO: Merge the timeseries type with time_series in CDM_global.h
@@ -71,9 +73,9 @@ struct timeseries
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                time_series_v2
-//==================================================================
+//------------------------------------------------------------------
 
 template <typename ARR_DATA_TYPE> class time_series_v2
 {
@@ -118,14 +120,14 @@ template <typename ARR_DATA_TYPE> class time_series_v2
 
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                Low Pass Filter Parameters
-//==================================================================
+//------------------------------------------------------------------
 
-enum LPF_window_enum
+enum class LPF_window_enum
 {
-	Hanning=0,
-	Blackman=1,
+    Hanning=0,
+    Blackman=1,
     Rectangular=2
 };
 
@@ -154,11 +156,11 @@ struct LPF_parameters_randomize_window_size
 std::pair<bool, LPF_window_enum> get_LPF_window_enum(const std::string str_val);
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                  L2_control_strategy_parameters
-//==================================================================
+//------------------------------------------------------------------
 
-enum L2_control_strategies_enum
+enum class L2_control_strategies_enum
 {
     NA = 0,
     ES100_A = 1,
@@ -166,7 +168,8 @@ enum L2_control_strategies_enum
     ES110 = 3,
     ES200 = 4,
     ES300 = 5,
-    ES500 = 6,
+    ES400 = 6,
+    ES500 = 7,
     VS100 = 8,   
     VS200_A = 10,
     VS200_B = 11,
@@ -225,6 +228,13 @@ struct normal_random_error
     normal_random_error() : seed(0), stdev(0.0), stdev_bounds(0.0) {}
 };
 
+struct ES400_L2_parameters
+{
+    bool communication;
+
+    ES400_L2_parameters() : communication(false) {}
+};
+
 
 struct ES500_L2_parameters
 {
@@ -278,6 +288,7 @@ struct L2_control_strategy_parameters
     ES110_L2_parameters ES110;
     ES200_L2_parameters ES200;
     ES300_L2_parameters ES300;
+    ES400_L2_parameters ES400;
     ES500_L2_parameters ES500;
     
     VS100_L2_parameters VS100;    
@@ -304,15 +315,15 @@ std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const
 bool is_L2_ES_control_strategy(L2_control_strategies_enum control_strategy_enum);
 bool is_L2_VS_control_strategy(L2_control_strategies_enum control_strategy_enum);
 
-//==================================================================
+//------------------------------------------------------------------
 //                   ES500 Aggregator Structures
-//==================================================================
+//------------------------------------------------------------------
 
 
 struct ES500_aggregator_pev_charge_needs
 {
-    SE_id_type SE_id;
-	double departure_unix_time;
+    SupplyEquipmentId SE_id;
+    double departure_unix_time;
     double e3_charge_remain_kWh;
     double e3_step_max_kWh;
     double e3_step_target_kWh;
@@ -336,8 +347,8 @@ struct ES500_aggregator_pev_charge_needs
 
 struct ES500_aggregator_charging_needs
 {
-	double next_aggregator_timestep_start_time;
-	std::vector<ES500_aggregator_pev_charge_needs> pev_charge_needs;
+    double next_aggregator_timestep_start_time;
+    std::vector<ES500_aggregator_pev_charge_needs> pev_charge_needs;
     
     bool is_empty();
     
@@ -347,13 +358,13 @@ struct ES500_aggregator_charging_needs
 
 struct ES500_aggregator_e_step_setpoints
 {
-	double next_aggregator_timestep_start_time;
-	std::vector<SE_id_type> SE_id;
-	std::vector<double> e3_step_kWh;
-	std::vector<double> charge_progression;
+    double next_aggregator_timestep_start_time;
+    std::vector<SupplyEquipmentId> SE_id;
+    std::vector<double> e3_step_kWh;
+    std::vector<double> charge_progression;
     
     ES500_aggregator_e_step_setpoints() : next_aggregator_timestep_start_time(0.0) {}
-    ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SE_id_type> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_);
+    ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SupplyEquipmentId> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_);
 
     bool is_empty();
 };
@@ -361,20 +372,20 @@ struct ES500_aggregator_e_step_setpoints
 
 struct ES500_aggregator_charging_forecast
 {
-	std::vector<double> arrival_unix_time;
-	std::vector<double> departure_unix_time;
-	std::vector<double> e3_charge_remain_kWh;
+    std::vector<double> arrival_unix_time;
+    std::vector<double> departure_unix_time;
+    std::vector<double> e3_charge_remain_kWh;
     std::vector<double> e3_step_max_kWh;
 };
 
 
 struct ES500_aggregator_obj_fun_constraints
 {
-	std::vector<double> E_cumEnergy_ALAP_kWh, 
-						E_cumEnergy_ASAP_kWh, 
-						E_energy_ALAP_kWh, 
-						E_energy_ASAP_kWh,
-						E_step_ALAP;
+    std::vector<double> E_cumEnergy_ALAP_kWh, 
+                        E_cumEnergy_ASAP_kWh, 
+                        E_energy_ALAP_kWh, 
+                        E_energy_ASAP_kWh,
+                        E_step_ALAP;
     bool canSolve_aka_pev_charging_in_prediction_window;
 };
 
@@ -382,13 +393,13 @@ struct ES500_aggregator_obj_fun_constraints
 struct ES500_charge_cycling_control_boundary_point
 {
     double cycling_magnitude;
-	double cycling_vs_ramping;
+    double cycling_vs_ramping;
     
-	ES500_charge_cycling_control_boundary_point() :
+    ES500_charge_cycling_control_boundary_point() :
                 cycling_magnitude(0.0),
                 cycling_vs_ramping(0.0) {}
     
-	ES500_charge_cycling_control_boundary_point( double cycling_magnitude, double cycling_vs_ramping );
+    ES500_charge_cycling_control_boundary_point( double cycling_magnitude, double cycling_vs_ramping );
 };
 
 
@@ -417,60 +428,64 @@ struct ES500_stop_charge_cycling_decision_parameters
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                       Charge Event Data
-//==================================================================
+//------------------------------------------------------------------
 
 bool ext_strategy_str_is_valid(std::string ext_str);
 
 
-enum stop_charging_decision_metric
+enum class stop_charging_decision_metric
 {
-	stop_charging_using_target_soc = 0,
-	stop_charging_using_depart_time = 1,
-	stop_charging_using_whatever_happens_first = 2
+    stop_charging_using_target_soc = 0,
+    stop_charging_using_depart_time = 1,
+    stop_charging_using_whatever_happens_first = 2
 };
 std::ostream& operator<<(std::ostream& out, const stop_charging_decision_metric& x);
 
 
-enum stop_charging_mode
+enum class stop_charging_mode
 {
-	target_charging = 0,
-	block_charging = 1
+    target_charging = 0,
+    block_charging = 1
 };
 std::ostream& operator<<(std::ostream& out, const stop_charging_mode& x);
 
 
 struct stop_charging_criteria
 {
-	stop_charging_decision_metric decision_metric;
-	stop_charging_mode soc_mode;
-	stop_charging_mode depart_time_mode;
-	double soc_block_charging_max_undershoot_percent;
-	double depart_time_block_charging_max_undershoot_percent;
-	
+    stop_charging_decision_metric decision_metric;
+    stop_charging_mode soc_mode;
+    stop_charging_mode depart_time_mode;
+    double soc_block_charging_max_undershoot_percent;
+    double depart_time_block_charging_max_undershoot_percent;
+    
     stop_charging_criteria();
     stop_charging_criteria( stop_charging_decision_metric decision_metric_,
                             stop_charging_mode soc_mode_,
                             stop_charging_mode depart_time_mode_,
                             double soc_block_charging_max_undershoot_percent_,
                             double depart_time_block_charging_max_undershoot_percent_ );
-	static std::string get_file_header();
+    static std::string get_file_header();
 };
 std::ostream& operator<<(std::ostream& out, const stop_charging_criteria& x);
 
 
+
+#define DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C 26.0
+
 struct charge_event_data
 {
-	int charge_event_id;
+    int charge_event_id;
     int SE_group_id;
-    SE_id_type SE_id;
-   	vehicle_id_type vehicle_id;
+    SupplyEquipmentId SE_id;
+    vehicle_id_type vehicle_id;
     EV_type vehicle_type;
     double arrival_unix_time;    // in seconds
     double departure_unix_time;  // in seconds
     double arrival_SOC;          // in percent (for 50%, this will be 50.0)
     double departure_SOC;        // in percent (for 50%, this will be 50.0)
+    double arrival_battery_temperature_C; // To be used in temperature-aware profiles.
     stop_charging_criteria stop_charge;
     
     control_strategy_enums control_enums;
@@ -484,11 +499,12 @@ struct charge_event_data
             arrival_unix_time(0.0),
             departure_unix_time(0.0),
             arrival_SOC(0.0),
-            departure_SOC(0.0) {};
+            departure_SOC(0.0),
+            arrival_battery_temperature_C(DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C) {};
     
     charge_event_data( int charge_event_id_,
                        int SE_group_id_,
-                       SE_id_type SE_id_,
+                       SupplyEquipmentId SE_id_,
                        vehicle_id_type vehicle_id_,
                        EV_type vehicle_type,
                        double arrival_unix_time_,
@@ -500,15 +516,15 @@ struct charge_event_data
     
     static std::string get_file_header();
     
-	bool operator<(const charge_event_data& rhs) const
-	{
-		return this->arrival_unix_time < rhs.arrival_unix_time;
-	}
+    bool operator<(const charge_event_data& rhs) const
+    {
+        return this->arrival_unix_time < rhs.arrival_unix_time;
+    }
 
     bool operator<(charge_event_data& rhs) const
-	{
-		return this->arrival_unix_time < rhs.arrival_unix_time;
-	}
+    {
+        return this->arrival_unix_time < rhs.arrival_unix_time;
+    }
 };
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x);
 
@@ -526,7 +542,7 @@ struct SE_group_charge_event_data
 //=====================================
 
 
-enum queuing_mode_enum
+enum class queuing_mode_enum
 {
     overlapAllowed_earlierArrivalTimeHasPriority = 0,
     overlapLimited_mostRecentlyQueuedHasPriority = 1
@@ -544,15 +560,15 @@ struct charge_event_queuing_inputs
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                       SE Group Configuration
-//==================================================================
+//------------------------------------------------------------------
 
 struct SE_configuration
-{	
+{    
     int SE_group_id;
-    SE_id_type SE_id;
-	EVSE_type supply_equipment_type;
+    SupplyEquipmentId SE_id;
+    EVSE_type supply_equipment_type;
     double lattitude;  // <-- TDDO: misspelled word. Should be "latitude"
     double longitude;
     grid_node_id_type grid_node_id;
@@ -568,7 +584,7 @@ struct SE_configuration
             location_type("") {};
     
     SE_configuration( int SE_group_id_,
-                      SE_id_type SE_id_,
+                      SupplyEquipmentId SE_id_,
                       EVSE_type supply_equipment_type_,
                       double lat_,
                       double long_,
@@ -587,16 +603,16 @@ struct SE_group_configuration
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                   Status of Charging 
-//==================================================================
+//------------------------------------------------------------------
 
-enum SE_charging_status
+enum class SE_charging_status
 {
-	no_ev_plugged_in = 0,
-	ev_plugged_in_not_charging = 1,
-	ev_charging = 2,
-	ev_charge_complete = 3,
+    no_ev_plugged_in = 0,
+    ev_plugged_in_not_charging = 1,
+    ev_charging = 2,
+    ev_charge_complete = 3,
     ev_charge_ended_early = 4
 };
 std::ostream& operator<<(std::ostream& out, const SE_charging_status& x);
@@ -614,7 +630,7 @@ struct FICE_inputs // Future Interval Charge Energy
 
 struct CE_FICE
 {   
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     int charge_event_id;
     double charge_energy_ackWh;
     double interval_duration_hrs;
@@ -634,7 +650,7 @@ struct CE_FICE_in_SE_group
 
 struct active_CE
 {
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     EVSE_type supply_equipment_type;
     int charge_event_id;
     vehicle_id_type vehicle_id;
@@ -674,7 +690,7 @@ struct active_CE
 
 struct SE_setpoint
 {
-    SE_id_type SE_id; 
+    SupplyEquipmentId SE_id; 
     double PkW;
     double QkVAR = 0;
     
@@ -684,7 +700,7 @@ struct SE_setpoint
 
 struct completed_CE
 {
-    SE_id_type SE_id;
+    SupplyEquipmentId SE_id;
     int charge_event_id;    
     double final_soc;
     
@@ -692,12 +708,21 @@ struct completed_CE
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                       Miscellaneous
-//==================================================================
+//------------------------------------------------------------------
 
 struct SE_power
 {
+    enum class PowerType
+    {
+        P1 = 0,  // Power to the battery
+        P2 = 1,  // Power to the vehicle
+        P3 = 2,  // Power to the charger
+        Q3 = 3,
+        undefined = 4
+    };
+    
     double time_step_duration_hrs;
     double P1_kW;
     double P2_kW;
@@ -716,11 +741,13 @@ struct SE_power
             SE_status_val(SE_charging_status::no_ev_plugged_in) {}
 };
 
+std::ostream& operator<<(std::ostream& out, const SE_power::PowerType& x);
 
-enum ac_to_dc_converter_enum
+
+enum class ac_to_dc_converter_enum
 {
-	pf=0,
-	Q_setpoint=1
+    pf=0,
+    Q_setpoint=1
 };
 
 
@@ -736,9 +763,9 @@ struct pev_batterySize_info
         battery_size_with_stochastic_degredation_kWh(0.0) {}
 };
 
-//==================================================================
+//------------------------------------------------------------------
 //                     PEV Charge Profile 
-//==================================================================
+//------------------------------------------------------------------
 
 struct pev_charge_profile_result
 {
@@ -872,9 +899,9 @@ struct all_charge_profile_data
 };
 
 
-//==================================================================
+//------------------------------------------------------------------
 //                     PEV Ramping Parameters
-//==================================================================
+//------------------------------------------------------------------
 
 
 struct pev_charge_ramping

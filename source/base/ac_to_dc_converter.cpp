@@ -23,13 +23,13 @@ ac_to_dc_converter::ac_to_dc_converter( const bool can_provide_reactive_power_,
 }
 
 
-bool ac_to_dc_converter::get_can_provide_reactive_power_control()
+bool ac_to_dc_converter::get_can_provide_reactive_power_control() const
 {
     return this->can_provide_reactive_power;
 }
 
 
-double ac_to_dc_converter::get_max_nominal_S3kVA()
+double ac_to_dc_converter::get_max_nominal_S3kVA() const
 {
     return this->max_nominal_S3kVA;
 }
@@ -41,7 +41,7 @@ double ac_to_dc_converter::get_P3_from_P2( const double P2 )
 }
 
 
-double ac_to_dc_converter::get_approxamate_P2_from_P3( const double P3 )
+double ac_to_dc_converter::get_approximate_P2_from_P3( const double P3 )
 {
     double approx_P2 = P3 * this->inv_eff_from_P2.get_val(P3);
     

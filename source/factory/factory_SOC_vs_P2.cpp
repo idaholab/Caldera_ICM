@@ -1,17 +1,8 @@
 #include "factory_SOC_vs_P2.h"
 #include <fstream>
 #include <algorithm>
+#include <unordered_set>
 
-//##########################################################
-//                      SOC_vs_P2
-//##########################################################
-
-SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
-                     const double& zero_slope_threshold)
-    : curve{ curve }, 
-    zero_slope_threshold{ zero_slope_threshold }
-{
-}
 
 
 //##########################################################
@@ -94,10 +85,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 
         // When a battery is approaching 0 soc or 100 soc there is a chance that energy continues to go into the battery while
         // the soc is not changing (fixed at 0 or 100 soc)
-        // 	- This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
-        // 	- This problem (for small time steps) can be mitigated by the following:
-        //		- Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
-        //		- Make sure the ramp rate is large when a battery stops charging/discharging
+        //     - This is caused by the fact that when a battery stopps charging/discharging there is a ramp down period.
+        //     - This problem (for small time steps) can be mitigated by the following:
+        //        - Make sure the P2_vs_soc curve decreases to zero as soc approaches 0 or 100 soc
+        //        - Make sure the ramp rate is large when a battery stops charging/discharging
         //      - Make sure the delay is small when battery stops charging/discharging
 
         std::vector<line_segment> charge_profile;
@@ -122,17 +113,18 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_L1_or_L2_charge_profile(const EV_type
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_charge_mode& mode, 
-                                                               const EV_type& EV, 
-                                                               const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile( const battery_charge_mode& mode, 
+                                                                const EV_type& EV, 
+                                                                const EVSE_type& EVSE,
+                                                                const double c_rate_scale_factor ) const
 {
-    if (mode == charging)
+    if (mode == battery_charge_mode::charging)
     {
-        return this->get_charging_dcfc_charge_profile(EV, EVSE);
+        return this->get_charging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
     }
-    else if (mode == discharging)
+    else if (mode == battery_charge_mode::discharging)
     {
-        return this->get_discharging_dcfc_charge_profile(EV, EVSE);
+        return this->get_discharging_dcfc_charge_profile(EV, EVSE, c_rate_scale_factor);
     }
     else
     {
@@ -142,12 +134,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_dcfc_charge_profile(const battery_cha
 }
 
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV_type& EV, 
-                                                                        const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile( const EV_type& EV, 
+                                                                         const EVSE_type& EVSE,
+                                                                         const double c_rate_scale_factor ) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -266,7 +259,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
 
             if (std::abs(next_lower_soc - next_upper_soc) < 1)
             {
-                if (next_upper_point_type == extend)
+                if (next_upper_point_type == point_type::extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -279,7 +272,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
             }
             else if (next_upper_soc < next_lower_soc)
             {
-                if (next_upper_point_type == extend)
+                if (next_upper_point_type == point_type::extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -471,12 +464,13 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_charging_dcfc_charge_profile(const EV
     return SOC_vs_P2{ dcPkW_from_soc_input, zero_slope_threshold_P2_vs_soc };
 }
 
-const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const EV_type& EV, 
-                                                                           const EVSE_type& EVSE) const
+const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( const EV_type& EV, 
+                                                                            const EVSE_type& EVSE,
+                                                                            const double c_rate_scale_factor ) const
 {
     const double battery_size_kWh = this->inventory.get_EV_inventory().at(EV).get_battery_size_kWh();
     const double battery_capacity_Ah_1C = this->inventory.get_EV_inventory().at(EV).get_battery_size_Ah_1C();
-    const double EV_crate = this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
+    const double EV_crate = c_rate_scale_factor * this->inventory.get_EV_inventory().at(EV).get_max_c_rate();
     const double EV_current_limit = EV_crate * battery_capacity_Ah_1C;
 
     const double EVSE_current_limit_A = this->inventory.get_EVSE_inventory().at(EVSE).get_current_limit_A();
@@ -594,7 +588,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 
             if (std::abs(next_lower_soc - next_upper_soc) < 1)
             {
-                if (next_upper_point_type == extend)
+                if (next_upper_point_type == point_type::extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -607,7 +601,7 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
             }
             else if (next_upper_soc > next_lower_soc)
             {
-                if (next_upper_point_type == extend)
+                if (next_upper_point_type == point_type::extend)
                     extend_segment = true;
 
                 soc_1 = next_upper_soc;
@@ -794,23 +788,36 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile(const
 //##########################################################
 
 
-factory_SOC_vs_P2::factory_SOC_vs_P2(const EV_EVSE_inventory& inventory) 
+factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const double c_rate_scale_factor ) 
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
     NMC_charge{ this->load_NMC_charge() },
     LTO_charge{ this->load_LTO_charge() },
     L1_L2_curves{ this->load_L1_L2_curves() },
-    DCFC_curves{ this->load_DCFC_curves() }
+    DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor, // const double max_c_rate_scale_factor,
+                                                                   20,                  // const int n_curve_levels, 
+                                                                   -20.0,               // const double min_start_temperature_C,
+                                                                   40.0,                // const double max_start_temperature_C,
+                                                                   6.0,                 // const double start_temperature_step,
+                                                                   0.0,                 // const double min_start_SOC,
+                                                                   90.0,                // const double max_start_SOC,
+                                                                   6.0                  // const double start_SOC_step
+                                                               ) }
+#endif
 {
 }
 
 
-const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV, 
-                                                         const EVSE_type& EVSE) const
+const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves( const EV_type& EV, 
+                                                          const EVSE_type& EVSE,
+                                                          const double charge_start_battery_temperature_C,
+                                                          const double charge_start_SOC ) const
 {
     const EVSE_level& level = this->inventory.get_EVSE_inventory().at(EVSE).get_level();
 
-    if (level == L1 || level == L2)
+    if (level == EVSE_level::L1 || level == EVSE_level::L2)
     {
         if (this->L1_L2_curves.find(EV) != this->L1_L2_curves.end())
         {
@@ -822,7 +829,24 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
-    else if (level == DCFC)
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    else if (level == EVSE_level::DCFC)
+    {
+        const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
+
+        if (this->TA_DCFC_curves.find(key) != this->TA_DCFC_curves.end())
+        {
+            const temperature_aware::temperature_aware_profiles_data_store& ta_data_store = this->TA_DCFC_curves.at(key);
+            return ta_data_store.lookup_profile( charge_start_battery_temperature_C, charge_start_SOC );
+        }
+        else
+        {
+            ASSERT(false, "Error: [TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING IS TRUE] P2_vs_soc is not defined in the EV_charge_model_factory for EV_type:" << EV << " and SE_type:" << EVSE << std::endl);
+            return this->error_case_curve;
+        }
+    }
+#else
+    else if (level == EVSE_level::DCFC)
     {
         const std::pair<EV_type, EVSE_type> key = std::make_pair(EV, EVSE);
 
@@ -836,6 +860,7 @@ const SOC_vs_P2& factory_SOC_vs_P2::get_SOC_vs_P2_curves(const EV_type& EV,
             return this->error_case_curve;
         }
     }
+#endif
     else
     {
         ASSERT(false, "invalid EVSE_level");
@@ -857,12 +882,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.898, interpolate));
-    points.emplace( 4.4, std::make_pair(1.056, interpolate));
-    points.emplace( 11.3, std::make_pair(1.154, interpolate));
-    points.emplace( 32.4, std::make_pair(1.215, interpolate));
-    points.emplace( 76.1, std::make_pair(1.274, extend));
-    points.emplace( 100.0, std::make_pair(0.064, use_directly));
+    points.emplace( 0.0, std::make_pair(0.898, point_type::interpolate));
+    points.emplace( 4.4, std::make_pair(1.056, point_type::interpolate));
+    points.emplace( 11.3, std::make_pair(1.154, point_type::interpolate));
+    points.emplace( 32.4, std::make_pair(1.215, point_type::interpolate));
+    points.emplace( 76.1, std::make_pair(1.274, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -871,12 +896,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.742, interpolate));
-    points.emplace( 4.0, std::make_pair(2.044, interpolate));
-    points.emplace( 12.0, std::make_pair(2.249, interpolate));
-    points.emplace( 55.0, std::make_pair(2.418, extend));
-    points.emplace( 75.0, std::make_pair(1.190, use_directly));
-    points.emplace( 100.0, std::make_pair(0.064, use_directly));
+    points.emplace( 0.0, std::make_pair(1.742, point_type::interpolate));
+    points.emplace( 4.0, std::make_pair(2.044, point_type::interpolate));
+    points.emplace( 12.0, std::make_pair(2.249, point_type::interpolate));
+    points.emplace( 55.0, std::make_pair(2.418, point_type::extend));
+    points.emplace( 75.0, std::make_pair(1.190, point_type::use_directly));
+    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -885,12 +910,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.667, interpolate));
-    points.emplace( 6.0, std::make_pair(3.246, interpolate));
-    points.emplace( 11.9, std::make_pair(3.436, interpolate));
-    points.emplace( 37.6, std::make_pair(3.628, extend));
-    points.emplace( 70.0, std::make_pair(1.440, use_directly));
-    points.emplace( 100.0, std::make_pair(0.064, use_directly));
+    points.emplace( 0.0, std::make_pair(2.667, point_type::interpolate));
+    points.emplace( 6.0, std::make_pair(3.246, point_type::interpolate));
+    points.emplace( 11.9, std::make_pair(3.436, point_type::interpolate));
+    points.emplace( 37.6, std::make_pair(3.628, point_type::extend));
+    points.emplace( 70.0, std::make_pair(1.440, point_type::use_directly));
+    points.emplace( 100.0, std::make_pair(0.064, point_type::use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -899,15 +924,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LMO_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, interpolate));
-    points.emplace( 100.0, std::make_pair(0, interpolate));
+    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LMO_charge{ this->inventory, curves, charging };
+    const create_dcPkW_from_soc LMO_charge{ this->inventory, curves, battery_charge_mode::charging };
     return LMO_charge;
 }
 
@@ -926,12 +951,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.917, interpolate));
-    points.emplace( 4.0, std::make_pair(1.048, interpolate));
-    points.emplace( 10.0, std::make_pair(1.095, interpolate));
-    points.emplace( 88.0, std::make_pair(1.250, extend));
+    points.emplace( 0.0, std::make_pair(0.917, point_type::interpolate));
+    points.emplace( 4.0, std::make_pair(1.048, point_type::interpolate));
+    points.emplace( 10.0, std::make_pair(1.095, point_type::interpolate));
+    points.emplace( 88.0, std::make_pair(1.250, point_type::extend));
     // points.push_back({ 93.0, 0.595, use_directly});  // This point violates one of the key rules.
-    points.emplace( 100.0, std::make_pair(0.060, use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -940,12 +965,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.750, interpolate));
-    points.emplace( 3.0, std::make_pair(2.000, interpolate));
-    points.emplace( 10.0, std::make_pair(2.143, interpolate));
-    points.emplace( 78.5, std::make_pair(2.417, extend));
-    points.emplace( 93.0, std::make_pair(0.595, use_directly));
-    points.emplace( 100.0, std::make_pair(0.060, use_directly));
+    points.emplace( 0.0, std::make_pair(1.750, point_type::interpolate));
+    points.emplace( 3.0, std::make_pair(2.000, point_type::interpolate));
+    points.emplace( 10.0, std::make_pair(2.143, point_type::interpolate));
+    points.emplace( 78.5, std::make_pair(2.417, point_type::extend));
+    points.emplace( 93.0, std::make_pair(0.595, point_type::use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -954,12 +979,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.798, interpolate));
-    points.emplace( 3.0, std::make_pair(3.167, interpolate));
-    points.emplace( 10.0, std::make_pair(3.393, interpolate));
-    points.emplace( 67.0, std::make_pair(3.750, extend));
-    points.emplace( 93.0, std::make_pair(0.595, use_directly));
-    points.emplace( 100.0, std::make_pair(0.060, use_directly));
+    points.emplace( 0.0, std::make_pair(2.798, point_type::interpolate));
+    points.emplace( 3.0, std::make_pair(3.167, point_type::interpolate));
+    points.emplace( 10.0, std::make_pair(3.393, point_type::interpolate));
+    points.emplace( 67.0, std::make_pair(3.750, point_type::extend));
+    points.emplace( 93.0, std::make_pair(0.595, point_type::use_directly));
+    points.emplace( 100.0, std::make_pair(0.060, point_type::use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -968,15 +993,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_NMC_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, interpolate));
-    points.emplace( 100.0, std::make_pair(0, interpolate));
+    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc NMC_charge{ this->inventory, curves, charging };
+    const create_dcPkW_from_soc NMC_charge{ this->inventory, curves, battery_charge_mode::charging };
     return NMC_charge;
 }
 
@@ -996,14 +1021,14 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
     // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0.798, interpolate));
-    points.emplace( 2.0, std::make_pair(0.882, interpolate));
-    points.emplace( 50.0, std::make_pair(0.966, interpolate));
-    points.emplace( 64.0, std::make_pair(1.008, interpolate));
-    points.emplace( 80.0, std::make_pair(1.040, interpolate));
-    points.emplace( 90.0, std::make_pair(1.071, interpolate));
-    points.emplace( 96.0, std::make_pair(1.134, extend));
-    points.emplace( 100.0, std::make_pair(0.057, use_directly));
+    points.emplace( 0.0, std::make_pair(0.798, point_type::interpolate));
+    points.emplace( 2.0, std::make_pair(0.882, point_type::interpolate));
+    points.emplace( 50.0, std::make_pair(0.966, point_type::interpolate));
+    points.emplace( 64.0, std::make_pair(1.008, point_type::interpolate));
+    points.emplace( 80.0, std::make_pair(1.040, point_type::interpolate));
+    points.emplace( 90.0, std::make_pair(1.071, point_type::interpolate));
+    points.emplace( 96.0, std::make_pair(1.134, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.057, point_type::use_directly));
 
     C_rate = 1;
     curves.emplace(C_rate, points);
@@ -1012,13 +1037,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(1.765, interpolate));
-    points.emplace( 2.0, std::make_pair(1.828, interpolate));
-    points.emplace( 50.0, std::make_pair(1.975, interpolate));
-    points.emplace( 60.0, std::make_pair(2.038, interpolate));
-    points.emplace( 80.0, std::make_pair(2.122, interpolate));
-    points.emplace( 91.0, std::make_pair(2.227, extend));
-    points.emplace( 100.0, std::make_pair(0.057, use_directly));
+    points.emplace( 0.0, std::make_pair(1.765, point_type::interpolate));
+    points.emplace( 2.0, std::make_pair(1.828, point_type::interpolate));
+    points.emplace( 50.0, std::make_pair(1.975, point_type::interpolate));
+    points.emplace( 60.0, std::make_pair(2.038, point_type::interpolate));
+    points.emplace( 80.0, std::make_pair(2.122, point_type::interpolate));
+    points.emplace( 91.0, std::make_pair(2.227, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.057, point_type::use_directly));
 
     C_rate = 2;
     curves.emplace(C_rate, points);
@@ -1027,13 +1052,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(2.647, interpolate));
-    points.emplace( 2.0, std::make_pair(2.794, interpolate));
-    points.emplace( 50.0, std::make_pair(2.983, interpolate));
-    points.emplace( 60.0, std::make_pair(3.109, interpolate));
-    points.emplace( 80.0, std::make_pair(3.256, interpolate));
-    points.emplace( 88.0, std::make_pair(3.361, extend));
-    points.emplace( 100.0, std::make_pair(0.085, use_directly));
+    points.emplace( 0.0, std::make_pair(2.647, point_type::interpolate));
+    points.emplace( 2.0, std::make_pair(2.794, point_type::interpolate));
+    points.emplace( 50.0, std::make_pair(2.983, point_type::interpolate));
+    points.emplace( 60.0, std::make_pair(3.109, point_type::interpolate));
+    points.emplace( 80.0, std::make_pair(3.256, point_type::interpolate));
+    points.emplace( 88.0, std::make_pair(3.361, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.085, point_type::use_directly));
 
     C_rate = 3;
     curves.emplace(C_rate, points);
@@ -1042,13 +1067,13 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(3.655, interpolate));
-    points.emplace( 3.0, std::make_pair(3.782, interpolate));
-    points.emplace( 50.0, std::make_pair(4.055, interpolate));
-    points.emplace( 60.0, std::make_pair(4.202, interpolate));
-    points.emplace( 80.0, std::make_pair(4.391, interpolate));
-    points.emplace( 86.0, std::make_pair(4.517, extend));
-    points.emplace( 100.0, std::make_pair(0.113, use_directly));
+    points.emplace( 0.0, std::make_pair(3.655, point_type::interpolate));
+    points.emplace( 3.0, std::make_pair(3.782, point_type::interpolate));
+    points.emplace( 50.0, std::make_pair(4.055, point_type::interpolate));
+    points.emplace( 60.0, std::make_pair(4.202, point_type::interpolate));
+    points.emplace( 80.0, std::make_pair(4.391, point_type::interpolate));
+    points.emplace( 86.0, std::make_pair(4.517, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.113, point_type::use_directly));
 
     C_rate = 4;
     curves.emplace(C_rate, points);
@@ -1057,12 +1082,12 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                    // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(4.622, interpolate));
-    points.emplace( 4.0, std::make_pair(4.832, interpolate));
-    points.emplace( 50.0, std::make_pair(5.168, interpolate));
-    points.emplace( 60.0, std::make_pair(5.357, interpolate));
-    points.emplace( 84.0, std::make_pair(5.630, extend));
-    points.emplace( 100.0, std::make_pair(0.063, use_directly));
+    points.emplace( 0.0, std::make_pair(4.622, point_type::interpolate));
+    points.emplace( 4.0, std::make_pair(4.832, point_type::interpolate));
+    points.emplace( 50.0, std::make_pair(5.168, point_type::interpolate));
+    points.emplace( 60.0, std::make_pair(5.357, point_type::interpolate));
+    points.emplace( 84.0, std::make_pair(5.630, point_type::extend));
+    points.emplace( 100.0, std::make_pair(0.063, point_type::use_directly));
 
     C_rate = 5;
     curves.emplace(C_rate, points);
@@ -1071,15 +1096,15 @@ const create_dcPkW_from_soc factory_SOC_vs_P2::load_LTO_charge()
 
                   // {soc, P, (interpolate, extend, use_directly)}
     points.clear();
-    points.emplace( 0.0, std::make_pair(0, interpolate));
-    points.emplace( 100.0, std::make_pair(0, interpolate));
+    points.emplace( 0.0, std::make_pair(0, point_type::interpolate));
+    points.emplace( 100.0, std::make_pair(0, point_type::interpolate));
 
     C_rate = 0;
     curves.emplace(C_rate, points);
 
     //------------------------------------
 
-    const create_dcPkW_from_soc LTO_charge{ this->inventory, curves, charging };
+    const create_dcPkW_from_soc LTO_charge{ this->inventory, curves, battery_charge_mode::charging };
     return LTO_charge;
 }
 
@@ -1097,15 +1122,15 @@ const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curv
 
         const battery_chemistry& chemistry = EV_char.get_chemistry();
 
-        if (chemistry == LMO)
+        if (chemistry == battery_chemistry::LMO)
         {
             return_val.emplace(EV, this->LMO_charge.get_L1_or_L2_charge_profile(EV));
         }
-        else if (chemistry == NMC)
+        else if (chemistry == battery_chemistry::NMC)
         {
             return_val.emplace(EV, this->NMC_charge.get_L1_or_L2_charge_profile(EV));
         }
-        else if (chemistry == LTO)
+        else if (chemistry == battery_chemistry::LTO)
         {
             return_val.emplace(EV, this->LTO_charge.get_L1_or_L2_charge_profile(EV));
         }
@@ -1118,7 +1143,7 @@ const std::unordered_map<EV_type, SOC_vs_P2 > factory_SOC_vs_P2::load_L1_L2_curv
 }
 
 
-const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves()
+const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > factory_SOC_vs_P2::load_DCFC_curves( const double c_rate_scale_factor )
 {
     std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > return_val;
 
@@ -1131,7 +1156,7 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
         const EVSE_characteristics& EVSE_char = EVSE_elem.second;
         const EVSE_level& level = EVSE_char.get_level();
 
-        if (level == DCFC)
+        if (level == EVSE_level::DCFC)
         {
             for (const auto& EV_elem : EV_inv)
             {
@@ -1142,26 +1167,27 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
                 if (DCFC_capable == true)
                 {
                     const battery_chemistry& chemistry = EV_char.get_chemistry();
-                    const double& battery_size_kWh = EV_char.get_battery_size_kWh();
-                    const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
-                    const double& max_c_rate = EV_char.get_max_c_rate();
-                    const double& power_limit_kW = EVSE_char.get_power_limit_kW();
-                    const double& DC_current_limit = EVSE_char.get_current_limit_A();
+                    // // NOTE: I commentted these out because these are not being used here.
+                    //const double& battery_size_kWh = EV_char.get_battery_size_kWh();
+                    //const double& bat_size_Ah_1C = EV_char.get_battery_size_Ah_1C();
+                    //const double& max_c_rate = EV_char.get_max_c_rate();
+                    //const double& power_limit_kW = EVSE_char.get_power_limit_kW();
+                    //const double& DC_current_limit = EVSE_char.get_current_limit_A();
 
-                    const battery_charge_mode mode = charging;
+                    const battery_charge_mode mode = battery_charge_mode::charging;
 
                     // charge profile is not a reference because the data is not stored by the object.
-                    if (chemistry == LMO)
+                    if (chemistry == battery_chemistry::LMO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LMO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
-                    else if (chemistry == NMC)
+                    else if (chemistry == battery_chemistry::NMC)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->NMC_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
-                    else if (chemistry == LTO)
+                    else if (chemistry == battery_chemistry::LTO)
                     {
-                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE));
+                        return_val.emplace(std::make_pair(EV, EVSE), this->LTO_charge.get_dcfc_charge_profile(mode, EV, EVSE, c_rate_scale_factor));
                     }
                     else
                     {
@@ -1183,6 +1209,331 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
 
     return return_val;
 }
+
+
+
+
+
+const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >&
+factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( 
+                                            const double max_c_rate_scale_factor,
+                                            const int n_curve_levels,
+                                            const double min_start_temperature_C,
+                                            const double max_start_temperature_C,
+                                            const double start_temperature_step,
+                                            const double min_start_SOC,
+                                            const double max_start_SOC,
+                                            const double start_SOC_step )
+{    
+    const EV_inventory& EV_inv = this->inventory.get_EV_inventory();
+    const EVSE_inventory& EVSE_inv = this->inventory.get_EVSE_inventory();
+    
+    // ---- helper function ----
+    // Generate unique key for this call to 'load_temperature_aware_DCFC_curves' based on the parameters.
+    auto generate_unique_key_string = [&] () -> std::string {
+        std::stringstream ss;
+        for (const auto& EVSE_elem : EVSE_inv)
+        {
+            const EVSE_type& setype = EVSE_elem.first;
+            ss << setype;
+        }
+        ss << "_";
+        for (const auto& EV_elem : EV_inv)
+        {
+            const EV_type& evtype = EV_elem.first;
+            ss << evtype;
+        }
+        ss << "_";
+        ss << std::setprecision(8) << max_c_rate_scale_factor << "_";
+        ss << n_curve_levels << "_";
+        ss << std::setprecision(8) << min_start_temperature_C << "_";
+        ss << std::setprecision(8) << max_start_temperature_C << "_";
+        ss << std::setprecision(8) << start_temperature_step << "_";
+        ss << std::setprecision(8) << min_start_SOC << "_";
+        ss << std::setprecision(8) << max_start_SOC << "_";
+        ss << std::setprecision(8) << start_SOC_step << "_";
+        return ss.str();
+    };
+    
+    std::string data_store_identifier_key = generate_unique_key_string();
+    
+    // If what we want isn't already stored in the static variable, then we create it and store it
+    // in the static variable.
+    if( TA_DCFC_CURVES_CACHE.find( data_store_identifier_key ) == TA_DCFC_CURVES_CACHE.end() )
+    {
+        std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > return_value;
+    
+        // For each (EV_type,EVSE_type) pair, we generate a matrix of 'SOC_vs_P2' profiles, one for each (start_temperature_C,start_SOC) pair.
+        // We store these in the 'temperature_aware::temperature_aware_profiles_data_store'.
+        
+        
+        // ---------------------------------------------------------------------------------------------------
+        // Step 1: Load 'n_curve_levels' curves at different c-rate levels.
+        // ---------------------------------------------------------------------------------------------------
+        
+        std::vector< std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > > curves_each_level_array;
+        std::unordered_set< std::pair<EV_type, EVSE_type>, pair_hash > ev_evse_pairs_set;
+        for( int i = 0; i < n_curve_levels; i++ )
+        {
+            const double adjusted_c_rate_scale_factor = max_c_rate_scale_factor * ((double)(i+1))/((double)n_curve_levels);
+            const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash >& curves_for_level_i = factory_SOC_vs_P2::load_DCFC_curves( adjusted_c_rate_scale_factor );
+            curves_each_level_array.push_back( curves_for_level_i );
+            for( const auto& evevsepair_curve_pair : curves_for_level_i )
+            {
+                ev_evse_pairs_set.insert( evevsepair_curve_pair.first );
+            }
+        }
+        
+        // ---------------------------------------------
+        // Step 1.1:  Define things we will need below.
+        // ---------------------------------------------
+        
+        // --------------------------------------------------------
+        // Define the 'update_power_level_index_callback' callback.
+        // --------------------------------------------------------
+        auto update_power_level_index_callback_v4 = [] (
+            const int current_power_level_index,
+            const int max_power_level_index_at_current_SOC_and_temperature,
+            const double current_temperature_C,
+            const double current_temperature_grad,
+            const double lower_bound_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
+            const double upper_bound_temperature_C
+        ) -> int {
+            // Approaching the max temperature threshold:
+            const double approaching_max_temp_threshold = lower_bound_temperature_C + (9.0/10.0)*(upper_bound_temperature_C - lower_bound_temperature_C);
+            const double approaching_min_temp_threshold = lower_bound_temperature_C + (8.0/9.0)*(upper_bound_temperature_C - lower_bound_temperature_C);
+            const double upper_gradient_threshold = (upper_bound_temperature_C - current_temperature_C)/60.0;
+            const double lower_gradient_threshold = (lower_bound_temperature_C - current_temperature_C)/60.0;
+            if(
+                current_temperature_C >= upper_bound_temperature_C
+                ||
+                ( current_temperature_C > approaching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
+            )
+            {
+                // Reduce the power level.
+                return std::min( std::max( current_power_level_index-7, 0 ), max_power_level_index_at_current_SOC_and_temperature );
+            }
+            else if(
+                current_temperature_C <= lower_bound_temperature_C
+                ||
+                ( current_temperature_C < approaching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
+                ||
+                current_temperature_C <= approaching_min_temp_threshold
+            )
+            {
+                // Increase the power level.
+                return std::min( current_power_level_index+7, max_power_level_index_at_current_SOC_and_temperature );
+            }
+            else
+            {
+                return std::min( current_power_level_index, max_power_level_index_at_current_SOC_and_temperature );
+            }
+        };
+        
+        
+        // ---------------------------------------
+        // FOR NOW, just HARD-CODING these values. <--------- TODO: Later, we need a way to input these for each EV_type (and ambient temperature, but that's for later).
+        // ---------------------------------------
+        // For ngp_hyundai_ioniq_5_longrange_awd:   
+        const std::string tgradmodel_EV_type = "ngp_hyundai_ioniq_5_longrange_awd";
+        const double tgradmodel_c0_intercept = 0.002023113474550346;
+        const double tgradmodel_c1_power_kW = 0.0001736131802966143;
+        const double tgradmodel_c2_temperature_C = -0.00043137615959905405;
+        const double tgradmodel_c3_time_sec = 2.5671254825204444e-06;
+        const double tgradmodel_c4_soc = 3.224134349228123e-06;
+        temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
+                                            tgradmodel_c0_intercept,
+                                            tgradmodel_c1_power_kW,
+                                            tgradmodel_c2_temperature_C,
+                                            tgradmodel_c3_time_sec,
+                                            tgradmodel_c4_soc );
+        // For ngp_hyundai_ioniq_5_longrange_awd:   
+        std::vector<double> battery_temperature_C = {-1000,0,15,16,20,22,24,25,50,1000};
+        std::vector<double> max_charging_power_kW_at_each_T_pts = {20,60,75,107,108,200,200,233,233,300}; 
+        std::vector<double> battery_SOC = {-1000,0,15,55,77,82,100,1000};
+        std::vector<double> max_charging_power_kW_at_each_SOC_pts = {0,219,224,238,156,131,5,0};
+        temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
+        // For ngp_hyundai_ioniq_5_longrange_awd:  
+        const double sim_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
+                                                         //             the minimum allowed temperature; it's okay for the battery to be colder).
+        const double sim_upper_bound_battery_temperature_C = 49;
+        
+        
+        
+        // -----------------------------------------------------------------------------------------------------------
+        // Step 2: For each (EV_type, EVSE_type) pair, compute the corresponding matrix of temperature-aware profiles.
+        // -----------------------------------------------------------------------------------------------------------
+
+        #define TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING 0
+
+        // The timestep used in the temperature-aware-profile algorithm below.
+        const double time_step_sec = 5;
+        
+        // We always end with SOC=100
+        const double end_soc = 100;
+
+        for( const auto& ev_evse_pair : ev_evse_pairs_set )
+        {
+            // Create an instance of 'temperature_aware::temperature_aware_profiles_data_store'
+            temperature_aware::temperature_aware_profiles_data_store TAP_data_store;
+            
+            // Get the clean profile curves at each energy level, sorted low-to-high.
+            const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high = [&] () {
+                std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high;
+                for( int i = 0; i < n_curve_levels; i++ )
+                {
+                    const SOC_vs_P2& socvsp2_for_level_i = curves_each_level_array.at(i).at( ev_evse_pair );
+                    power_profiles_sorted_low_to_high.push_back( socvsp2_for_level_i );
+                }
+                return power_profiles_sorted_low_to_high;
+            }();
+            
+            // Other parameters
+            const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
+            
+            // Loop over each pair of values in the matrix, and build the profile for each.
+            for( double start_temperature_C = min_start_temperature_C; start_temperature_C <= (max_start_temperature_C + 1e-8); start_temperature_C += start_temperature_step )
+            {
+                for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += start_SOC_step )
+                {
+                    const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
+                                                                                                power_profiles_sorted_low_to_high,
+                                                                                                max_power_model,
+                                                                                                start_temperature_C,
+                                                                                                start_soc );
+                    
+                    
+                    //  ----------------------------------------------------------------------
+                    //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                    //  ----------------------------------------------------------------------
+                    const bool CONDITIONS_FOR_TESTING_OUTPUT = (
+                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                        TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
+                        ev_evse_pair.first == "bev250_350kW" &&
+                        ev_evse_pair.second == "xfc_350" &&
+                        std::fabs( start_temperature_C - 4.0 ) < 1e-12 &&
+                        std::fabs( start_soc - 6.0 ) < 1e-12
+                        #else
+                        false
+                        #endif
+                    );
+                    // ( ev_evse_pair.first == "bev150_ld1_50kW" && ev_evse_pair.second == "xfc_350" )
+                    
+                    
+                    //  ----------------------------------------------------------------------
+                    //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                    //  ----------------------------------------------------------------------
+                    const std::string tmp_output_filename_for_testing = [&] () {
+                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                        if( CONDITIONS_FOR_TESTING_OUTPUT )
+                        {
+                            return std::string("TAP_TEMPORARY_output_for_testing.csv");
+                        }
+                        else
+                        {
+                            return std::string("");
+                        }
+                        #else
+                            return std::string("");
+                        #endif
+                    }();
+                    
+                    const SOC_vs_P2 socVsP2_temperature_aware = temperature_aware::TemperatureAwareProfiles::generate_temperature_aware_power_profile(
+                                                                            power_profiles_sorted_low_to_high,        // const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high,
+                                                                            temperature_grad_model,                   // const temperature_gradient_model& temperature_grad_model,
+                                                                            max_power_model,                          // const max_charging_power_model& max_power_model,
+                                                                            time_step_sec,                            // const double time_step_sec,
+                                                                            battery_capacity_kWh,                     // const double battery_capacity_kWh,
+                                                                            start_soc,                                // const double start_soc,
+                                                                            end_soc,                                  // const double end_soc,
+                                                                            start_temperature_C,                      // const double start_temperature_C,
+                                                                            sim_lower_bound_battery_temperature_C,    // const double lower_bound_temperature_C,
+                                                                            sim_upper_bound_battery_temperature_C,    // const double upper_bound_temperature_C,
+                                                                            start_power_level_index,                  // const int start_power_level_index,
+                                                                            time_step_sec*3,                          // const double update_power_level_delay_sec,
+                                                                            tmp_output_filename_for_testing,          // const std::string output_file_name,
+                                                                            update_power_level_index_callback_v4   // std::function<int(
+                                                                                                                   //               const int current_power_level_index,
+                                                                                                                   //               const int max_power_level_index_at_current_temperature,
+                                                                                                                   //               const double current_temperature_C,
+                                                                                                                   //               const double current_temperature_grad,
+                                                                                                                   //               const double lower_bound_temperature_C,
+                                                                                                                   //               const double upper_bound_temperature_C
+                                                                                                                   //           )> update_power_level_index_callback
+                                                                        );
+                    
+                    //  ----------------------------------------------------------------------
+                    //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                    //  ----------------------------------------------------------------------
+                    #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                    if( CONDITIONS_FOR_TESTING_OUTPUT )
+                    {
+                        std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
+                        //std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
+                        std::cout << "    start_temperature_C: " << start_temperature_C << "  start_soc: " << start_soc << std::endl;
+                        
+                        //
+                        // Plot these results to see if you think it's doing it right!!
+                        //
+                        const std::string file_name = "TEMPORARY_output_for_testing.csv";
+                        std::ofstream opfile;
+                        opfile.open(file_name);
+                        opfile << "soc,power_kW" << std::endl;
+                        const int N = 1000;
+                        const double h = ( socVsP2_temperature_aware.xmax() - socVsP2_temperature_aware.xmin() ) / N;
+                        for( int i = 0; i < N; i++ )
+                        {
+                            const double x = socVsP2_temperature_aware.xmin() + i*h + 0.5*h;
+                            const double y = socVsP2_temperature_aware.eval( x );
+                            opfile << x << "," << y << std::endl;
+                        }
+                        // Close the file
+                        opfile.close();
+                        //__builtin_debugtrap();
+                    }
+                    #endif
+                    
+                    //  ----------------------------------------------------------------------------------------------------
+                    //  Saving the profile in the 'temperature_aware::temperature_aware_profiles_data_store' data structure.
+                    //  ----------------------------------------------------------------------------------------------------
+                    TAP_data_store.add( start_temperature_C, start_soc, socVsP2_temperature_aware );
+                }
+            }
+            
+            // ----------------------------------------------------------------------------------------------
+            // Double-check that the 'temperature_aware::temperature_aware_profiles_data_store' is complete.
+            // ----------------------------------------------------------------------------------------------
+            if( !TAP_data_store.complete() )
+            {
+                std::cout << "ERROR: The data store of temperature-aware profiles is not complete even though it should." << std::endl;
+                exit(1);
+            }
+            
+            //  --------------------------------------------------------
+            //  Saving the result in the 'return_value' data structure.
+            //  --------------------------------------------------------
+            return_value.emplace( ev_evse_pair, TAP_data_store );
+        }
+        
+        // Save the value in the static variable.
+        TA_DCFC_CURVES_CACHE.emplace( data_store_identifier_key, return_value );
+    }
+    
+    // Return a reference to the value in the static variable.
+    return TA_DCFC_CURVES_CACHE.at( data_store_identifier_key );
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 void factory_SOC_vs_P2::write_charge_profile(const std::string& output_path) const
 {
