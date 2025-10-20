@@ -4,6 +4,451 @@
 #include <unordered_set>
 
 
+// **************************************
+//           all_ta_data_store
+// **************************************
+
+void all_ta_data_store::load_ta_data( all_ta_data_store& alltadata,
+                                      const std::string path_to_ta_directory,
+                                      const std::vector<std::string>& ev_types_to_load )
+{
+    // --- helper function ---
+    auto trim = [&] ( const std::string& s ) -> std::string {
+        size_t first = s.find_first_not_of(" \t\n\r\f\v");
+        if (first == std::string::npos) {
+            return "";
+        }
+        size_t last = s.find_last_not_of(" \t\n\r\f\v");
+        return s.substr(first, last - first + 1);
+    };
+    
+    // ----------------------------------------------------------
+    // Load path_to_ta_directory/ta_precompute_curves_inputs.csv
+    // ----------------------------------------------------------
+    {
+        const std::string ta_precompute_curves_inputs_full_path = (std::filesystem::path(path_to_ta_directory) / "ta_precompute_curves_inputs.csv");
+        
+        bool found__n_curve_levels = false;
+        bool found__min_start_temperature_C = false;
+        bool found__max_start_temperature_C = false;
+        bool found__vary_start_temperature_step_C = false;
+        bool found__min_start_SOC = false;
+        bool found__max_start_SOC = false;
+        bool found__vary_start_SOC_step = false;
+        
+        // Open an existing file
+        std::ifstream fin;
+        fin.open(ta_precompute_curves_inputs_full_path);
+        if( !fin.is_open() )
+        {
+            std::string error_msg = "Error. Couldn't open file 'ta_precompute_curves_inputs.csv'.";
+            std::cout << error_msg << std::endl;
+            throw(std::invalid_argument(error_msg));
+        }
+        
+        int line_i = 0;
+        std::string line;
+        while( std::getline(fin, line) )
+        {
+            if( line_i >= 0 )
+            {
+                // Tokenize the line.
+                std::stringstream ss;
+                ss << trim(line);
+                std::vector<std::string> tokens;
+                std::string temp_str;
+                while(getline(ss, temp_str, ','))
+                {
+                    tokens.push_back(trim(temp_str));
+                }
+                
+                // Check that we have the right number of tokens.
+                if( tokens.size() != 2 )
+                {
+                    std::string error_msg = "Error. Not the right number of tokens! Are there empty lines at the end of the file input file? [3]";
+                    std::cout << error_msg << std::endl;
+                    throw(std::invalid_argument(error_msg));
+                }
+                
+                std::string key;
+                double value;
+                
+                
+                int k = -1;
+                k++; if( k < tokens.size() ) key      = std::string( tokens.at(k).c_str() );
+                k++; if( k < tokens.size() ) value    = std::stof(tokens.at(k).c_str());
+                
+                if( key == "n_curve_levels" )
+                {
+                    alltadata.n_curve_levels = (int)value;
+                    found__n_curve_levels = true;
+                }
+                else if( key == "min_start_temperature_C" )
+                {
+                    alltadata.min_start_temperature_C = value;
+                    found__min_start_temperature_C = true;
+                }
+                else if( key == "max_start_temperature_C" )
+                {
+                    alltadata.max_start_temperature_C = value;
+                    found__max_start_temperature_C = true;
+                }
+                else if( key == "vary_start_temperature_step_C" )
+                {
+                    alltadata.vary_start_temperature_step_C = value;
+                    found__vary_start_temperature_step_C = true;
+                }
+                else if( key == "min_start_SOC" )
+                {
+                    alltadata.min_start_SOC = value;
+                    found__min_start_SOC = true;
+                }
+                else if( key == "max_start_SOC" )
+                {
+                    alltadata.max_start_SOC = value;
+                    found__max_start_SOC = true;
+                }
+                else if( key == "vary_start_SOC_step" )
+                {
+                    alltadata.vary_start_SOC_step = value;
+                    found__vary_start_SOC_step = true;
+                }
+                else
+                {
+                    // error
+                    ASSERT(false, "Error : Invalid key in 'ta_precompute_curves_inputs.csv'.");
+                }
+            }
+            
+            // Increment what line of the file we're on.
+            line_i++;
+        }
+        fin.close();
+        
+        if( ! ( found__n_curve_levels &&
+                found__min_start_temperature_C &&
+                found__max_start_temperature_C  &&
+                found__vary_start_temperature_step_C  &&
+                found__min_start_SOC  &&
+                found__max_start_SOC  &&
+                found__vary_start_SOC_step ) )
+        {
+            // error
+            ASSERT(false, "Error : Some keys not found in 'ta_precompute_curves_inputs.csv'.");
+        }
+    }
+    
+    
+    
+    // ----------------------------------------------------------
+    // Load each path_to_ta_directory/EV_types_TA_data/EV_type/ data
+    // ----------------------------------------------------------
+    for( const std::string& ev_type_name : ev_types_to_load )
+    {
+        
+        // ------------------------------------------------------
+        // Load the 'battery_temperature_vs_max_power.csv' file.
+        // ------------------------------------------------------
+        
+        {
+            const std::string battemp_vs_maxpower_csv_full_path = (std::filesystem::path(path_to_ta_directory) / "EV_types_TA_data" / ev_type_name / "battery_temperature_vs_max_power.csv");
+            
+            // Open an existing file
+            std::ifstream fin;
+            std::string header_check = "battery_temperature_C,max_power_kW";
+            fin.open(battemp_vs_maxpower_csv_full_path);
+            if( !fin.is_open() )
+            {
+                std::string error_msg = "Error. Couldn't open file.";
+                std::cout << error_msg << std::endl;
+                throw(std::invalid_argument(error_msg));
+            }
+            
+            int line_i = 0;
+            std::string line;
+            while( std::getline(fin, line) )
+            {
+                if( line_i == 0 )
+                {
+                    // check the header.
+                    if( header_check != trim(line) )
+                    {
+                        std::string error_msg = "Error. Is the header correct? [44]";
+                        std::cout << "trim(line):   " << trim(line) << std::endl;
+                        std::cout << "header_check: " << header_check << std::endl;
+                        std::cout << error_msg << std::endl;
+                        throw(std::invalid_argument(error_msg));
+                    }
+                }
+                if( line_i > 0 )
+                {
+                    // Tokenize the line.
+                    std::stringstream ss;
+                    ss << trim(line);
+                    std::vector<std::string> tokens;
+                    std::string temp_str;
+                    while(getline(ss, temp_str, ','))
+                    {
+                        tokens.push_back(trim(temp_str));
+                    }
+                    
+                    // Check that we have the right number of tokens.
+                    if( tokens.size() != 2 )
+                    {
+                        std::string error_msg = "Error. Not enough tokens! Are there empty lines at the end of the file input file? [3]";
+                        std::cout << error_msg << std::endl;
+                        throw(std::invalid_argument(error_msg));
+                    }
+                    
+                    double bat_temperature_C;
+                    double max_power_kW;
+                    
+                    int k = -1;
+                    k++; if( k < tokens.size() ) bat_temperature_C     = std::stof(tokens.at(k).c_str());
+                    k++; if( k < tokens.size() ) max_power_kW          = std::stof(tokens.at(k).c_str());
+                    
+                    alltadata.each_EV_type_ta_data.at(ev_type_name).TvsMAXPWR__battery_temperature_C.push_back(bat_temperature_C);
+                    alltadata.each_EV_type_ta_data.at(ev_type_name).TvsMAXPWR__max_power_kW.push_back(max_power_kW);
+                }
+                    
+                // Increment what line of the file we're on.
+                line_i++;
+            }
+            fin.close();
+        }
+        
+        
+        
+        // --------------------------------------
+        // Load the 'soc_vs_max_power.csv' file.
+        // --------------------------------------
+        
+        {
+            const std::string soc_vs_max_power_csv_full_path = (std::filesystem::path(path_to_ta_directory) / "EV_types_TA_data" / ev_type_name / "soc_vs_max_power.csv");
+            
+            // Open an existing file
+            std::ifstream fin;
+            std::string header_check = "soc,max_power_kW";
+            fin.open(soc_vs_max_power_csv_full_path);
+            if( !fin.is_open() )
+            {
+                std::string error_msg = "Error. Couldn't open file.";
+                std::cout << error_msg << std::endl;
+                throw(std::invalid_argument(error_msg));
+            }
+            
+            int line_i = 0;
+            std::string line;
+            while( std::getline(fin, line) )
+            {
+                if( line_i == 0 )
+                {
+                    // check the header.
+                    if( header_check != trim(line) )
+                    {
+                        std::string error_msg = "Error. Is the header correct? [33]";
+                        std::cout << "trim(line):   " << trim(line) << std::endl;
+                        std::cout << "header_check: " << header_check << std::endl;
+                        std::cout << error_msg << std::endl;
+                        throw(std::invalid_argument(error_msg));
+                    }
+                }
+                if( line_i > 0 )
+                {
+                    // Tokenize the line.
+                    std::stringstream ss;
+                    ss << trim(line);
+                    std::vector<std::string> tokens;
+                    std::string temp_str;
+                    while(getline(ss, temp_str, ','))
+                    {
+                        tokens.push_back(trim(temp_str));
+                    }
+                    
+                    // Check that we have the right number of tokens.
+                    if( tokens.size() != 2 )
+                    {
+                        std::string error_msg = "Error. Not enough tokens! Are there empty lines at the end of the file input file? [3]";
+                        std::cout << error_msg << std::endl;
+                        throw(std::invalid_argument(error_msg));
+                    }
+                    
+                    double soc_value;
+                    double max_power_kW_value;
+                    
+                    int k = -1;
+                    k++; if( k < tokens.size() ) soc_value                   = std::stof(tokens.at(k).c_str());
+                    k++; if( k < tokens.size() ) max_power_kW_value          = std::stof(tokens.at(k).c_str());
+                    
+                    alltadata.each_EV_type_ta_data.at(ev_type_name).SOCvsMAXPWR__soc.push_back(soc_value);
+                    alltadata.each_EV_type_ta_data.at(ev_type_name).SOCvsMAXPWR__max_power_kW.push_back(max_power_kW_value);
+                }
+                    
+                // Increment what line of the file we're on.
+                line_i++;
+            }
+            fin.close();
+        }
+        
+        
+        
+        // ------------------------------------------------------------------------------
+        // Load all possible 'tgrad_model_coeffs_XX.csv' files (max range from 00 to 99)
+        // ------------------------------------------------------------------------------
+        for( int i = 0; i <= 99; i++ )
+        {
+            std::stringstream ss;
+            ss << std::setw(2) << std::setfill('0') << i;
+            std::string number_string = ss.str();
+            const std::string tgrad_model_csv_full_path = (std::filesystem::path(path_to_ta_directory) / "EV_types_TA_data" / ev_type_name / ("tgrad_model_coeffs_"+number_string+".csv"));
+            
+            // Load the file, if it exists.
+            if( std::filesystem::exists(tgrad_model_csv_full_path) )
+            {
+                std::cout << "File exists: " << tgrad_model_csv_full_path << std::endl;
+                {
+                    bool found__tgradmodel_EV_type = false;
+                    bool found__ambient_temperature_C_range_min = false;
+                    bool found__ambient_temperature_C_range_max = false;
+                    bool found__tgradmodel_c0_intercept = false;
+                    bool found__tgradmodel_c1_power_kW = false;
+                    bool found__tgradmodel_c2_temperature_C = false;
+                    bool found__tgradmodel_c3_time_sec = false;
+                    bool found__tgradmodel_c4_soc = false;
+                    
+                    // tgradmodel_EV_type
+                    // ambient_temperature_C_range_min
+                    // ambient_temperature_C_range_max
+                    // tgradmodel_c0_intercept
+                    // tgradmodel_c1_power_kW
+                    // tgradmodel_c2_temperature_C
+                    // tgradmodel_c3_time_sec
+                    // tgradmodel_c4_soc
+                    
+                    
+                    
+                    // Open an existing file
+                    std::ifstream fin;
+                    fin.open(tgrad_model_csv_full_path);
+                    if( !fin.is_open() )
+                    {
+                        std::string error_msg = "Error. Couldn't open file '"+tgrad_model_csv_full_path+"'.";
+                        std::cout << error_msg << std::endl;
+                        throw(std::invalid_argument(error_msg));
+                    }
+                    
+                    tgrad_model_data_store new_tgrad_data;
+                    
+                    int line_i = 0;
+                    std::string line;
+                    while( std::getline(fin, line) )
+                    {
+                        if( line_i >= 0 )
+                        {
+                            // Tokenize the line.
+                            std::stringstream ss;
+                            ss << trim(line);
+                            std::vector<std::string> tokens;
+                            std::string temp_str;
+                            while(getline(ss, temp_str, ','))
+                            {
+                                tokens.push_back(trim(temp_str));
+                            }
+                            
+                            // Check that we have the right number of tokens.
+                            if( tokens.size() != 2 )
+                            {
+                                std::string error_msg = "Error. Not the right number of tokens! Are there empty lines at the end of the file input file? [3]";
+                                std::cout << error_msg << std::endl;
+                                throw(std::invalid_argument(error_msg));
+                            }
+                            
+                            std::string key;
+                            std::string value;
+                            
+                            int k = -1;
+                            k++; if( k < tokens.size() ) key      = std::string( tokens.at(k).c_str() );
+                            k++; if( k < tokens.size() ) value    = std::string( tokens.at(k).c_str() );
+                            
+                            if( key == "tgradmodel_EV_type" )
+                            {
+                                new_tgrad_data.tgradmodel_EV_type = value;
+                                found__tgradmodel_EV_type = true;
+                            }
+                            else if( key == "ambient_temperature_C_range_min" )
+                            {
+                                new_tgrad_data.ambient_temperature_C_range_min = std::stof( value );
+                                found__ambient_temperature_C_range_min = true;
+                            }
+                            else if( key == "ambient_temperature_C_range_max" )
+                            {
+                                new_tgrad_data.ambient_temperature_C_range_max = std::stof( value );
+                                found__ambient_temperature_C_range_max = true;
+                            }
+                            else if( key == "tgradmodel_c0_intercept" )
+                            {
+                                new_tgrad_data.tgradmodel_c0_intercept = std::stof( value );
+                                found__tgradmodel_c0_intercept = true;
+                            }
+                            else if( key == "tgradmodel_c1_power_kW" )
+                            {
+                                new_tgrad_data.tgradmodel_c1_power_kW = std::stof( value );
+                                found__tgradmodel_c1_power_kW = true;
+                            }
+                            else if( key == "tgradmodel_c2_temperature_C" )
+                            {
+                                new_tgrad_data.tgradmodel_c2_temperature_C = std::stof( value );
+                                found__tgradmodel_c2_temperature_C = true;
+                            }
+                            else if( key == "tgradmodel_c3_time_sec" )
+                            {
+                                new_tgrad_data.tgradmodel_c3_time_sec = std::stof( value );
+                                found__tgradmodel_c3_time_sec = true;
+                            }
+                            else if( key == "tgradmodel_c4_soc" )
+                            {
+                                new_tgrad_data.tgradmodel_c4_soc = std::stof( value );
+                                found__tgradmodel_c4_soc = true;
+                            }
+                            else
+                            {
+                                // error
+                                const std::string error_str = "Error : Invalid key in '"+tgrad_model_csv_full_path+".csv'.";
+                                ASSERT( false, error_str.c_str() );
+                            }
+                        }
+                        
+                        // Increment what line of the file we're on.
+                        line_i++;
+                    }
+                    fin.close();
+                    
+                    if( ! ( found__tgradmodel_EV_type &&
+                            found__ambient_temperature_C_range_min &&
+                            found__ambient_temperature_C_range_max &&
+                            found__tgradmodel_c0_intercept  &&
+                            found__tgradmodel_c1_power_kW  &&
+                            found__tgradmodel_c2_temperature_C  &&
+                            found__tgradmodel_c3_time_sec  &&
+                            found__tgradmodel_c4_soc ) )
+                    {
+                        // error
+                        const std::string error_str = "Error : Some keys not found in '"+tgrad_model_csv_full_path+"'.";
+                        ASSERT( false, error_str.c_str() );
+                    }
+                    
+                    // Add the newly collected data into the array.
+                    alltadata.each_EV_type_ta_data.at(ev_type_name).tgrad_models_vec.push_back( new_tgrad_data );
+                }
+            }
+        } // end of for-loop over i \in 0..99.
+        
+    } // end of 'ev_type_name' for-loop
+}
+
+
+
+
 
 //##########################################################
 //                      create_dcPkW_from_soc
@@ -788,7 +1233,10 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( cons
 //##########################################################
 
 
-factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const double c_rate_scale_factor ) 
+factory_SOC_vs_P2::factory_SOC_vs_P2(
+                        const EV_EVSE_inventory& inventory,
+                        const double c_rate_scale_factor
+                    )
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
     NMC_charge{ this->load_NMC_charge() },
@@ -800,7 +1248,7 @@ factory_SOC_vs_P2::factory_SOC_vs_P2( const EV_EVSE_inventory& inventory, const 
                                                                    20,                  // const int n_curve_levels, 
                                                                    -20.0,               // const double min_start_temperature_C,
                                                                    40.0,                // const double max_start_temperature_C,
-                                                                   6.0,                 // const double start_temperature_step,
+                                                                   6.0,                 // const double vary_start_temperature_step_C,
                                                                    0.0,                 // const double min_start_SOC,
                                                                    90.0,                // const double max_start_SOC,
                                                                    6.0                  // const double start_SOC_step
@@ -1220,7 +1668,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
                                             const int n_curve_levels,
                                             const double min_start_temperature_C,
                                             const double max_start_temperature_C,
-                                            const double start_temperature_step,
+                                            const double vary_start_temperature_step_C,
                                             const double min_start_SOC,
                                             const double max_start_SOC,
                                             const double start_SOC_step )
@@ -1248,7 +1696,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
         ss << n_curve_levels << "_";
         ss << std::setprecision(8) << min_start_temperature_C << "_";
         ss << std::setprecision(8) << max_start_temperature_C << "_";
-        ss << std::setprecision(8) << start_temperature_step << "_";
+        ss << std::setprecision(8) << vary_start_temperature_step_C << "_";
         ss << std::setprecision(8) << min_start_SOC << "_";
         ss << std::setprecision(8) << max_start_SOC << "_";
         ss << std::setprecision(8) << start_SOC_step << "_";
@@ -1392,7 +1840,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
             const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
             
             // Loop over each pair of values in the matrix, and build the profile for each.
-            for( double start_temperature_C = min_start_temperature_C; start_temperature_C <= (max_start_temperature_C + 1e-8); start_temperature_C += start_temperature_step )
+            for( double start_temperature_C = min_start_temperature_C; start_temperature_C <= (max_start_temperature_C + 1e-8); start_temperature_C += vary_start_temperature_step_C )
             {
                 for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += start_SOC_step )
                 {

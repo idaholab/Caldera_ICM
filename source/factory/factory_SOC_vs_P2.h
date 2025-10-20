@@ -18,6 +18,80 @@ typedef double power;
 
 static std::map< std::string, std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > > TA_DCFC_CURVES_CACHE;
 
+
+
+
+// ******
+// *********************
+// ******************************************
+// ***************************************************************
+
+struct tgrad_model_data_store
+{
+    std::string tgradmodel_EV_type;
+    double ambient_temperature_C_range_min;
+    double ambient_temperature_C_range_max;
+    double tgradmodel_c0_intercept;
+    double tgradmodel_c1_power_kW;
+    double tgradmodel_c2_temperature_C;
+    double tgradmodel_c3_time_sec;
+    double tgradmodel_c4_soc;
+    
+    tgrad_model_data_store() : 
+        tgradmodel_EV_type(""),
+        ambient_temperature_C_range_min(0.0),
+        ambient_temperature_C_range_max(0.0),
+        tgradmodel_c0_intercept(0.0),
+        tgradmodel_c1_power_kW(0.0),
+        tgradmodel_c2_temperature_C(0.0),
+        tgradmodel_c3_time_sec(0.0),
+        tgradmodel_c4_soc(0.0)
+    {}
+};
+
+struct each_EV_type_ta_data_store
+{
+    // Data for the battery temperature vs. max power curve.
+    std::vector<double> TvsMAXPWR__battery_temperature_C;
+    std::vector<double> TvsMAXPWR__max_power_kW;
+    
+    // Data for the SOC vs. max power curve.
+    std::vector<double> SOCvsMAXPWR__soc;
+    std::vector<double> SOCvsMAXPWR__max_power_kW;
+    
+    // The T-grad model coefficients and metadata for each temperature range.
+    std::vector< tgrad_model_data_store > tgrad_models_vec;
+};
+
+// All the temperature-aware data, mirroring the input folder data.
+struct all_ta_data_store
+{
+    // Parameters for pre-computing all the curves.
+    int n_curve_levels;
+    double min_start_temperature_C;
+    double max_start_temperature_C;
+    double vary_start_temperature_step_C;
+    double min_start_SOC;
+    double max_start_SOC;
+    double vary_start_SOC_step;
+    
+    // The data for each EV_type
+    std::map< std::string, each_EV_type_ta_data_store > each_EV_type_ta_data;
+    
+    static void load_ta_data( all_ta_data_store& alltadata,
+                              const std::string path_to_ta_directory,
+                              const std::vector<std::string>& ev_types_to_load );
+};
+
+// ***************************************************************
+// ******************************************
+// *********************
+// ******
+
+
+
+
+
 enum class point_type
 {
     interpolate,
@@ -101,7 +175,7 @@ private:
                                                                                                                             const int n_curve_levels,
                                                                                                                             const double min_start_temperature_C,
                                                                                                                             const double max_start_temperature_C,
-                                                                                                                            const double start_temperature_step,
+                                                                                                                            const double vary_start_temperature_step_C,
                                                                                                                             const double min_start_SOC,
                                                                                                                             const double max_start_SOC,
                                                                                                                             const double start_SOC_step );
