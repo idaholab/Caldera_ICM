@@ -172,13 +172,10 @@ private:
     
     const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >& load_temperature_aware_DCFC_curves( 
                                                                                                                             const double max_c_rate_scale_factor,
-                                                                                                                            const int n_curve_levels,
-                                                                                                                            const double min_start_temperature_C,
-                                                                                                                            const double max_start_temperature_C,
-                                                                                                                            const double vary_start_temperature_step_C,
-                                                                                                                            const double min_start_SOC,
-                                                                                                                            const double max_start_SOC,
-                                                                                                                            const double start_SOC_step );
+                                                                                                                            const double ambient_temperature_C,
+                                                                                                                            const all_ta_data_store all_ta_ds );
+    
+    
 public:
     factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
                        const double c_rate_scale_factor = 1.0 );

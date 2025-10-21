@@ -1244,15 +1244,10 @@ factory_SOC_vs_P2::factory_SOC_vs_P2(
     L1_L2_curves{ this->load_L1_L2_curves() },
     DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
 #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
-    , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor, // const double max_c_rate_scale_factor,
-                                                                   20,                  // const int n_curve_levels, 
-                                                                   -20.0,               // const double min_start_temperature_C,
-                                                                   40.0,                // const double max_start_temperature_C,
-                                                                   6.0,                 // const double vary_start_temperature_step_C,
-                                                                   0.0,                 // const double min_start_SOC,
-                                                                   90.0,                // const double max_start_SOC,
-                                                                   6.0                  // const double start_SOC_step
-                                                               ) }
+    , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor,  // const double max_c_rate_scale_factor,
+                                                                27.0,                 // const double ambient_temperature_C
+                                                                all_ta_data_store()   // const all_ta_data_store all_ta_ds
+                                                                ) }
 #endif
 {
 }
@@ -1663,16 +1658,19 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
 
 
 const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >&
-factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( 
-                                            const double max_c_rate_scale_factor,
-                                            const int n_curve_levels,
-                                            const double min_start_temperature_C,
-                                            const double max_start_temperature_C,
-                                            const double vary_start_temperature_step_C,
-                                            const double min_start_SOC,
-                                            const double max_start_SOC,
-                                            const double start_SOC_step )
-{    
+factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_scale_factor,
+                                                       const double ambient_temperature_C,
+                                                       const all_ta_data_store all_ta_ds )
+{
+    
+    const int n_curve_levels = all_ta_ds.n_curve_levels;
+    const double min_start_temperature_C = all_ta_ds.min_start_temperature_C;
+    const double max_start_temperature_C = all_ta_ds.max_start_temperature_C;
+    const double vary_start_temperature_step_C = all_ta_ds.vary_start_temperature_step_C;
+    const double min_start_SOC = all_ta_ds.min_start_SOC;
+    const double max_start_SOC = all_ta_ds.max_start_SOC;
+    const double vary_start_SOC_step = all_ta_ds.vary_start_SOC_step;
+
     const EV_inventory& EV_inv = this->inventory.get_EV_inventory();
     const EVSE_inventory& EVSE_inv = this->inventory.get_EVSE_inventory();
     
@@ -1680,6 +1678,9 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
     // Generate unique key for this call to 'load_temperature_aware_DCFC_curves' based on the parameters.
     auto generate_unique_key_string = [&] () -> std::string {
         std::stringstream ss;
+        // NOTE: The unique key includes all the EVSE_types and SE_types because
+        //     we load the orignal curves that way (in groups for all <EVSE_type,SE_type> pairs)
+        //     so we will compute this for all combinations below, hence the unique key includes all of them.
         for (const auto& EVSE_elem : EVSE_inv)
         {
             const EVSE_type& setype = EVSE_elem.first;
@@ -1693,13 +1694,14 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
         }
         ss << "_";
         ss << std::setprecision(8) << max_c_rate_scale_factor << "_";
+        ss << std::setprecision(4) << ambient_temperature_C << "_";
         ss << n_curve_levels << "_";
         ss << std::setprecision(8) << min_start_temperature_C << "_";
         ss << std::setprecision(8) << max_start_temperature_C << "_";
         ss << std::setprecision(8) << vary_start_temperature_step_C << "_";
         ss << std::setprecision(8) << min_start_SOC << "_";
         ss << std::setprecision(8) << max_start_SOC << "_";
-        ss << std::setprecision(8) << start_SOC_step << "_";
+        ss << std::setprecision(8) << vary_start_SOC_step << "_";
         return ss.str();
     };
     
@@ -1730,6 +1732,12 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
             {
                 ev_evse_pairs_set.insert( evevsepair_curve_pair.first );
             }
+        }
+        
+        if( ev_evse_pairs_set.size() == 0 || curves_each_level_array.size() == 0 )
+        {
+            std::cout << "ERROR: There aren't any loaded DCFC curves.   ev_evse_pairs_set.size(): " << ev_evse_pairs_set.size() << "  curves_each_level_array.size(): " << curves_each_level_array.size() << std::endl;
+            exit(1);
         }
         
         // ---------------------------------------------
@@ -1778,36 +1786,6 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
             }
         };
         
-        
-        // ---------------------------------------
-        // FOR NOW, just HARD-CODING these values. <--------- TODO: Later, we need a way to input these for each EV_type (and ambient temperature, but that's for later).
-        // ---------------------------------------
-        // For ngp_hyundai_ioniq_5_longrange_awd:   
-        const std::string tgradmodel_EV_type = "ngp_hyundai_ioniq_5_longrange_awd";
-        const double tgradmodel_c0_intercept = 0.002023113474550346;
-        const double tgradmodel_c1_power_kW = 0.0001736131802966143;
-        const double tgradmodel_c2_temperature_C = -0.00043137615959905405;
-        const double tgradmodel_c3_time_sec = 2.5671254825204444e-06;
-        const double tgradmodel_c4_soc = 3.224134349228123e-06;
-        temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
-                                            tgradmodel_c0_intercept,
-                                            tgradmodel_c1_power_kW,
-                                            tgradmodel_c2_temperature_C,
-                                            tgradmodel_c3_time_sec,
-                                            tgradmodel_c4_soc );
-        // For ngp_hyundai_ioniq_5_longrange_awd:   
-        std::vector<double> battery_temperature_C = {-1000,0,15,16,20,22,24,25,50,1000};
-        std::vector<double> max_charging_power_kW_at_each_T_pts = {20,60,75,107,108,200,200,233,233,300}; 
-        std::vector<double> battery_SOC = {-1000,0,15,55,77,82,100,1000};
-        std::vector<double> max_charging_power_kW_at_each_SOC_pts = {0,219,224,238,156,131,5,0};
-        temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
-        // For ngp_hyundai_ioniq_5_longrange_awd:  
-        const double sim_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
-                                                         //             the minimum allowed temperature; it's okay for the battery to be colder).
-        const double sim_upper_bound_battery_temperature_C = 49;
-        
-        
-        
         // -----------------------------------------------------------------------------------------------------------
         // Step 2: For each (EV_type, EVSE_type) pair, compute the corresponding matrix of temperature-aware profiles.
         // -----------------------------------------------------------------------------------------------------------
@@ -1822,6 +1800,71 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
 
         for( const auto& ev_evse_pair : ev_evse_pairs_set )
         {
+            const std::string& EV_type_name = ev_evse_pair.first;
+            
+            if( all_ta_ds.each_EV_type_ta_data.find( EV_type_name ) == all_ta_ds.each_EV_type_ta_data.end() )
+            {
+                std::cout << "ERROR: EV_type_name not found in 'all_ta_ds.each_EV_type_ta_data'.  EV_type_name: " << EV_type_name << std::endl;
+                exit(1);
+            }
+            
+            // -----
+            // Load all the essential coefficients and parametes from the 'all_ta_ds' data.
+            // -----
+            
+            // Determine which tgrad coeffs we want based on the ambient_temperature_C
+            const int tgradcoeffs_index = [&] () {
+                const int n_models = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
+                bool found_it = false;
+                int found_index = -1;
+                for( int i = 0; i < n_models; i++ )
+                {
+                    const double min_C = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
+                    const double max_C = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
+                    if( ambient_temperature_C >= min_C && ambient_temperature_C < max_C )
+                    {
+                        found_index = i;
+                        found_it = true;
+                        break;
+                    }
+                }
+                if( !found_it )
+                {
+                    std::cout << "ERROR: No tgrad coeffs found for given ambient temperature." << std::endl;
+                    exit(1);
+                }
+                return found_index;
+            }();
+            
+            const double tgradmodel_c0_intercept =      all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c0_intercept;
+            const double tgradmodel_c1_power_kW =       all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c1_power_kW;
+            const double tgradmodel_c2_temperature_C =  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c2_temperature_C;
+            const double tgradmodel_c3_time_sec =       all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c3_time_sec;
+            const double tgradmodel_c4_soc =            all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c4_soc;
+            // For ngp_hyundai_ioniq_5_longrange_awd:   
+            const std::vector<double>& battery_temperature_C =                  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__battery_temperature_C;
+            const std::vector<double>& max_charging_power_kW_at_each_T_pts =    all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
+            const std::vector<double>& battery_SOC =                            all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
+            const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
+            // THESE ARE STILL HARD-CODED FOR NOW. (TODO)
+            const double sim_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
+                                                             //             the minimum allowed temperature; it's okay for the battery to be colder).
+            const double sim_upper_bound_battery_temperature_C = 49;
+
+            // ************************************************************************
+            // ************************************************************************
+            
+            temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
+                                                tgradmodel_c0_intercept,
+                                                tgradmodel_c1_power_kW,
+                                                tgradmodel_c2_temperature_C,
+                                                tgradmodel_c3_time_sec,
+                                                tgradmodel_c4_soc );
+            temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
+            
+            // ************************************************************************
+            // ************************************************************
+            
             // Create an instance of 'temperature_aware::temperature_aware_profiles_data_store'
             temperature_aware::temperature_aware_profiles_data_store TAP_data_store;
             
@@ -1842,7 +1885,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves(
             // Loop over each pair of values in the matrix, and build the profile for each.
             for( double start_temperature_C = min_start_temperature_C; start_temperature_C <= (max_start_temperature_C + 1e-8); start_temperature_C += vary_start_temperature_step_C )
             {
-                for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += start_SOC_step )
+                for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += vary_start_SOC_step )
                 {
                     const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
                                                                                                 power_profiles_sorted_low_to_high,
