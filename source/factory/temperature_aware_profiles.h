@@ -183,6 +183,9 @@ class max_charging_power_model_v1 : public max_charging_power_model
             }
         }
         
+
+#define THROW_ERROR_IF_T_OR_SOC_OUT_OF_RANGE_OF_DATA 0
+        
         double eval_at_T( const double temperature_C ) const override
         {
             bool found_it = false;
@@ -199,8 +202,24 @@ class max_charging_power_model_v1 : public max_charging_power_model
             }
             if( !found_it )
             {
-                std::cout << "Error: Temperature was out of range of the points." << std::endl;
-                exit(0);
+                if( THROW_ERROR_IF_T_OR_SOC_OUT_OF_RANGE_OF_DATA )
+                {
+                    std::cout << "Error in 'max_charging_power_model_v1::eval_at_T':   Temperature was out of range of the points.  temperature_C: " << temperature_C << std::endl;
+                    exit(0);
+                }    
+                if( temperature_C >= temperature_C_pts.at( temperature_C_pts.size()-1 ) )
+                {
+                    power_val = max_charging_power_kW_at_each_T_pts.at( max_charging_power_kW_at_each_T_pts.size()-1 );
+                }
+                else if( temperature_C <= temperature_C_pts.at(0) )
+                {
+                    power_val = max_charging_power_kW_at_each_T_pts.at(0);
+                }
+                else
+                {
+                    std::cout << "Error in 'max_charging_power_model_v1::eval_at_T." << std::endl;
+                    exit(0);
+                }
             }
             return power_val;
         }
@@ -221,13 +240,29 @@ class max_charging_power_model_v1 : public max_charging_power_model
             }
             if( !found_it )
             {
-                std::cout << "Error: SOC was out of range of the points." << std::endl;
-                std::cout << "soc: " << soc << std::endl;
-                for( int j = 0; j < SOC_pts.size(); j++ )
+                if( THROW_ERROR_IF_T_OR_SOC_OUT_OF_RANGE_OF_DATA )
                 {
-                    std::cout << "     SOC_pts.at(j):  " << SOC_pts.at(j) << std::endl;
+                    std::cout << "Error: SOC was out of range of the points." << std::endl;
+                    std::cout << "soc: " << soc << std::endl;
+                    for( int j = 0; j < SOC_pts.size(); j++ )
+                    {
+                        std::cout << "     SOC_pts.at(j):  " << SOC_pts.at(j) << std::endl;
+                    }
+                    exit(0);
                 }
-                exit(0);
+                if( soc >= SOC_pts.at( SOC_pts.size()-1 ) )
+                {
+                    power_val = max_charging_power_kW_at_each_SOC_pts.at( max_charging_power_kW_at_each_SOC_pts.size()-1 );
+                }
+                else if( soc <= SOC_pts.at( 0 ) )
+                {
+                    power_val = max_charging_power_kW_at_each_SOC_pts.at(0);
+                }
+                else
+                {
+                    std::cout << "Error in 'max_charging_power_model_v1::eval_at_SOC." << std::endl;
+                    exit(0);
+                }
             }
             return power_val;
         }
