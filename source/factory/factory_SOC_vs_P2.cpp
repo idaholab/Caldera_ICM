@@ -5,10 +5,10 @@
 
 
 // **************************************
-//           all_ta_data_store
+//           raw_ta_data_store
 // **************************************
 
-void all_ta_data_store::load_ta_data( all_ta_data_store& alltadata,
+void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                                       const std::string path_to_ta_directory,
                                       const std::vector<std::string>& ev_types_to_load )
 {
@@ -159,7 +159,7 @@ void all_ta_data_store::load_ta_data( all_ta_data_store& alltadata,
             fin.open(battemp_vs_maxpower_csv_full_path);
             if( !fin.is_open() )
             {
-                std::string error_msg = "Error. Couldn't open file.";
+                std::string error_msg = "Error. Couldn't open file. Filename: "+battemp_vs_maxpower_csv_full_path;
                 std::cout << error_msg << std::endl;
                 throw(std::invalid_argument(error_msg));
             }
@@ -448,6 +448,9 @@ void all_ta_data_store::load_ta_data( all_ta_data_store& alltadata,
         } // end of for-loop over i \in 0..99.
         
     } // end of 'ev_type_name' for-loop
+    
+    // Mark this 'alltadata' object has now holding data.
+    alltadata.holds_data = true;
 }
 
 
@@ -1238,8 +1241,11 @@ const SOC_vs_P2 create_dcPkW_from_soc::get_discharging_dcfc_charge_profile( cons
 
 
 factory_SOC_vs_P2::factory_SOC_vs_P2(
-                        const EV_EVSE_inventory& inventory,
-                        const double c_rate_scale_factor
+                        const EV_EVSE_inventory& inventory
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                        , const raw_ta_data_store& ta_raw_data
+#endif
+                        , const double c_rate_scale_factor
                     )
     : inventory{ inventory },
     LMO_charge{ this->load_LMO_charge() },
@@ -1249,8 +1255,8 @@ factory_SOC_vs_P2::factory_SOC_vs_P2(
     DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
 #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
     , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor  // const double max_c_rate_scale_factor,
-                                                                //, 21.0                 // const double ambient_temperature_C
-                                                                //, all_ta_data_store()   // const all_ta_data_store all_ta_ds
+                                                                //, 21.0             // const double ambient_temperature_C
+                                                                , ta_raw_data        // const raw_ta_data_store ta_raw_data
                                                                 ) }
 #endif
 {
@@ -1664,7 +1670,7 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
 const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >&
 factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_scale_factor
                                                        //, const double ambient_temperature_C
-                                                       //, const all_ta_data_store all_ta_ds
+                                                       , const raw_ta_data_store& ta_raw_data
                                                    )
 {
     
@@ -1673,36 +1679,23 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     const EVSE_inventory& EVSE_inv = this->inventory.get_EVSE_inventory();
     
     
+    
     // ***************************************
     // ***************************************
-    // TEMPORARY: FOR NOW LOAD THIS HERE.
-    // TODO: Move this to a better point for initialiation and then pass it in to this function.
+    // TEMPORARY: FOR NOW SET THIS HERE.
     const double ambient_temperature_C = 19.0;
-    all_ta_data_store all_ta_ds;
-    const std::vector<std::string> ev_types_to_load_from_ta = [&] () {
-        std::vector<std::string> ev_types_to_load_from_ta;
-        for (const auto& EV_elem : EV_inv)
-        {
-            const EV_type& evtype = EV_elem.first;
-            ev_types_to_load_from_ta.push_back(evtype);
-        }
-        return ev_types_to_load_from_ta;
-    }();
-    all_ta_data_store::load_ta_data( all_ta_ds,
-                                     std::string("inout/icm/inputs/ta"),
-                                     ev_types_to_load_from_ta );
     // ***************************************
     // ***************************************
     
     
     
-    const int n_curve_levels = all_ta_ds.n_curve_levels;
-    const double min_start_temperature_C = all_ta_ds.min_start_temperature_C;
-    const double max_start_temperature_C = all_ta_ds.max_start_temperature_C;
-    const double vary_start_temperature_step_C = all_ta_ds.vary_start_temperature_step_C;
-    const double min_start_SOC = all_ta_ds.min_start_SOC;
-    const double max_start_SOC = all_ta_ds.max_start_SOC;
-    const double vary_start_SOC_step = all_ta_ds.vary_start_SOC_step;
+    const int n_curve_levels = ta_raw_data.n_curve_levels;
+    const double min_start_temperature_C = ta_raw_data.min_start_temperature_C;
+    const double max_start_temperature_C = ta_raw_data.max_start_temperature_C;
+    const double vary_start_temperature_step_C = ta_raw_data.vary_start_temperature_step_C;
+    const double min_start_SOC = ta_raw_data.min_start_SOC;
+    const double max_start_SOC = ta_raw_data.max_start_SOC;
+    const double vary_start_SOC_step = ta_raw_data.vary_start_SOC_step;
     
     
     
@@ -1832,25 +1825,25 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         {
             const std::string& EV_type_name = ev_evse_pair.first;
             
-            if( all_ta_ds.each_EV_type_ta_data.find( EV_type_name ) == all_ta_ds.each_EV_type_ta_data.end() )
+            if( ta_raw_data.each_EV_type_ta_data.find( EV_type_name ) == ta_raw_data.each_EV_type_ta_data.end() )
             {
-                std::cout << "ERROR: EV_type_name not found in 'all_ta_ds.each_EV_type_ta_data'.  EV_type_name: " << EV_type_name << std::endl;
+                std::cout << "ERROR: EV_type_name not found in 'ta_raw_data.each_EV_type_ta_data'.  EV_type_name: " << EV_type_name << std::endl;
                 exit(1);
             }
             
             // -----
-            // Load all the essential coefficients and parametes from the 'all_ta_ds' data.
+            // Load all the essential coefficients and parametes from the 'ta_raw_data' data.
             // -----
             
             // Determine which tgrad coeffs we want based on the ambient_temperature_C
             const int tgradcoeffs_index = [&] () {
-                const int n_models = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
+                const int n_models = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
                 bool found_it = false;
                 int found_index = -1;
                 for( int i = 0; i < n_models; i++ )
                 {
-                    const double min_C = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
-                    const double max_C = all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
+                    const double min_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
+                    const double max_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
                     if( ambient_temperature_C >= min_C && ambient_temperature_C < max_C )
                     {
                         found_index = i;
@@ -1866,16 +1859,16 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                 return found_index;
             }();
             
-            const double tgradmodel_c0_intercept =      all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c0_intercept;
-            const double tgradmodel_c1_power_kW =       all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c1_power_kW;
-            const double tgradmodel_c2_temperature_C =  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c2_temperature_C;
-            const double tgradmodel_c3_time_sec =       all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c3_time_sec;
-            const double tgradmodel_c4_soc =            all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c4_soc;
+            const double tgradmodel_c0_intercept =      ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c0_intercept;
+            const double tgradmodel_c1_power_kW =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c1_power_kW;
+            const double tgradmodel_c2_temperature_C =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c2_temperature_C;
+            const double tgradmodel_c3_time_sec =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c3_time_sec;
+            const double tgradmodel_c4_soc =            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c4_soc;
             // For ngp_hyundai_ioniq_5_longrange_awd:   
-            const std::vector<double>& battery_temperature_C =                  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__battery_temperature_C;
-            const std::vector<double>& max_charging_power_kW_at_each_T_pts =    all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
-            const std::vector<double>& battery_SOC =                            all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
-            const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  all_ta_ds.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
+            const std::vector<double>& battery_temperature_C =                  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__battery_temperature_C;
+            const std::vector<double>& max_charging_power_kW_at_each_T_pts =    ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
+            const std::vector<double>& battery_SOC =                            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
+            const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
             // THESE ARE STILL HARD-CODED FOR NOW. (TODO)
             const double sim_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
                                                              //             the minimum allowed temperature; it's okay for the battery to be colder).
@@ -2023,7 +2016,8 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                         opfile.close();
 
                         // I do this to stop running after the files are written.
-                        //std::cout << "stopping." << std::endl; __builtin_debugtrap();
+                        // If 'TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING' is true, remember this part:
+                        // std::cout << "stopping." << std::endl; __builtin_debugtrap();
                     }
                     #endif
                     

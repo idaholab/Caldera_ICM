@@ -33,12 +33,19 @@ private:
                                                 const double target_acP3_kW,
                                                 const pev_SE_pair pev_SE,
                                                 double& max_P3kW,
-                                                std::vector<pev_charge_fragment>& charge_fragments,
-                                                const double c_rate_scale_factor = 1.0 );
+                                                std::vector<pev_charge_fragment>& charge_fragments
+                                                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                #endif
+                                                , const double c_rate_scale_factor = 1.0 );
     
     static double get_max_P3kW( const EV_EVSE_inventory& inventory,
                                 const double time_step_sec,
-                                const pev_SE_pair pev_SE );
+                                const pev_SE_pair pev_SE
+                                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                #endif
+                            );
     
     static double get_min_P3kW( const EV_EVSE_inventory& inventory,
                                 const double max_P3kW,
@@ -58,7 +65,11 @@ private:
                                                               const pev_SE_pair pev_SE,
                                                               const pev_charge_fragment_removal_criteria fragment_removal_criteria,
                                                               double& max_P3kW,
-                                                              std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data );
+                                                              std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data
+                                                              #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                              , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                              #endif
+                                                          );
     
 public:
     
@@ -71,7 +82,11 @@ public:
                                                                                                 const double time_step_sec,
                                                                                                 const double target_acP3_kW,
                                                                                                 const EV_type pev_type,
-                                                                                                const EVSE_type SE_type );
+                                                                                                const EVSE_type SE_type
+                                                                                                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                                , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                                                                #endif
+                                                                                            );
 };
 
 
@@ -90,14 +105,20 @@ public:
                                        const double end_soc,
                                        const double target_acP3_kW,
                                        std::vector<double>& soc,
-                                       std::vector<ac_power_metrics>& charge_profile,
-                                       const double c_rate_scale_factor = 1.0 );
+                                       std::vector<ac_power_metrics>& charge_profile
+                                       #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                       , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                       #endif
+                                       , const double c_rate_scale_factor = 1.0 );
 
     static pev_charge_profile_library_v2 get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                      const double L1_timestep_sec,
                                                                      const double L2_timestep_sec,
-                                                                     const double HPC_timestep_sec,
-                                                                     const std::vector<double> c_rate_scale_factor_levels = {1.0} );
+                                                                     const double HPC_timestep_sec
+                                                                     #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                     , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                                     #endif
+                                                                     , const std::vector<double> c_rate_scale_factor_levels = {1.0} );
     
     static all_charge_profile_data build_all_charge_profile_data_for_specific_pev_SE_pair( const EV_EVSE_inventory& inventory,
                                                                                            const double timestep_sec,

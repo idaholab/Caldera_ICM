@@ -200,8 +200,11 @@ all_charge_profile_data CP_interface_v2::create_charge_profile_from_model_with_p
                                                               end_soc,
                                                               target_acP3_kW,
                                                               soc,
-                                                              ac_power_vec,
-                                                              this->CP_library_v2.get_c_rate_scale_factor_levels().at(c_rate_scale_factor_index) );
+                                                              ac_power_vec
+                                                              #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                              , raw_ta_data_store()
+                                                              #endif
+                                                              , this->CP_library_v2.get_c_rate_scale_factor_levels().at(c_rate_scale_factor_index) );
 
     //---------------------
     
@@ -270,7 +273,16 @@ CP_interface_v2::CP_interface_v2( const std::string& input_path,
     : loader{ load_EV_EVSE_inventory{ input_path } },
     inventory{ this->loader.get_EV_EVSE_inventory() },
     CP_library_v2{
-        factory_charge_profile_library_v2::get_charge_profile_library( this->inventory, L1_timestep_sec, L2_timestep_sec, HPC_timestep_sec, c_rate_scale_factor_levels )
+        factory_charge_profile_library_v2::get_charge_profile_library(
+            this->inventory,
+            L1_timestep_sec,
+            L2_timestep_sec,
+            HPC_timestep_sec
+            #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+            , raw_ta_data_store()
+            #endif
+            , c_rate_scale_factor_levels
+        )
     }
 {
 }

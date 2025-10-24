@@ -35,8 +35,12 @@ public:
     factory_EV_charge_model( const EV_EVSE_inventory& inventory,
                              const EV_ramping_map& EV_ramping,
                              const EV_EVSE_ramping_map& EV_EVSE_ramping,
-                             const bool model_stochastic_battery_degregation,
-                             const double c_rate_scale_factor = 1.0 );
+                             const bool model_stochastic_battery_degregation
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                             , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+#endif
+                             , const double c_rate_scale_factor = 1.0
+                         );
     
     vehicle_charge_model* alloc_get_EV_charge_model(const charge_event_data& event, 
                                                     const EVSE_type& EVSE, 

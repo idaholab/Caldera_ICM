@@ -12,6 +12,9 @@
 
 const factory_EV_charge_model interface_to_SE_groups::load_factory_EV_charge_model(
     const interface_to_SE_groups_inputs& inputs
+    #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    , const raw_ta_data_store& ta_raw_data
+    #endif
 )
 {
     EV_EVSE_ramping_map ramping_by_pevType_seType_map;
@@ -20,17 +23,35 @@ const factory_EV_charge_model interface_to_SE_groups::load_factory_EV_charge_mod
         ramping_by_pevType_seType_map[std::make_pair(X.pev_type, X.SE_type)] = X.pev_charge_ramping_obj;
     }
     
-    return factory_EV_charge_model{ this->inventory, inputs.ramping_by_pevType_only, ramping_by_pevType_seType_map, false };
+    return factory_EV_charge_model{
+        this->inventory,
+        inputs.ramping_by_pevType_only,
+        ramping_by_pevType_seType_map,
+        false
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+    };
 }
 
 interface_to_SE_groups::interface_to_SE_groups( 
     const std::string& input_path,
     const interface_to_SE_groups_inputs& inputs 
+    #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    , const raw_ta_data_store& ta_raw_data
+    #endif
 )
     : 
     loader{ input_path },
     inventory{ this->loader.get_EV_EVSE_inventory() },
-    EV_model_factory{ this->load_factory_EV_charge_model(inputs) },
+    EV_model_factory{
+        this->load_factory_EV_charge_model(
+            inputs
+            #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+            , ta_raw_data
+            #endif
+        )
+    },
     ac_to_dc_converter_factory{ this->inventory },
     charge_profile_library{ load_charge_profile_library(inputs) },
     baseLD_forecaster{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs },

@@ -64,7 +64,7 @@ struct each_EV_type_ta_data_store
 };
 
 // All the temperature-aware data, mirroring the input folder data.
-struct all_ta_data_store
+struct raw_ta_data_store
 {
     // Parameters for pre-computing all the curves.
     int n_curve_levels;
@@ -74,11 +74,23 @@ struct all_ta_data_store
     double min_start_SOC;
     double max_start_SOC;
     double vary_start_SOC_step;
+    bool holds_data;
     
     // The data for each EV_type
     std::map< std::string, each_EV_type_ta_data_store > each_EV_type_ta_data;
     
-    static void load_ta_data( all_ta_data_store& alltadata,
+    raw_ta_data_store() :
+        n_curve_levels(0),
+        min_start_temperature_C(0.0),
+        max_start_temperature_C(0.0),
+        vary_start_temperature_step_C(0.0),
+        min_start_SOC(0.0),
+        max_start_SOC(0.0),
+        vary_start_SOC_step(0.0),
+        holds_data(false)
+    {}
+    
+    static void load_ta_data( raw_ta_data_store& alltadata,
                               const std::string path_to_ta_directory,
                               const std::vector<std::string>& ev_types_to_load );
 };
@@ -173,13 +185,17 @@ private:
     const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >& load_temperature_aware_DCFC_curves( 
                                                                                                                             const double max_c_rate_scale_factor
                                                                                                                             //, const double ambient_temperature_C
-                                                                                                                            //, const all_ta_data_store all_ta_ds
+                                                                                                                            , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
                                                                                                                         );
     
     
 public:
-    factory_SOC_vs_P2( const EV_EVSE_inventory& inventory,
-                       const double c_rate_scale_factor = 1.0 );
+    factory_SOC_vs_P2( const EV_EVSE_inventory& inventory
+#if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                       , const raw_ta_data_store& ta_data = raw_ta_data_store()
+#endif
+                       , const double c_rate_scale_factor = 1.0
+                    );
 
     const SOC_vs_P2& get_SOC_vs_P2_curves( const EV_type& EV, 
                                            const EVSE_type& EVSE,

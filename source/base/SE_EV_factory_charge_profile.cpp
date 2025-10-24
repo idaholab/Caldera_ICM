@@ -30,8 +30,11 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
                                                                      const double target_acP3_kW,
                                                                      const pev_SE_pair pev_SE,
                                                                      double& max_P3kW,
-                                                                     std::vector<pev_charge_fragment>& charge_fragments,
-                                                                     const double c_rate_scale_factor )
+                                                                     std::vector<pev_charge_fragment>& charge_fragments
+                                                                     #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                     , const raw_ta_data_store& ta_raw_data
+                                                                     #endif
+                                                                     , const double c_rate_scale_factor )
 {
     //std::cout << "time_step_sec: " << time_step_sec << "  target_acP3_kW: " << target_acP3_kW << " EV_type: " << pev_SE.EV_type << " SE_type: " << pev_SE.SE_type << std::endl;
     
@@ -55,7 +58,16 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
     EV_EVSE_ramping_map EV_EVSE_ramping;
     bool model_stochastic_battery_degregation = false;
 
-    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation, c_rate_scale_factor };
+    factory_EV_charge_model PEV_charge_factory{
+        inventory,
+        EV_ramping,
+        EV_EVSE_ramping,
+        model_stochastic_battery_degregation
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+        , c_rate_scale_factor
+    };
     //PEV_charge_factory.set_bool_model_stochastic_battery_degregation(false);
 
     //------------------------
@@ -143,7 +155,11 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
 
 double factory_charge_profile_library::get_max_P3kW( const EV_EVSE_inventory& inventory,
                                                      const double time_step_sec,
-                                                     const pev_SE_pair pev_SE )
+                                                     const pev_SE_pair pev_SE
+                                                     #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                     , const raw_ta_data_store& ta_raw_data
+                                                     #endif
+                                                 )
 {
     std::vector<pev_charge_fragment> charge_fragments;
     double max_P3kW;
@@ -151,7 +167,18 @@ double factory_charge_profile_library::get_max_P3kW( const EV_EVSE_inventory& in
     int charge_event_Id = 1000;
     
     // Compute 'max_P3kW'.
-    factory_charge_profile_library::create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, charge_fragments);
+    factory_charge_profile_library::create_charge_fragments_vector(
+        inventory,
+        charge_event_Id,
+        time_step_sec,
+        target_acP3_kW,
+        pev_SE,
+        max_P3kW,
+        charge_fragments
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+    );
     
     // Return the result.
     return max_P3kW;
@@ -283,11 +310,26 @@ pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_au
                                                                                    const pev_SE_pair pev_SE,
                                                                                    const pev_charge_fragment_removal_criteria fragment_removal_criteria,
                                                                                    double& max_P3kW,
-                                                                                   std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data )
+                                                                                   std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data
+                                                                                   #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                   , const raw_ta_data_store& ta_raw_data
+                                                                                   #endif
+                                                                                )
 {
     std::vector<pev_charge_fragment> original_charge_fragments, downsampled_charge_fragments;
     
-    factory_charge_profile_library::create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, original_charge_fragments);
+    factory_charge_profile_library::create_charge_fragments_vector(
+        inventory,
+        charge_event_Id,
+        time_step_sec,
+        target_acP3_kW,
+        pev_SE,
+        max_P3kW,
+        original_charge_fragments
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+    );
 
     downsample_charge_fragment_vector downsample_obj(fragment_removal_criteria);
     downsample_obj.downsample(original_charge_fragments, downsampled_charge_fragments);
@@ -415,7 +457,11 @@ std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_P
                                                                                                                      const double time_step_sec,
                                                                                                                      const double target_acP3_kW,
                                                                                                                      const EV_type pev_type,
-                                                                                                                     const EVSE_type SE_type )
+                                                                                                                     const EVSE_type SE_type
+                                                                                                                     #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                                                     , const raw_ta_data_store& ta_raw_data
+                                                                                                                     #endif
+                                                                                                                 )
 {
     pev_SE_pair pev_SE;
     pev_SE.ev_type = pev_type;
@@ -424,7 +470,18 @@ std::vector<pev_charge_fragment> factory_charge_profile_library::USE_FOR_DEBUG_P
     double max_P3kW;
     int charge_event_Id = 1000;
     std::vector<pev_charge_fragment> return_val;    
-    create_charge_fragments_vector(inventory, charge_event_Id, time_step_sec, target_acP3_kW, pev_SE, max_P3kW, return_val);
+    create_charge_fragments_vector(
+        inventory,
+        charge_event_Id,
+        time_step_sec,
+        target_acP3_kW,
+        pev_SE,
+        max_P3kW,
+        return_val
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+    );
     
     return return_val;
 }
@@ -444,8 +501,11 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
                                                                const double end_soc,
                                                                const double target_acP3_kW,
                                                                std::vector<double>& soc,
-                                                               std::vector<ac_power_metrics>& charge_profile,
-                                                               const double c_rate_scale_factor )
+                                                               std::vector<ac_power_metrics>& charge_profile
+                                                               #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                               , const raw_ta_data_store& ta_raw_data
+                                                               #endif
+                                                               , const double c_rate_scale_factor )
 {
     charge_profile.clear();
     soc.clear();
@@ -469,7 +529,16 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
     bool model_stochastic_battery_degregation = false;
 
     // This is where a whole bunch of stuff happens.
-    factory_EV_charge_model PEV_charge_factory{ inventory, EV_ramping, EV_EVSE_ramping, model_stochastic_battery_degregation, c_rate_scale_factor };
+    factory_EV_charge_model PEV_charge_factory{
+        inventory,
+        EV_ramping,
+        EV_EVSE_ramping,
+        model_stochastic_battery_degregation
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+        , c_rate_scale_factor
+    };
 
     //------------------------
     //   Create SE Object
@@ -544,8 +613,11 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
 pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                                              const double L1_timestep_sec,
                                                                                              const double L2_timestep_sec,
-                                                                                             const double HPC_timestep_sec,
-                                                                                             const std::vector<double> c_rate_scale_factor_levels )
+                                                                                             const double HPC_timestep_sec
+                                                                                             #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                             , const raw_ta_data_store& ta_raw_data
+                                                                                             #endif
+                                                                                             , const std::vector<double> c_rate_scale_factor_levels )
 {
     pev_charge_profile_library_v2 return_val{ inventory, c_rate_scale_factor_levels };
     std::vector<pev_SE_pair> all_pev_SE_pairs = inventory.get_all_compatible_pev_SE_combinations();
@@ -579,7 +651,20 @@ pev_charge_profile_library_v2 factory_charge_profile_library_v2::get_charge_prof
         for( int crsf_i = 0; crsf_i < c_rate_scale_factor_levels.size(); crsf_i++ )
         {
             // "soc" and "charge_profile" are initialized by calling this function.
-            factory_charge_profile_library_v2::create_charge_profile( inventory, time_step_sec, pev_SE, start_soc, end_soc, target_acP3_kW, soc, charge_profile, c_rate_scale_factor_levels.at(crsf_i) );
+            factory_charge_profile_library_v2::create_charge_profile(
+                inventory,
+                time_step_sec,
+                pev_SE,
+                start_soc,
+                end_soc,
+                target_acP3_kW,
+                soc,
+                charge_profile
+                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                , ta_raw_data
+                #endif
+                , c_rate_scale_factor_levels.at(crsf_i)
+            );
             
             // Put the charge profile in the library.
             return_val.add_charge_PkW_profile_to_library( pev_SE.ev_type, pev_SE.se_type, crsf_i, time_step_sec, soc, charge_profile );
@@ -609,8 +694,11 @@ all_charge_profile_data factory_charge_profile_library_v2::build_all_charge_prof
         end_soc,                          // const double end_soc,
         target_acP3_kW,                   // const double target_acP3_kW,
         soc_vec,                          // std::vector<double>& soc,
-        charge_profile_vec,               // std::vector<ac_power_metrics>& charge_profile,
-        c_rate_scale_factor               // const double c_rate_scale_factor
+        charge_profile_vec                // std::vector<ac_power_metrics>& charge_profile,
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , raw_ta_data_store()
+        #endif
+        , c_rate_scale_factor               // const double c_rate_scale_factor
     );
     
     // Construct a 'all_charge_profile_data' object.
