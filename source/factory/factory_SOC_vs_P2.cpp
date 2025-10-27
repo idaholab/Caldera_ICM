@@ -1688,6 +1688,27 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     // ***************************************
     
     
+    // --- helper function ---
+    auto round_to_nearest_odd_number = [] ( const double x ) -> double {
+        return std::round( ( x + 1.0 ) / 2.0 ) * 2.0 - 1.0;
+    };
+    // {
+    //     double val = -35.0;
+    //     double h = 0.01;
+    //     for( int i = 0; i < 7000; i++ )
+    //     {
+    //         std::cout << "val:  " << val << "  rounded: " << round_to_nearest_odd_number(val) << std::endl;
+    //         val = val + h;
+    //     }
+    //     exit(1);
+    // }
+    
+    
+    // We round the ambient temperature to the nearest
+    // pre-decided value in order to limit the number of possible
+    // profiles to store.
+    const double rounded_ambient_temperature_C = round_to_nearest_odd_number( ambient_temperature_C );
+    
     
     const int n_curve_levels = ta_raw_data.n_curve_levels;
     const double min_start_temperature_C = ta_raw_data.min_start_temperature_C;
@@ -1719,7 +1740,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         }
         ss << "_";
         ss << std::setprecision(8) << max_c_rate_scale_factor << "_";
-        ss << std::setprecision(4) << ambient_temperature_C << "_";
+        ss << std::setprecision(4) << rounded_ambient_temperature_C << "_";
         ss << n_curve_levels << "_";
         ss << std::setprecision(8) << min_start_temperature_C << "_";
         ss << std::setprecision(8) << max_start_temperature_C << "_";
@@ -1761,6 +1782,8 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         
         if( ev_evse_pairs_set.size() == 0 || curves_each_level_array.size() == 0 )
         {
+            std::cout << "n_curve_levels: " << n_curve_levels << std::endl;
+            std::cout << "ta_raw_data.holds_data: " << ta_raw_data.holds_data << std::endl;
             std::cout << "ERROR: There aren't any loaded DCFC curves.   ev_evse_pairs_set.size(): " << ev_evse_pairs_set.size() << "  curves_each_level_array.size(): " << curves_each_level_array.size() << std::endl;
             exit(1);
         }
@@ -1835,7 +1858,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
             // Load all the essential coefficients and parametes from the 'ta_raw_data' data.
             // -----
             
-            // Determine which tgrad coeffs we want based on the ambient_temperature_C
+            // Determine which tgrad coeffs we want based on the 'rounded_ambient_temperature_C'.
             const int tgradcoeffs_index = [&] () {
                 const int n_models = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
                 bool found_it = false;
@@ -1844,7 +1867,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                 {
                     const double min_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
                     const double max_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
-                    if( ambient_temperature_C >= min_C && ambient_temperature_C < max_C )
+                    if( rounded_ambient_temperature_C >= min_C && rounded_ambient_temperature_C < max_C )
                     {
                         found_index = i;
                         found_it = true;
@@ -1996,6 +2019,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                         std::cout << "    start_temperature_C:   " << start_temperature_C << std::endl;
                         std::cout << "    start_soc:             " << start_soc << std::endl;
                         std::cout << "    ambient_temperature_C: " << ambient_temperature_C << std::endl;
+                        std::cout << "    rounded_ambient_temperature_C: " << rounded_ambient_temperature_C << std::endl;
                         std::cout << "" << std::endl;
                         //
                         // Plot these results to see if you think it's doing it right!!

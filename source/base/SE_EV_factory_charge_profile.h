@@ -76,7 +76,11 @@ public:
     static pev_charge_profile_library get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                   const bool save_validation_data,
                                                                   const bool create_charge_profile_library,
-                                                                  std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data );
+                                                                  std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data
+                                                                  #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                  , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                                  #endif
+                                                              );
     
     static std::vector<pev_charge_fragment> USE_FOR_DEBUG_PURPOSES_ONLY_get_raw_charge_profile( const EV_EVSE_inventory& inventory,
                                                                                                 const double time_step_sec,

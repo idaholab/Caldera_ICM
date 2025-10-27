@@ -364,7 +364,11 @@ pev_charge_profile_aux factory_charge_profile_library::get_pev_charge_profile_au
 pev_charge_profile_library factory_charge_profile_library::get_charge_profile_library( const EV_EVSE_inventory& inventory,
                                                                                        const bool save_validation_data,
                                                                                        const bool create_charge_profile_library,
-                                                                                       std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data )
+                                                                                       std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& validation_data
+                                                                                       #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                       , const raw_ta_data_store& ta_raw_data
+                                                                                       #endif
+                                                                                   )
 {
     if( save_validation_data )
     {
@@ -397,7 +401,14 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
                 get_max_time_step_sec = 1;
             }
             
-            const double max_target_P3kW = factory_charge_profile_library::get_max_P3kW(inventory, get_max_time_step_sec, pev_SE);
+            const double max_target_P3kW = factory_charge_profile_library::get_max_P3kW(
+                inventory,
+                get_max_time_step_sec,
+                pev_SE
+                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                , ta_raw_data
+                #endif
+            );
             
             //-----------------------
             
@@ -426,7 +437,11 @@ pev_charge_profile_library factory_charge_profile_library::get_charge_profile_li
                                                                                 pev_SE,
                                                                                 fragment_removal_criteria.at(i),
                                                                                 max_P3kW_tmp,
-                                                                                validation_data )
+                                                                                validation_data
+                                                                                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                , ta_raw_data
+                                                                                #endif
+                                                                            )
                 );
             
                 if(max_P3kW_tmp > max_P3kW)

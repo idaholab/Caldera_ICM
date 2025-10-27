@@ -50,7 +50,7 @@ private:
     const factory_EV_charge_model load_factory_EV_charge_model(
                                         const interface_to_SE_groups_inputs& inputs
                                         #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
-                                        , const raw_ta_data_store& ta_raw_data
+                                        , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
                                         #endif
                                     );
 
@@ -62,7 +62,11 @@ public:
                             #endif
                          );
 
-    pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
+    pev_charge_profile_library load_charge_profile_library( const interface_to_SE_groups_inputs& inputs
+                                                            #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                            , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                            #endif
+                                                      );
     
     void stop_active_charge_events(std::vector<SupplyEquipmentId> SE_ids);
     void add_charge_events( const std::vector<charge_event_data>& charge_events );

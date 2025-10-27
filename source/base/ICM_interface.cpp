@@ -53,7 +53,14 @@ interface_to_SE_groups::interface_to_SE_groups(
         )
     },
     ac_to_dc_converter_factory{ this->inventory },
-    charge_profile_library{ load_charge_profile_library(inputs) },
+    charge_profile_library{
+        load_charge_profile_library(
+            inputs
+            #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+            , ta_raw_data
+            #endif
+        ) 
+    },
     baseLD_forecaster{ inputs.data_start_unix_time, inputs.data_timestep_sec, inputs.actual_load_akW, inputs.forecast_load_akW, inputs.adjustment_interval_hrs },
     manage_L2_control{ inputs.L2_parameters }
 {
@@ -111,11 +118,24 @@ interface_to_SE_groups::interface_to_SE_groups(
 
 }
 
-pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library(const interface_to_SE_groups_inputs& inputs)
+pev_charge_profile_library interface_to_SE_groups::load_charge_profile_library( const interface_to_SE_groups_inputs& inputs
+                                                                                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                                , const raw_ta_data_store& ta_raw_data
+                                                                                #endif
+                                                                            )
 {
     std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> > validation_data;
     const bool save_validation_data = false;
-    return factory_charge_profile_library::get_charge_profile_library( this->inventory, save_validation_data, inputs.create_charge_profile_library, validation_data);
+    
+    return factory_charge_profile_library::get_charge_profile_library(
+        this->inventory,
+        save_validation_data,
+        inputs.create_charge_profile_library,
+        validation_data
+        #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+        , ta_raw_data
+        #endif
+    );
 }
 
 
