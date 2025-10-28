@@ -26,7 +26,7 @@ static std::map< std::string, std::unordered_map< std::pair<EV_type, EVSE_type>,
 // ******************************************
 // ***************************************************************
 
-struct tgrad_model_data_store
+struct raw_tgrad_model_coeffs_data
 {
     std::string tgradmodel_EV_type;
     double ambient_temperature_C_range_min;
@@ -37,7 +37,7 @@ struct tgrad_model_data_store
     double tgradmodel_c3_time_sec;
     double tgradmodel_c4_soc;
     
-    tgrad_model_data_store() : 
+    raw_tgrad_model_coeffs_data() : 
         tgradmodel_EV_type(""),
         ambient_temperature_C_range_min(0.0),
         ambient_temperature_C_range_max(0.0),
@@ -49,7 +49,7 @@ struct tgrad_model_data_store
     {}
 };
 
-struct each_EV_type_ta_data_store
+struct each_EV_type_raw_tgrad_model_data
 {
     // Data for the battery temperature vs. max power curve.
     std::vector<double> TvsMAXPWR__battery_temperature_C;
@@ -60,7 +60,7 @@ struct each_EV_type_ta_data_store
     std::vector<double> SOCvsMAXPWR__max_power_kW;
     
     // The T-grad model coefficients and metadata for each temperature range.
-    std::vector< tgrad_model_data_store > tgrad_models_vec;
+    std::vector< raw_tgrad_model_coeffs_data > tgrad_models_vec;
 };
 
 // All the temperature-aware data, mirroring the input folder data.
@@ -77,7 +77,7 @@ struct raw_ta_data_store
     bool holds_data;
     
     // The data for each EV_type
-    std::map< std::string, each_EV_type_ta_data_store > each_EV_type_ta_data;
+    std::map< std::string, each_EV_type_raw_tgrad_model_data > each_EV_type_ta_data;
     
     raw_ta_data_store() :
         n_curve_levels(0),

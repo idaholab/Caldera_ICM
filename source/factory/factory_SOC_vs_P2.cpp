@@ -209,7 +209,7 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                     
                     if( alltadata.each_EV_type_ta_data.find(ev_type_name) == alltadata.each_EV_type_ta_data.end() )
                     {
-                        alltadata.each_EV_type_ta_data[ ev_type_name ] = each_EV_type_ta_data_store();
+                        alltadata.each_EV_type_ta_data[ ev_type_name ] = each_EV_type_raw_tgrad_model_data();
                     }
                     alltadata.each_EV_type_ta_data.at(ev_type_name).TvsMAXPWR__battery_temperature_C.push_back(bat_temperature_C);
                     alltadata.each_EV_type_ta_data.at(ev_type_name).TvsMAXPWR__max_power_kW.push_back(max_power_kW);
@@ -341,7 +341,7 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                         throw(std::invalid_argument(error_msg));
                     }
                     
-                    tgrad_model_data_store new_tgrad_data;
+                    raw_tgrad_model_coeffs_data new_tgrad_data;
                     
                     int line_i = 0;
                     std::string line;
