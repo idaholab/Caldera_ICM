@@ -29,9 +29,12 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
         const std::string ta_precompute_curves_inputs_full_path = (std::filesystem::path(path_to_ta_directory) / "ta_precompute_curves_inputs.csv");
         
         bool found__n_curve_levels = false;
-        bool found__min_start_temperature_C = false;
-        bool found__max_start_temperature_C = false;
-        bool found__vary_start_temperature_step_C = false;
+        bool found__min_ambient_temperature_C = false;
+        bool found__max_ambient_temperature_C = false;
+        bool found__vary_ambient_temperature_step_C = false;
+        bool found__min_start_battery_temperature_C = false;
+        bool found__max_start_battery_temperature_C = false;
+        bool found__vary_start_battery_temperature_step_C = false;
         bool found__min_start_SOC = false;
         bool found__max_start_SOC = false;
         bool found__vary_start_SOC_step = false;
@@ -83,20 +86,35 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                     alltadata.n_curve_levels = (int)value;
                     found__n_curve_levels = true;
                 }
-                else if( key == "min_start_temperature_C" )
+                else if( key == "min_ambient_temperature_C" )
                 {
-                    alltadata.min_start_temperature_C = value;
-                    found__min_start_temperature_C = true;
+                    alltadata.min_ambient_temperature_C = value;
+                    found__min_ambient_temperature_C = true;
                 }
-                else if( key == "max_start_temperature_C" )
+                else if( key == "max_ambient_temperature_C" )
                 {
-                    alltadata.max_start_temperature_C = value;
-                    found__max_start_temperature_C = true;
+                    alltadata.max_ambient_temperature_C = value;
+                    found__max_ambient_temperature_C = true;
                 }
-                else if( key == "vary_start_temperature_step_C" )
+                else if( key == "vary_ambient_temperature_step_C" )
                 {
-                    alltadata.vary_start_temperature_step_C = value;
-                    found__vary_start_temperature_step_C = true;
+                    alltadata.vary_ambient_temperature_step_C = value;
+                    found__vary_ambient_temperature_step_C = true;
+                }
+                else if( key == "min_start_battery_temperature_C" )
+                {
+                    alltadata.min_start_battery_temperature_C = value;
+                    found__min_start_battery_temperature_C = true;
+                }
+                else if( key == "max_start_battery_temperature_C" )
+                {
+                    alltadata.max_start_battery_temperature_C = value;
+                    found__max_start_battery_temperature_C = true;
+                }
+                else if( key == "vary_start_battery_temperature_step_C" )
+                {
+                    alltadata.vary_start_battery_temperature_step_C = value;
+                    found__vary_start_battery_temperature_step_C = true;
                 }
                 else if( key == "min_start_SOC" )
                 {
@@ -116,7 +134,8 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                 else
                 {
                     // error
-                    ASSERT(false, "Error : Invalid key in 'ta_precompute_curves_inputs.csv'.");
+                    const std::string err_str = "Error : Invalid key in 'ta_precompute_curves_inputs.csv'.  key: "+key;
+                    ASSERT( false, err_str.c_str() );
                 }
             }
             
@@ -126,9 +145,12 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
         fin.close();
         
         if( ! ( found__n_curve_levels &&
-                found__min_start_temperature_C &&
-                found__max_start_temperature_C  &&
-                found__vary_start_temperature_step_C  &&
+                found__min_ambient_temperature_C &&
+                found__max_ambient_temperature_C &&
+                found__vary_ambient_temperature_step_C &&
+                found__min_start_battery_temperature_C &&
+                found__max_start_battery_temperature_C  &&
+                found__vary_start_battery_temperature_step_C  &&
                 found__min_start_SOC  &&
                 found__max_start_SOC  &&
                 found__vary_start_SOC_step ) )
@@ -314,22 +336,13 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                     bool found__tgradmodel_EV_type = false;
                     bool found__ambient_temperature_C_range_min = false;
                     bool found__ambient_temperature_C_range_max = false;
+                    bool found__soft_min_battery_temperature_C = false;
+                    bool found__soft_max_battery_temperature_C = false;
                     bool found__tgradmodel_c0_intercept = false;
                     bool found__tgradmodel_c1_power_kW = false;
                     bool found__tgradmodel_c2_temperature_C = false;
                     bool found__tgradmodel_c3_time_sec = false;
                     bool found__tgradmodel_c4_soc = false;
-                    
-                    // tgradmodel_EV_type
-                    // ambient_temperature_C_range_min
-                    // ambient_temperature_C_range_max
-                    // tgradmodel_c0_intercept
-                    // tgradmodel_c1_power_kW
-                    // tgradmodel_c2_temperature_C
-                    // tgradmodel_c3_time_sec
-                    // tgradmodel_c4_soc
-                    
-                    
                     
                     // Open an existing file
                     std::ifstream fin;
@@ -389,6 +402,16 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                                 new_tgrad_data.ambient_temperature_C_range_max = std::stof( value );
                                 found__ambient_temperature_C_range_max = true;
                             }
+                            else if( key == "soft_min_battery_temperature_C" )
+                            {
+                                new_tgrad_data.soft_min_battery_temperature_C = std::stof( value );
+                                found__soft_min_battery_temperature_C = true;
+                            }
+                            else if( key == "soft_max_battery_temperature_C" )
+                            {
+                                new_tgrad_data.soft_max_battery_temperature_C = std::stof( value );
+                                found__soft_max_battery_temperature_C = true;
+                            }
                             else if( key == "tgradmodel_c0_intercept" )
                             {
                                 new_tgrad_data.tgradmodel_c0_intercept = std::stof( value );
@@ -417,7 +440,7 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                             else
                             {
                                 // error
-                                const std::string error_str = "Error : Invalid key in '"+tgrad_model_csv_full_path+".csv'.";
+                                const std::string error_str = "Error : Invalid key in '"+tgrad_model_csv_full_path+".csv'.  key: "+key;
                                 ASSERT( false, error_str.c_str() );
                             }
                         }
@@ -430,6 +453,8 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
                     if( ! ( found__tgradmodel_EV_type &&
                             found__ambient_temperature_C_range_min &&
                             found__ambient_temperature_C_range_max &&
+                            found__soft_min_battery_temperature_C &&
+                            found__soft_max_battery_temperature_C &&
                             found__tgradmodel_c0_intercept  &&
                             found__tgradmodel_c1_power_kW  &&
                             found__tgradmodel_c2_temperature_C  &&
@@ -1683,7 +1708,14 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     // ***************************************
     // ***************************************
     // TEMPORARY: FOR NOW SET THIS HERE.
-    const double ambient_temperature_C = 19.0;
+    const double ambient_temperature_C = 26.0;  //19.0;     // <--- TODO: This needs to be loaded from an input file, for each charge event.
+    
+    ///// vvvv ALSO  NOTE THAT THESE (FURTHER BELOW) ARE ALSO HARD CODED!! 
+    //
+    // const double sim_soft_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
+    //                                                  //             the minimum allowed temperature; it's okay for the battery to be colder).
+    // const double sim_soft_upper_bound_battery_temperature_C = 49;
+    
     // ***************************************
     // ***************************************
     
@@ -1711,9 +1743,9 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     
     
     const int n_curve_levels = ta_raw_data.n_curve_levels;
-    const double min_start_temperature_C = ta_raw_data.min_start_temperature_C;
-    const double max_start_temperature_C = ta_raw_data.max_start_temperature_C;
-    const double vary_start_temperature_step_C = ta_raw_data.vary_start_temperature_step_C;
+    const double min_start_battery_temperature_C = ta_raw_data.min_start_battery_temperature_C;
+    const double max_start_battery_temperature_C = ta_raw_data.max_start_battery_temperature_C;
+    const double vary_start_battery_temperature_step_C = ta_raw_data.vary_start_battery_temperature_step_C;
     const double min_start_SOC = ta_raw_data.min_start_SOC;
     const double max_start_SOC = ta_raw_data.max_start_SOC;
     const double vary_start_SOC_step = ta_raw_data.vary_start_SOC_step;
@@ -1742,9 +1774,9 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         ss << std::setprecision(8) << max_c_rate_scale_factor << "_";
         ss << std::setprecision(4) << rounded_ambient_temperature_C << "_";
         ss << n_curve_levels << "_";
-        ss << std::setprecision(8) << min_start_temperature_C << "_";
-        ss << std::setprecision(8) << max_start_temperature_C << "_";
-        ss << std::setprecision(8) << vary_start_temperature_step_C << "_";
+        ss << std::setprecision(8) << min_start_battery_temperature_C << "_";
+        ss << std::setprecision(8) << max_start_battery_temperature_C << "_";
+        ss << std::setprecision(8) << vary_start_battery_temperature_step_C << "_";
         ss << std::setprecision(8) << min_start_SOC << "_";
         ss << std::setprecision(8) << max_start_SOC << "_";
         ss << std::setprecision(8) << vary_start_SOC_step << "_";
@@ -1759,7 +1791,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     {
         std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > return_value;
     
-        // For each (EV_type,EVSE_type) pair, we generate a matrix of 'SOC_vs_P2' profiles, one for each (start_temperature_C,start_SOC) pair.
+        // For each (EV_type,EVSE_type) pair, we generate a matrix of 'SOC_vs_P2' profiles, one for each (start_bat_temperature_C,start_SOC) pair.
         // We store these in the 'temperature_aware::temperature_aware_profiles_data_store'.
         
         
@@ -1800,16 +1832,16 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
             const int max_power_level_index_at_current_SOC_and_temperature,
             const double current_temperature_C,
             const double current_temperature_grad,
-            const double lower_bound_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
-            const double upper_bound_temperature_C
+            const double soft_lower_bound_battery_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
+            const double soft_upper_bound_battery_temperature_C
         ) -> int {
             // Approaching the max temperature threshold:
-            const double approaching_max_temp_threshold = lower_bound_temperature_C + (9.0/10.0)*(upper_bound_temperature_C - lower_bound_temperature_C);
-            const double approaching_min_temp_threshold = lower_bound_temperature_C + (8.0/9.0)*(upper_bound_temperature_C - lower_bound_temperature_C);
-            const double upper_gradient_threshold = (upper_bound_temperature_C - current_temperature_C)/60.0;
-            const double lower_gradient_threshold = (lower_bound_temperature_C - current_temperature_C)/60.0;
+            const double approaching_max_temp_threshold = soft_lower_bound_battery_temperature_C + (9.0/10.0)*(soft_upper_bound_battery_temperature_C - soft_lower_bound_battery_temperature_C);
+            const double approaching_min_temp_threshold = soft_lower_bound_battery_temperature_C + (8.0/9.0)*(soft_upper_bound_battery_temperature_C - soft_lower_bound_battery_temperature_C);
+            const double upper_gradient_threshold = (soft_upper_bound_battery_temperature_C - current_temperature_C)/60.0;
+            const double lower_gradient_threshold = (soft_lower_bound_battery_temperature_C - current_temperature_C)/60.0;
             if(
-                current_temperature_C >= upper_bound_temperature_C
+                current_temperature_C >= soft_upper_bound_battery_temperature_C
                 ||
                 ( current_temperature_C > approaching_max_temp_threshold && current_temperature_grad > upper_gradient_threshold )
             )
@@ -1818,7 +1850,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                 return std::min( std::max( current_power_level_index-7, 0 ), max_power_level_index_at_current_SOC_and_temperature );
             }
             else if(
-                current_temperature_C <= lower_bound_temperature_C
+                current_temperature_C <= soft_lower_bound_battery_temperature_C
                 ||
                 ( current_temperature_C < approaching_max_temp_threshold && current_temperature_grad < lower_gradient_threshold )
                 ||
@@ -1893,9 +1925,9 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
             const std::vector<double>& battery_SOC =                            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
             const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
             // THESE ARE STILL HARD-CODED FOR NOW. (TODO)
-            const double sim_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
+            const double sim_soft_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
                                                              //             the minimum allowed temperature; it's okay for the battery to be colder).
-            const double sim_upper_bound_battery_temperature_C = 49;
+            const double sim_soft_upper_bound_battery_temperature_C = 49;
 
             // ************************************************************************
             // ************************************************************************
@@ -1929,14 +1961,14 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
             const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
             
             // Loop over each pair of values in the matrix, and build the profile for each.
-            for( double start_temperature_C = min_start_temperature_C; start_temperature_C <= (max_start_temperature_C + 1e-8); start_temperature_C += vary_start_temperature_step_C )
+            for( double start_bat_temperature_C = min_start_battery_temperature_C; start_bat_temperature_C <= (max_start_battery_temperature_C + 1e-8); start_bat_temperature_C += vary_start_battery_temperature_step_C )
             {
                 for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += vary_start_SOC_step )
                 {
                     const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
                                                                                                 power_profiles_sorted_low_to_high,
                                                                                                 max_power_model,
-                                                                                                start_temperature_C,
+                                                                                                start_bat_temperature_C,
                                                                                                 start_soc );
                     
                     //  ----------------------------------------------------------------------
@@ -1957,7 +1989,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                             TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
                             ev_evse_pair.first == "bev300_400kW" &&
                             ev_evse_pair.second == "xfc_350" &&
-                            std::fabs( start_temperature_C - (-20.0 + jjjj*vary_start_temperature_step_C) ) < 1e-12 &&
+                            std::fabs( start_bat_temperature_C - (-20.0 + jjjj*vary_start_battery_temperature_step_C) ) < 1e-12 &&
                             std::fabs( start_soc - 6.0 ) < 1e-12
                         #else
                             false
@@ -1992,9 +2024,9 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                                                                             battery_capacity_kWh,                     // const double battery_capacity_kWh,
                                                                             start_soc,                                // const double start_soc,
                                                                             end_soc,                                  // const double end_soc,
-                                                                            start_temperature_C,                      // const double start_temperature_C,
-                                                                            sim_lower_bound_battery_temperature_C,    // const double lower_bound_temperature_C,
-                                                                            sim_upper_bound_battery_temperature_C,    // const double upper_bound_temperature_C,
+                                                                            start_bat_temperature_C,                      // const double start_bat_temperature_C,
+                                                                            sim_soft_lower_bound_battery_temperature_C,    // const double soft_lower_bound_battery_temperature_C,
+                                                                            sim_soft_upper_bound_battery_temperature_C,    // const double soft_upper_bound_battery_temperature_C,
                                                                             start_power_level_index,                  // const int start_power_level_index,
                                                                             time_step_sec*3,                          // const double update_power_level_delay_sec,
                                                                             tmp_output_filename_for_testing,          // const std::string output_file_name,
@@ -2003,8 +2035,8 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                                                                                                                    //               const int max_power_level_index_at_current_temperature,
                                                                                                                    //               const double current_temperature_C,
                                                                                                                    //               const double current_temperature_grad,
-                                                                                                                   //               const double lower_bound_temperature_C,
-                                                                                                                   //               const double upper_bound_temperature_C
+                                                                                                                   //               const double soft_lower_bound_battery_temperature_C,
+                                                                                                                   //               const double soft_upper_bound_battery_temperature_C
                                                                                                                    //           )> update_power_level_index_callback
                                                                         );
                     
@@ -2016,7 +2048,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                     {
                         std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
                         //std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
-                        std::cout << "    start_temperature_C:   " << start_temperature_C << std::endl;
+                        std::cout << "    start_bat_temperature_C:   " << start_bat_temperature_C << std::endl;
                         std::cout << "    start_soc:             " << start_soc << std::endl;
                         std::cout << "    ambient_temperature_C: " << ambient_temperature_C << std::endl;
                         std::cout << "    rounded_ambient_temperature_C: " << rounded_ambient_temperature_C << std::endl;
@@ -2048,7 +2080,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                     //  ----------------------------------------------------------------------------------------------------
                     //  Saving the profile in the 'temperature_aware::temperature_aware_profiles_data_store' data structure.
                     //  ----------------------------------------------------------------------------------------------------
-                    TAP_data_store.add( start_temperature_C, start_soc, socVsP2_temperature_aware );
+                    TAP_data_store.add( start_bat_temperature_C, start_soc, socVsP2_temperature_aware );
                 }
             }
             

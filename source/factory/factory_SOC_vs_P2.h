@@ -31,6 +31,8 @@ struct raw_tgrad_model_coeffs_data
     std::string tgradmodel_EV_type;
     double ambient_temperature_C_range_min;
     double ambient_temperature_C_range_max;
+    double soft_min_battery_temperature_C;
+    double soft_max_battery_temperature_C;
     double tgradmodel_c0_intercept;
     double tgradmodel_c1_power_kW;
     double tgradmodel_c2_temperature_C;
@@ -41,6 +43,8 @@ struct raw_tgrad_model_coeffs_data
         tgradmodel_EV_type(""),
         ambient_temperature_C_range_min(0.0),
         ambient_temperature_C_range_max(0.0),
+        soft_min_battery_temperature_C(0.0),
+        soft_max_battery_temperature_C(0.0),
         tgradmodel_c0_intercept(0.0),
         tgradmodel_c1_power_kW(0.0),
         tgradmodel_c2_temperature_C(0.0),
@@ -68,9 +72,12 @@ struct raw_ta_data_store
 {
     // Parameters for pre-computing all the curves.
     int n_curve_levels;
-    double min_start_temperature_C;
-    double max_start_temperature_C;
-    double vary_start_temperature_step_C;
+    double min_ambient_temperature_C;
+    double max_ambient_temperature_C;
+    double vary_ambient_temperature_step_C;
+    double min_start_battery_temperature_C;
+    double max_start_battery_temperature_C;
+    double vary_start_battery_temperature_step_C;
     double min_start_SOC;
     double max_start_SOC;
     double vary_start_SOC_step;
@@ -81,9 +88,12 @@ struct raw_ta_data_store
     
     raw_ta_data_store() :
         n_curve_levels(0),
-        min_start_temperature_C(0.0),
-        max_start_temperature_C(0.0),
-        vary_start_temperature_step_C(0.0),
+        min_ambient_temperature_C(0.0),
+        max_ambient_temperature_C(0.0),
+        vary_ambient_temperature_step_C(0.0),
+        min_start_battery_temperature_C(0.0),
+        max_start_battery_temperature_C(0.0),
+        vary_start_battery_temperature_step_C(0.0),
         min_start_SOC(0.0),
         max_start_SOC(0.0),
         vary_start_SOC_step(0.0),
