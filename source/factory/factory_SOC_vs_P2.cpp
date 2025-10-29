@@ -1693,9 +1693,8 @@ const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > 
 
 
 const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >&
-factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_scale_factor
-                                                       //, const double ambient_temperature_C
-                                                       , const raw_ta_data_store& ta_raw_data
+factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_scale_factor,
+                                                       const raw_ta_data_store& ta_raw_data
                                                    )
 {
     
@@ -1709,13 +1708,6 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     // ***************************************
     // TEMPORARY: FOR NOW SET THIS HERE.
     const double ambient_temperature_C = 26.0;  //19.0;     // <--- TODO: This needs to be loaded from an input file, for each charge event.
-    
-    ///// vvvv ALSO  NOTE THAT THESE (FURTHER BELOW) ARE ALSO HARD CODED!! 
-    //
-    // const double sim_soft_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
-    //                                                  //             the minimum allowed temperature; it's okay for the battery to be colder).
-    // const double sim_soft_upper_bound_battery_temperature_C = 49;
-    
     // ***************************************
     // ***************************************
     
@@ -1924,10 +1916,10 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
             const std::vector<double>& max_charging_power_kW_at_each_T_pts =    ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
             const std::vector<double>& battery_SOC =                            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
             const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
-            // THESE ARE STILL HARD-CODED FOR NOW. (TODO)
-            const double sim_soft_lower_bound_battery_temperature_C = 39; // <--- a.k.a. the temperature at which it's okay to heat up again (not actually
-                                                             //             the minimum allowed temperature; it's okay for the battery to be colder).
-            const double sim_soft_upper_bound_battery_temperature_C = 49;
+            // The temperatures at which it's okay to heat up again or cool down (not actually the minimum 
+            // or maximum allowed temperatures; it's okay for the battery to be colder or hotter).
+            const double sim_soft_lower_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_min_battery_temperature_C;
+            const double sim_soft_upper_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_max_battery_temperature_C;
 
             // ************************************************************************
             // ************************************************************************

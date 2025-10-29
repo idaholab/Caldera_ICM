@@ -193,9 +193,8 @@ private:
     const std::unordered_map< std::pair<EV_type, EVSE_type>, SOC_vs_P2, pair_hash > load_DCFC_curves( const double c_rate_scale_factor = 1.0 );
     
     const std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash >& load_temperature_aware_DCFC_curves( 
-                                                                                                                            const double max_c_rate_scale_factor
-                                                                                                                            //, const double ambient_temperature_C
-                                                                                                                            , const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
+                                                                                                                            const double max_c_rate_scale_factor,
+                                                                                                                            const raw_ta_data_store& ta_raw_data = raw_ta_data_store()
                                                                                                                         );
     
     
