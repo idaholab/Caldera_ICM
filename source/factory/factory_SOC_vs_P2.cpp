@@ -1763,10 +1763,14 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
     
     std::string data_store_identifier_key = generate_unique_key_string();
     
+    const bool PRINT_OUT_WHEN_BUILDING_TA_DATA = false;
+    
     // If what we want isn't already stored in the static variable, then we create it and store it
     // in the static variable.
     if( TA_DCFC_CURVES_CACHE.find( data_store_identifier_key ) == TA_DCFC_CURVES_CACHE.end() )
     {
+        if( PRINT_OUT_WHEN_BUILDING_TA_DATA ) std::cout << "Generating Temperature-aware profile data for key: " << data_store_identifier_key << std::endl;
+        
         std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > return_value;
     
         // For each (EV_type,EVSE_type) pair, we generate a matrix of 'SOC_vs_P2' profiles, one for each (start_bat_temperature_C,start_SOC) pair.
@@ -2086,6 +2090,8 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         
         // Save the value in the static variable.
         TA_DCFC_CURVES_CACHE.emplace( data_store_identifier_key, return_value );
+        
+        if( PRINT_OUT_WHEN_BUILDING_TA_DATA ) std::cout << "...Done." << std::endl;
     }
     
     // Return a reference to the value in the static variable.
