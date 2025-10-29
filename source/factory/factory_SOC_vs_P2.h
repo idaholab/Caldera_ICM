@@ -18,7 +18,8 @@ typedef double power;
 
 static std::map< std::string, std::unordered_map< std::pair<EV_type, EVSE_type>, temperature_aware::temperature_aware_profiles_data_store, pair_hash > > TA_DCFC_CURVES_CACHE;
 
-
+// Defined in 'inputs.h'.
+struct vehicle_charge_model_inputs;
 
 
 // ******
@@ -28,11 +29,19 @@ static std::map< std::string, std::unordered_map< std::pair<EV_type, EVSE_type>,
 
 struct raw_tgrad_model_coeffs_data
 {
+    // The name of the EV-type associated with this model.
     std::string tgradmodel_EV_type;
+    
+    // The range of ambient temperatures that this model is valid for:
     double ambient_temperature_C_range_min;
     double ambient_temperature_C_range_max;
+    
+    // The soft min and max battery temperature, at which point it's
+    // okay to either heat up or cool down (but not the absolute max or min)
     double soft_min_battery_temperature_C;
     double soft_max_battery_temperature_C;
+    
+    // The model coefficients.
     double tgradmodel_c0_intercept;
     double tgradmodel_c1_power_kW;
     double tgradmodel_c2_temperature_C;
@@ -208,9 +217,13 @@ public:
 
     const SOC_vs_P2& get_SOC_vs_P2_curves( const EV_type& EV, 
                                            const EVSE_type& EVSE,
+                                           const double charge_event_ambient_temperature_C,
                                            const double charge_start_battery_temperature_C,
                                            const double charge_start_SOC    // <-- In percent a.k.a. 45% SOC is 45.0.
                                       ) const;
+    
+    // For convenience, this one will unpack the values from 'inputs' for you.
+    const SOC_vs_P2& get_SOC_vs_P2_curves( const vehicle_charge_model_inputs& inputs ) const;
 
     void write_charge_profile(const std::string& output_path) const;
 };

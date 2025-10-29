@@ -471,8 +471,8 @@ struct stop_charging_criteria
 std::ostream& operator<<(std::ostream& out, const stop_charging_criteria& x);
 
 
-
-#define DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C 26.0
+#define DEFAULT_AMBIENT_TEMPERATURE_C 19.0            // <--- TODO: This needs to be loaded from an input file, for each charge event.
+#define DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C 26.0    // <--- TODO: This needs to be loaded from an input file, for each charge event.
 
 struct charge_event_data
 {
@@ -486,6 +486,7 @@ struct charge_event_data
     double departure_unix_time;  // in seconds
     double arrival_SOC;          // in percent (for 50%, this will be 50.0)
     double departure_SOC;        // in percent (for 50%, this will be 50.0)
+    double ambient_temperature_C;         // To be used in temperature-aware profiles.
     double arrival_battery_temperature_C; // To be used in temperature-aware profiles.
     stop_charging_criteria stop_charge;
     
@@ -502,7 +503,9 @@ struct charge_event_data
             departure_unix_time(0.0),
             arrival_SOC(0.0),
             departure_SOC(0.0),
-            arrival_battery_temperature_C(DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C) {};
+            ambient_temperature_C(DEFAULT_AMBIENT_TEMPERATURE_C),
+            arrival_battery_temperature_C(DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C)
+    {};
     
     charge_event_data( int charge_event_id_,
                        int SE_group_id_,

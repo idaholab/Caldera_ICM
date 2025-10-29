@@ -515,48 +515,74 @@ struct temperature_aware_profiles_data_store
 {
     public:
     
+    std::vector< double > ambient_temperature_C_vec; // in Celsius
     std::vector< double > start_battery_temperature_C_vec; // in Celsius
     std::vector< double > start_soc_vec;   // in 0 to 100 format.
-    std::map< std::pair< double, double >, SOC_vs_P2 > temperatureSOCpair_to_power_profile_map;
+    std::map< std::tuple< double, double, double >, SOC_vs_P2 > temperatureSOCpair_to_power_profile_map;
     
     temperature_aware_profiles_data_store() {}
     
-    void add( const double start_battery_temperature_C, const double start_soc, const SOC_vs_P2& profile )
+    void add( const double ambient_temperature_C,
+              const double start_battery_temperature_C,
+              const double start_soc,
+              const SOC_vs_P2& profile )
     {
-        temperatureSOCpair_to_power_profile_map.emplace( std::make_pair(start_battery_temperature_C,start_soc), profile );
-        
-        // Insert the temperature and SOC for key-look-up.
+        const std::tuple< double, double, double > key = std::make_tuple(ambient_temperature_C,start_battery_temperature_C,start_soc);
+        if( temperatureSOCpair_to_power_profile_map.find( key ) != temperatureSOCpair_to_power_profile_map.end() )
+        {
+            // Throw an error becasue we should only be adding keys not already in the map.
+            std::cout << "ERROR: adding key that is already in the map." << std::endl;
+            exit(1);
+        }
+        temperatureSOCpair_to_power_profile_map.emplace( key, profile );
+            
+        // Insert the ambient temperature, battery temperature, and SOC for key-look-up.
+        ambient_temperature_C_vec.push_back(ambient_temperature_C);
         start_battery_temperature_C_vec.push_back(start_battery_temperature_C);
         start_soc_vec.push_back(start_soc);
         
         // Sort the vectors to ensure they remain in ascending order.
+        std::sort(ambient_temperature_C_vec.begin(), ambient_temperature_C_vec.end());
         std::sort(start_battery_temperature_C_vec.begin(), start_battery_temperature_C_vec.end());
         std::sort(start_soc_vec.begin(), start_soc_vec.end());    
     }
     
     // Checks to be sure the data store is 'complete', a.k.a. it has a profile
-    // for every possible pair in (start_battery_temperature_C_vec x start_soc_vec).
+    // for every possible pair in (selected_ambient_temperature_C x start_battery_temperature_C_vec x start_soc_vec).
     bool complete()
     {
-        for( const double temperature : start_battery_temperature_C_vec )
+        for( const double amb_temperature : ambient_temperature_C_vec )
         {
-            for( const double soc : start_soc_vec )
+            for( const double bat_temperature : start_battery_temperature_C_vec )
             {
-                if( temperatureSOCpair_to_power_profile_map.find( std::make_pair(temperature,soc) ) == temperatureSOCpair_to_power_profile_map.end() )
+                for( const double soc : start_soc_vec )
                 {
-                    return false;
+                    const std::tuple< double, double, double > key = std::make_tuple(amb_temperature,bat_temperature,soc);
+                    if( temperatureSOCpair_to_power_profile_map.find( key ) == temperatureSOCpair_to_power_profile_map.end() )
+                    {
+                        return false;
+                    }
                 }
             }
         }
         return true;
     }
     
-    // TODO: This needs to pass in both start temperature and ambient temperature in the look-up.
-    //
-    const SOC_vs_P2& lookup_profile( const double start_battery_temperature_C, const double start_soc ) const
+    const SOC_vs_P2& lookup_profile( const double ambient_temperature_C,
+                                     const double start_battery_temperature_C,
+                                     const double start_soc ) const
     {
-        // Find the profile whose starting temperature is nearest to 'start_battery_temperature_C'
-        // and whose starting SOC is nearest to 'start_soc'.
+        // Find the profile whose
+        // * ambient temperature is nearest to 'ambient_temperature_C'
+        // * starting temperature is nearest to 'start_battery_temperature_C'
+        // * starting SOC is nearest to 'start_soc'.
+        auto nearest_ambient_temperature_iterator = std::min_element(
+            this->ambient_temperature_C_vec.begin(),
+            this->ambient_temperature_C_vec.end(),
+            [ambient_temperature_C] ( const double a, const double b ) {
+                return std::abs(a - ambient_temperature_C) < std::abs(b - ambient_temperature_C);
+            }
+        );
         auto nearest_bat_temperature_iterator = std::min_element(
             this->start_battery_temperature_C_vec.begin(),
             this->start_battery_temperature_C_vec.end(),
@@ -571,7 +597,9 @@ struct temperature_aware_profiles_data_store
                 return std::abs(a - start_soc) < std::abs(b - start_soc);
             }
         );
-        if( nearest_bat_temperature_iterator == this->start_battery_temperature_C_vec.end() || nearest_soc_iterator == this->start_soc_vec.end() )
+        if(    nearest_ambient_temperature_iterator == this->ambient_temperature_C_vec.end()
+            || nearest_bat_temperature_iterator == this->start_battery_temperature_C_vec.end()
+            || nearest_soc_iterator == this->start_soc_vec.end() )
         {
             // ERROR
             std::cout << "ERROR finding nearest in 'temperature_aware_profiles_data_store::lookup_profile'" << std::endl;
@@ -579,11 +607,13 @@ struct temperature_aware_profiles_data_store
         }
         
         // Get the key values
+        const double nearest_ambient_temperature_C = *nearest_ambient_temperature_iterator;
         const double nearest_bat_temperature_C = *nearest_bat_temperature_iterator;
         const double nearest_soc = *nearest_soc_iterator;
         
         // Return the profile.
-        return temperatureSOCpair_to_power_profile_map.at( std::make_pair(nearest_bat_temperature_C,nearest_soc) );
+        const std::tuple< double, double, double > key = std::make_tuple(nearest_ambient_temperature_C,nearest_bat_temperature_C,nearest_soc);
+        return temperatureSOCpair_to_power_profile_map.at( key );
     }
     
     void write_to_file( std::ostream& fout ) const
