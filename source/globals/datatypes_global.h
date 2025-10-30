@@ -488,8 +488,8 @@ struct charge_event_data
     double departure_SOC;        // in percent (for 50%, this will be 50.0)
     double ambient_temperature_C;         // To be used in temperature-aware profiles.
     double arrival_battery_temperature_C; // To be used in temperature-aware profiles.
-    stop_charging_criteria stop_charge;
     
+    stop_charging_criteria stop_charge;
     control_strategy_enums control_enums;
 
     charge_event_data() :
@@ -557,7 +557,7 @@ struct SE_group_charge_event_data
 };
 
 
-//=====================================
+//------------------------------------
 
 
 enum class queuing_mode_enum

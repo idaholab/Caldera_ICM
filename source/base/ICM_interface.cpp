@@ -657,3 +657,104 @@ void interface_to_SE_groups::ES500_set_energy_setpoints(ES500_aggregator_e_step_
     }
 }
 
+
+
+std::vector<charge_event_data> interface_to_SE_groups::get_charge_events( const std::string& CE_file_path,  
+                                                                          const std::string& SE_file_path,
+                                                                          const control_strategy_enums control_enums,
+                                                                          const stop_charging_criteria scc )
+{
+    // Get the 'SE_id_to_SE_group_id_map'.
+    const std::unordered_map<int, int> SE_id_to_SE_group_id_map = [&SE_file_path] () -> std::unordered_map<int, int> {
+        std::ifstream file(SE_file_path);
+        std::string line, header, token;
+        std::unordered_map<int, int> seMap;
+
+        // Read the header line
+        std::getline(file, header);
+
+        while (std::getline(file, line)) {
+            std::istringstream ss(line);
+            int se_id, se_group;
+
+            // Read SE_id
+            std::getline(ss, token, ',');
+            se_id = std::stoi(token);
+
+            // Skip other columns until SE_group
+            for (int i = 0; i < 4; ++i) {
+                std::getline(ss, token, ',');
+            }
+
+            // Read SE_group
+            std::getline(ss, token, ',');
+            se_group = std::stoi(token);
+
+            // Insert into the map
+            seMap[se_id] = se_group;
+        }
+        return seMap;
+    }();
+
+    const std::vector<charge_event_data> data = [&] () -> std::vector<charge_event_data> {
+        std::vector<std::string> tokens;
+        tokens.reserve(13);
+        
+        std::vector<charge_event_data> data;
+        std::ifstream file(CE_file_path);
+        std::string line;
+
+        // Skip the header
+        std::getline(file, line);
+
+        while (std::getline(file, line)) {
+
+            tokens.clear();
+            std::istringstream ss(line);
+            std::string item;
+        
+            while( std::getline(ss, item, ',') )
+            {
+                tokens.push_back(std::move(item));
+            }
+
+            if (tokens.size() == 13)
+            {
+                int charge_event_id = std::stoi(tokens[0]);
+                int SE_id = std::stoi(tokens[1]);
+                int SE_group_id = SE_id_to_SE_group_id_map.at(SE_id);
+                int PEV_id = std::stoi(tokens[2]);
+                std::string PEV_type = tokens[3];
+                double arrival_unix_time = std::stod(tokens[4])*3600;
+                double departure_unix_time = std::stod(tokens[6])*3600;
+                double arrival_SOC = std::stod(tokens[8]) * 100;
+                double departure_SOC = std::stod(tokens[9]) * 100;
+
+                data.emplace_back(
+                    charge_event_id,
+                    SE_group_id,
+                    SE_id,
+                    PEV_id,
+                    PEV_type,
+                    arrival_unix_time,
+                    departure_unix_time,
+                    arrival_SOC,
+                    departure_SOC,
+                    scc,
+                    control_enums
+                );
+            }
+            else
+            {
+                std::cerr << "CE file has columns not equal to 13." << std::endl;
+                exit(1);
+            }
+        }
+        
+        return data;
+    }();
+    
+    std::cout <<  "Number of charge events loaded: " << data.size() << std::endl;
+    return data;
+}
+

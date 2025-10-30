@@ -490,6 +490,7 @@ charge_event_data::charge_event_data( int charge_event_id_,
     this->departure_unix_time = departure_unix_time_;
     this->arrival_SOC = arrival_SOC_;
     this->departure_SOC = departure_SOC_;
+    this->ambient_temperature_C = DEFAULT_AMBIENT_TEMPERATURE_C;
     this->arrival_battery_temperature_C = DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C;
     this->stop_charge = stop_charge_;
     this->control_enums = control_enums_;
