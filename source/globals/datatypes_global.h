@@ -471,8 +471,8 @@ struct stop_charging_criteria
 std::ostream& operator<<(std::ostream& out, const stop_charging_criteria& x);
 
 
-#define DEFAULT_AMBIENT_TEMPERATURE_C 19.0            // <--- TODO: This needs to be loaded from an input file, for each charge event.
-#define DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C 26.0    // <--- TODO: This needs to be loaded from an input file, for each charge event.
+#define DEFAULT_AMBIENT_TEMPERATURE_C 19.0
+#define DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C 26.0
 
 struct charge_event_data
 {

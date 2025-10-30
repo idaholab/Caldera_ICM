@@ -661,6 +661,9 @@ void interface_to_SE_groups::ES500_set_energy_setpoints(ES500_aggregator_e_step_
 
 std::vector<charge_event_data> interface_to_SE_groups::get_charge_events( const std::string& CE_file_path,  
                                                                           const std::string& SE_file_path,
+                                                                          #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                                          const std::string& TA_CE_file_path,
+                                                                          #endif
                                                                           const control_strategy_enums control_enums,
                                                                           const stop_charging_criteria scc )
 {
@@ -695,6 +698,51 @@ std::vector<charge_event_data> interface_to_SE_groups::get_charge_events( const 
         }
         return seMap;
     }();
+    
+    #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+    const std::map< int, std::pair<double,double> > charge_event_id_to_ambientTinitialBatT_pair = [&] () -> std::map< int, std::pair<double,double> > {
+        std::vector<std::string> tokens;
+        tokens.reserve(3);
+        
+        std::map< int, std::pair<double,double> > ceid_to_ambInitTpair;
+        std::ifstream file(TA_CE_file_path);
+        std::string line;
+
+        // Skip the header
+        std::getline(file, line);
+
+        while (std::getline(file, line)) {
+
+            tokens.clear();
+            std::istringstream ss(line);
+            std::string item;
+        
+            while( std::getline(ss, item, ',') )
+            {
+                tokens.push_back(std::move(item));
+            }
+
+            // Header:
+            // charge_event_id,ambient_temperature_C,initial_battery_temperature_C
+
+            if (tokens.size() == 3)
+            {
+                int charge_event_id = std::stoi(tokens[0]);
+                double ambient_temperature_C = std::stod(tokens[1]);
+                double initial_battery_temperature_C = std::stod(tokens[2]);
+                
+                ceid_to_ambInitTpair[ charge_event_id ] = std::make_pair( ambient_temperature_C, initial_battery_temperature_C );
+            }
+            else
+            {
+                std::cerr << "Error: TA_CE file does not have 3 columns." << std::endl;
+                exit(1);
+            }
+        }
+        
+        return ceid_to_ambInitTpair;
+    }();
+    #endif
 
     const std::vector<charge_event_data> data = [&] () -> std::vector<charge_event_data> {
         std::vector<std::string> tokens;
@@ -730,7 +778,7 @@ std::vector<charge_event_data> interface_to_SE_groups::get_charge_events( const 
                 double arrival_SOC = std::stod(tokens[8]) * 100;
                 double departure_SOC = std::stod(tokens[9]) * 100;
 
-                data.emplace_back(
+                charge_event_data ced(
                     charge_event_id,
                     SE_group_id,
                     SE_id,
@@ -743,10 +791,23 @@ std::vector<charge_event_data> interface_to_SE_groups::get_charge_events( const 
                     scc,
                     control_enums
                 );
+                
+                #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                if( charge_event_id_to_ambientTinitialBatT_pair.find( charge_event_id ) == charge_event_id_to_ambientTinitialBatT_pair.end() )
+                {
+                    std::cerr << "Error: charge_event_id not found in the TE_CE file." << std::endl;
+                    exit(1);
+                }
+                ced.ambient_temperature_C = charge_event_id_to_ambientTinitialBatT_pair.at(charge_event_id).first;
+                ced.arrival_battery_temperature_C = charge_event_id_to_ambientTinitialBatT_pair.at(charge_event_id).second;
+                //std::cout << "loaded TA data:  ced.ambient_temperature_C, ced.arrival_battery_temperature_C: " << ced.ambient_temperature_C << ",    " << ced.arrival_battery_temperature_C << std::endl;
+                #endif
+
+                data.push_back(ced);
             }
             else
             {
-                std::cerr << "CE file has columns not equal to 13." << std::endl;
+                std::cerr << "Error: CE file does not have 13 columns." << std::endl;
                 exit(1);
             }
         }

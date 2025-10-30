@@ -97,8 +97,11 @@ public:
     ES500_aggregator_charging_needs ES500_get_charging_needs(double unix_time_now, double unix_time_begining_of_next_agg_step);                
     void ES500_set_energy_setpoints(ES500_aggregator_e_step_setpoints pev_energy_setpoints);  
 
-    static std::vector<charge_event_data> get_charge_events( const std::string& CE_file_path,  
+    static std::vector<charge_event_data> get_charge_events( const std::string& CE_file_path, 
                                                              const std::string& SE_file_path,
+                                                             #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
+                                                             const std::string& TA_CE_file_path,
+                                                             #endif
                                                              const control_strategy_enums control_enums,
                                                              const stop_charging_criteria scc );
 };
