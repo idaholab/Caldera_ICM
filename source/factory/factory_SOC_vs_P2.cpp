@@ -1969,21 +1969,22 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                         //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
                         //  ----------------------------------------------------------------------
                         #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                        const int jjjj = 6;
+                        const int jjjj = 1; // <--- index of ambient temperature value to look at.
+                        const int kkkk = 6; // <--- index of start_bat_temperature value to look at.
+                        const int llll = 1; // <--- index of start_soc value to look at
                         #endif
                         const bool CONDITIONS_FOR_TESTING_OUTPUT = (
                             #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
                                 TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
                                 ev_evse_pair.first == "bev300_400kW" &&
                                 ev_evse_pair.second == "xfc_350" &&
-                                std::fabs( start_bat_temperature_C - (-20.0 + jjjj*vary_start_battery_temperature_step_C) ) < 1e-12 &&
-                                std::fabs( start_soc - 6.0 ) < 1e-12
+                                std::fabs( selected_ambient_temperature_C - (min_ambient_temperature_C + jjjj*vary_ambient_temperature_step_C) ) < 1e-12 &&
+                                std::fabs( start_bat_temperature_C - (min_start_battery_temperature_C + kkkk*vary_start_battery_temperature_step_C) ) < 1e-12 &&
+                                std::fabs( start_soc - (min_start_SOC + llll*vary_start_SOC_step) ) < 1e-12
                             #else
                                 false
                             #endif
                         );
-                        // ( ev_evse_pair.first == "bev150_ld1_50kW" && ev_evse_pair.second == "xfc_350" )
-                        
                         
                         //  ----------------------------------------------------------------------
                         //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
@@ -1992,7 +1993,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                             #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
                             if( CONDITIONS_FOR_TESTING_OUTPUT )
                             {
-                                return std::string("TAP_TEMPORARY_output_for_testing.csv");
+                                return std::string("TAP_FOR_TESTING_temp_aware_sim_details.csv");
                             }
                             else
                             {
@@ -2034,16 +2035,14 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                         if( CONDITIONS_FOR_TESTING_OUTPUT )
                         {
                             std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
-                            //std::cout << "    Result 'socVsP2_temperature_aware': " << socVsP2_temperature_aware << std::endl;
+                            std::cout << "    selected_ambient_temperature_C: " << selected_ambient_temperature_C << std::endl;
                             std::cout << "    start_bat_temperature_C:   " << start_bat_temperature_C << std::endl;
                             std::cout << "    start_soc:             " << start_soc << std::endl;
-                            std::cout << "    ambient_temperature_C: " << ambient_temperature_C << std::endl;
-                            std::cout << "    selected_ambient_temperature_C: " << selected_ambient_temperature_C << std::endl;
                             std::cout << "" << std::endl;
                             //
                             // Plot these results to see if you think it's doing it right!!
                             //
-                            const std::string file_name = "TEMPORARY_output_for_testing.csv";
+                            const std::string file_name = "TAP_FOR_TESTING_powerkW_vs_soc_data.csv";
                             std::ofstream opfile;
                             opfile.open(file_name);
                             opfile << "soc,power_kW" << std::endl;
@@ -2060,7 +2059,7 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
 
                             // I do this to stop running after the files are written.
                             // If 'TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING' is true, remember this part:
-                            // std::cout << "stopping." << std::endl; __builtin_debugtrap();
+                            //std::cout << "stopping." << std::endl; __builtin_debugtrap();
                         }
                         #endif
                         

@@ -316,11 +316,11 @@ class TemperatureAwareProfiles
                                                                const double start_soc,
                                                                const double end_soc,
                                                                const double start_battery_temperature_C,
-                                                               const double soft_lower_bound_battery_temperature_C, // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
+                                                               const double soft_lower_bound_battery_temperature_C,  // <--- a.k.a. the temperature at which it's okay to heat up again (it's okay for the battery to be colder than this).
                                                                const double soft_upper_bound_battery_temperature_C,
                                                                const int start_power_level_index,
                                                                const double update_power_level_delay_sec,
-                                                               const std::string output_file_name,
+                                                               const std::string optional_output_file_name_for_testing,  // <--- Just set to an empty-string if not needed.
                                                                std::function<int(
                                                                              const int current_power_level_index,
                                                                              const int max_power_level_index_at_current_temperature,
@@ -422,9 +422,9 @@ class TemperatureAwareProfiles
         // -----------------------------------------------
         // Write the results to disk so we can look at it.
         // -----------------------------------------------
-        if( output_file_name != std::string("") )
+        if( optional_output_file_name_for_testing != std::string("") )
         {
-            std::ofstream fout(output_file_name);
+            std::ofstream fout(optional_output_file_name_for_testing);
             std::string header = "time_sec,soc,power_kW,temperature_C,temperature_grad_dTdt";
             fout << header << std::endl;
             for( int i = 0; i < time_sec_vec.size(); i++ )
