@@ -246,7 +246,7 @@ pev_charge_fragment::pev_charge_fragment(double soc_, double E1_kWh_, double E2_
 //------------------------------------------------------------------
 
 
-bool L2_control_strategy_supports_Vrms_using_QkVAR(L2_control_strategies_enum  control_strategy)
+bool L2_control_strategy_supports_Vrms_using_QkVAR( const L2_control_strategies_enum control_strategy )
 {
     bool return_val = false;
     
@@ -270,7 +270,7 @@ bool L2_control_strategy_supports_Vrms_using_QkVAR(L2_control_strategies_enum  c
 }
 
 
-std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const std::string str_val)
+std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum( const std::string str_val )
 {
     bool conversion_successfull = true;
     L2_control_strategies_enum enum_val;
@@ -308,7 +308,7 @@ std::pair<bool, L2_control_strategies_enum> get_L2_control_strategies_enum(const
 }
 
 
-bool is_L2_ES_control_strategy(L2_control_strategies_enum control_strategy_enum)
+bool is_L2_ES_control_strategy( const L2_control_strategies_enum control_strategy_enum )
 {
     std::vector<L2_control_strategies_enum> ES_strategies = {
         L2_control_strategies_enum::ES100_A,
@@ -383,7 +383,10 @@ bool ES500_aggregator_e_step_setpoints::is_empty()
 }
 
 
-ES500_aggregator_e_step_setpoints::ES500_aggregator_e_step_setpoints(double next_aggregator_timestep_start_time_, std::vector<SupplyEquipmentId> SE_id_, std::vector<double> e3_step_kWh_, std::vector<double> charge_progression_)
+ES500_aggregator_e_step_setpoints::ES500_aggregator_e_step_setpoints( const double next_aggregator_timestep_start_time_,
+                                                                      const std::vector<SupplyEquipmentId> SE_id_,
+                                                                      const std::vector<double> e3_step_kWh_,
+                                                                      const std::vector<double> charge_progression_ )
 {
     this->next_aggregator_timestep_start_time = next_aggregator_timestep_start_time_;
     this->SE_id = SE_id_;
@@ -423,7 +426,11 @@ std::ostream& operator<<(std::ostream& out, const stop_charging_mode& x)
 
 std::ostream& operator<<(std::ostream& out, const stop_charging_criteria& x)
 {
-    out << x.decision_metric << "," << x.soc_mode << "," << x.depart_time_mode << "," << x.soc_block_charging_max_undershoot_percent << "," << x.depart_time_block_charging_max_undershoot_percent;
+    out << x.decision_metric << ","
+        << x.soc_mode << ","
+        << x.depart_time_mode << ","
+        << x.soc_block_charging_max_undershoot_percent << ","
+        << x.depart_time_block_charging_max_undershoot_percent;
     return out;
 }
 
@@ -436,7 +443,16 @@ std::string stop_charging_criteria::get_file_header()
 
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x)
 {
-    out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
+    out << x.charge_event_id << ","
+        << x.SE_group_id << ","
+        << x.SE_id << ","
+        << x.vehicle_id << ","
+        << x.vehicle_type << ","
+        << x.arrival_unix_time << ","
+        << x.departure_unix_time << ","
+        << x.arrival_SOC << ","
+        << x.departure_SOC << ","
+        << x.stop_charge;
     return out;
 }
 
@@ -446,7 +462,7 @@ std::string charge_event_data::get_file_header()
     return "charge_event_id,SE_group_id,SE_id,vehicle_id,vehicle_type,arrival_unix_time,departure_unix_time,arrival_SOC,departure_SOC," + stop_charging_criteria::get_file_header();
 }
 
-    
+
 stop_charging_criteria::stop_charging_criteria()
 {
     this->decision_metric = stop_charging_decision_metric::stop_charging_using_whatever_happens_first;
@@ -457,7 +473,11 @@ stop_charging_criteria::stop_charging_criteria()
 }
 
 
-stop_charging_criteria::stop_charging_criteria(stop_charging_decision_metric decision_metric_, stop_charging_mode soc_mode_, stop_charging_mode depart_time_mode_, double soc_block_charging_max_undershoot_percent_, double depart_time_block_charging_max_undershoot_percent_)
+stop_charging_criteria::stop_charging_criteria( const stop_charging_decision_metric decision_metric_,
+                                                const stop_charging_mode soc_mode_,
+                                                const stop_charging_mode depart_time_mode_,
+                                                const double soc_block_charging_max_undershoot_percent_,
+                                                const double depart_time_block_charging_max_undershoot_percent_ )
 {
     this->decision_metric = decision_metric_;
     this->soc_mode = soc_mode_;
