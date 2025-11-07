@@ -1280,7 +1280,6 @@ factory_SOC_vs_P2::factory_SOC_vs_P2(
     DCFC_curves{ this->load_DCFC_curves( c_rate_scale_factor ) }
 #if TURN_ON_TEMPERATURE_AWARE_PROFILE_TESTING
     , TA_DCFC_curves{ this->load_temperature_aware_DCFC_curves( c_rate_scale_factor  // const double max_c_rate_scale_factor,
-                                                                //, 21.0             // const double ambient_temperature_C
                                                                 , ta_raw_data        // const raw_ta_data_store ta_raw_data
                                                                 ) }
 #endif

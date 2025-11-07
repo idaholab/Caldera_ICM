@@ -518,7 +518,7 @@ struct temperature_aware_profiles_data_store
     std::vector< double > ambient_temperature_C_vec; // in Celsius
     std::vector< double > start_battery_temperature_C_vec; // in Celsius
     std::vector< double > start_soc_vec;   // in 0 to 100 format.
-    std::map< std::tuple< double, double, double >, SOC_vs_P2 > temperatureSOCpair_to_power_profile_map;
+    std::map< std::tuple< double, double, double >, SOC_vs_P2 > ambT_batT_SOC_tuple_to_power_profile_map;
     
     temperature_aware_profiles_data_store() {}
     
@@ -528,13 +528,13 @@ struct temperature_aware_profiles_data_store
               const SOC_vs_P2& profile )
     {
         const std::tuple< double, double, double > key = std::make_tuple(ambient_temperature_C,start_battery_temperature_C,start_soc);
-        if( temperatureSOCpair_to_power_profile_map.find( key ) != temperatureSOCpair_to_power_profile_map.end() )
+        if( ambT_batT_SOC_tuple_to_power_profile_map.find( key ) != ambT_batT_SOC_tuple_to_power_profile_map.end() )
         {
             // Throw an error becasue we should only be adding keys not already in the map.
             std::cout << "ERROR: adding key that is already in the map." << std::endl;
             exit(1);
         }
-        temperatureSOCpair_to_power_profile_map.emplace( key, profile );
+        ambT_batT_SOC_tuple_to_power_profile_map.emplace( key, profile );
             
         // Insert the ambient temperature, battery temperature, and SOC for key-look-up.
         ambient_temperature_C_vec.push_back(ambient_temperature_C);
@@ -558,7 +558,7 @@ struct temperature_aware_profiles_data_store
                 for( const double soc : start_soc_vec )
                 {
                     const std::tuple< double, double, double > key = std::make_tuple(amb_temperature,bat_temperature,soc);
-                    if( temperatureSOCpair_to_power_profile_map.find( key ) == temperatureSOCpair_to_power_profile_map.end() )
+                    if( ambT_batT_SOC_tuple_to_power_profile_map.find( key ) == ambT_batT_SOC_tuple_to_power_profile_map.end() )
                     {
                         return false;
                     }
@@ -613,22 +613,252 @@ struct temperature_aware_profiles_data_store
         
         // Return the profile.
         const std::tuple< double, double, double > key = std::make_tuple(nearest_ambient_temperature_C,nearest_bat_temperature_C,nearest_soc);
-        return temperatureSOCpair_to_power_profile_map.at( key );
+        return ambT_batT_SOC_tuple_to_power_profile_map.at( key );
     }
     
     void write_to_file( std::ostream& fout ) const
     {
-        // TODO - UNDER CONSTRUCTION
-        std::cout << "UNDER CONSTRUCTION" << std::endl;
-        exit(1);
+        fout << "temperature_aware_profiles_data_store,n_ambient_temperature_values,n_start_battery_temperature_values,n_start_soc_values,"
+             << this->ambient_temperature_C_vec.size() << ","
+             << this->start_battery_temperature_C_vec.size() << ","
+             << this->start_soc_vec.size() << std::endl;
+        for (int i = 0; i < this->ambient_temperature_C_vec.size(); i++)
+        {
+            fout << std::setprecision(16) << this->ambient_temperature_C_vec.at(i) << std::endl;
+        }
+        for (int i = 0; i < this->start_battery_temperature_C_vec.size(); i++)
+        {
+            fout << std::setprecision(16) << this->start_battery_temperature_C_vec.at(i) << std::endl;
+        }
+        for (int i = 0; i < this->start_soc_vec.size(); i++)
+        {
+            fout << std::setprecision(16) << this->start_soc_vec.at(i) << std::endl;
+        }
+        fout << "temperature_aware_profiles_data_store,n_SOC_vs_P2_objects," << this->ambT_batT_SOC_tuple_to_power_profile_map.size() << std::endl;
+        for( const auto& dddtuple_SOCvsP2obj_pair : this->ambT_batT_SOC_tuple_to_power_profile_map )
+        {
+            fout << "SOC_vs_P2,ambientT,batteryT,SOC," << std::setprecision(16)
+                 << std::get<0>(dddtuple_SOCvsP2obj_pair.first) << ","
+                 << std::get<1>(dddtuple_SOCvsP2obj_pair.first) << "," 
+                 << std::get<2>(dddtuple_SOCvsP2obj_pair.first) << std::endl;
+            dddtuple_SOCvsP2obj_pair.second.write_to_file( fout );
+        }
+    }
+    
+    void load_from_file( std::istream& fin )
+    {
+        // --- helper function ---
+        auto trim = [&] ( const std::string& s ) -> std::string {
+            size_t first = s.find_first_not_of(" \t\n\r\f\v");
+            if (first == std::string::npos) {
+                return "";
+            }
+            size_t last = s.find_last_not_of(" \t\n\r\f\v");
+            return s.substr(first, last - first + 1);
+        };
+        
+        // **************************************************************
+        // Read the lines with the number of values for each vector.
+        // **************************************************************
+        
+        const std::tuple<int,int,int> nAmbTempVals__nStBatTempVals__nStSOCVals__tuple = [&] () -> std::tuple<int,int,int> {
+            std::string line;
+            std::getline(fin, line);
+            
+            // Tokenize the line.
+            std::stringstream ss;
+            ss << trim(line);
+            std::vector<std::string> tokens;
+            std::string temp_str;
+            while(getline(ss, temp_str, ','))
+            {
+                tokens.push_back(trim(temp_str));
+            }
+                        
+            // Check that we have the right number of tokens.
+            if( tokens.size() != 7 )
+            {
+                std::cout << "Error. Not the right number of tokens! [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                exit(1);
+            }
+
+            std::string temperature_aware_profiles_data_store_str;
+            std::string n_ambient_temperature_values_str;
+            std::string n_start_battery_temperature_values_str;
+            std::string n_start_soc_values_str;
+            int n_ambient_temperature_values;
+            int n_start_battery_temperature_values;
+            int n_start_soc_values;
+
+            int collected_tokens_count = 0;
+            int k = -1;
+            k++; if( k < tokens.size() ) { temperature_aware_profiles_data_store_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_ambient_temperature_values_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_start_battery_temperature_values_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_start_soc_values_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_ambient_temperature_values = std::atoi(tokens.at(k).c_str()); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_start_battery_temperature_values = std::atoi(tokens.at(k).c_str()); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_start_soc_values = std::atoi(tokens.at(k).c_str()); collected_tokens_count++; }
+            
+            if( collected_tokens_count != 7 )
+            {
+                std::cout << "Error. Incorrect number of tokens collected. [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                exit(1);
+            }
+            
+            return std::make_tuple( n_ambient_temperature_values, n_start_battery_temperature_values, n_start_soc_values );
+        }();
+        const int n_ambient_temperature_values       = std::get<0>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
+        const int n_start_battery_temperature_values = std::get<1>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
+        const int n_start_soc_values                 = std::get<2>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
+        
+        
+        
+        // ****************************************
+        // Read the data for the three vectors.
+        // ****************************************
+        
+        for( int i = 0; i < n_ambient_temperature_values; i++ )
+        {
+            std::string line;
+            std::getline(fin, line);
+            const double value = std::stod(line);
+            this->ambient_temperature_C_vec.push_back(value);
+        }
+        for( int i = 0; i < n_start_battery_temperature_values; i++ )
+        {
+            std::string line;
+            std::getline(fin, line);
+            const double value = std::stod(line);
+            this->start_battery_temperature_C_vec.push_back(value);
+        }
+        for( int i = 0; i < n_start_soc_values; i++ )
+        {
+            std::string line;
+            std::getline(fin, line);
+            const double value = std::stod(line);
+            this->start_soc_vec.push_back(value);
+        }
+        
+        
+        
+        // ****************************************
+        // Read the line with 'n_SOC_vs_P2_objects'
+        // ****************************************
+        
+        const int n_SOC_vs_P2_objects = [&] () -> int {
+            std::string line;
+            std::getline(fin, line);
+            
+            // Tokenize the line.
+            std::stringstream ss;
+            ss << trim(line);
+            std::vector<std::string> tokens;
+            std::string temp_str;
+            while(getline(ss, temp_str, ','))
+            {
+                tokens.push_back(trim(temp_str));
+            }
+                        
+            // Check that we have the right number of tokens.
+            if( tokens.size() != 3 )
+            {
+                std::cout << "Error. Not the right number of tokens! [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                exit(1);
+            }
+
+            std::string temperature_aware_profiles_data_store_str;
+            std::string n_SOC_vs_P2_objects_str;
+            int n_SOC_vs_P2_objects;
+
+            int collected_tokens_count = 0;
+            int k = -1;
+            k++; if( k < tokens.size() ) { temperature_aware_profiles_data_store_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_SOC_vs_P2_objects_str = tokens.at(k).c_str(); collected_tokens_count++; }
+            k++; if( k < tokens.size() ) { n_SOC_vs_P2_objects = std::atoi(tokens.at(k).c_str()); collected_tokens_count++; }
+            
+            if( collected_tokens_count != 3 )
+            {
+                std::cout << "Error. Incorrect number of tokens collected. [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                exit(1);
+            }
+            
+            return n_SOC_vs_P2_objects;
+        }(); 
+        
+        
+        // ***************************
+        // Load each SOC_vs_P2 object.
+        // ***************************
+        
+        for( int i = 0; i < n_SOC_vs_P2_objects; i++ )
+        {
+            // Read the line with the 'ambT_batT_SOC' values (three doubles)
+            const std::tuple<double,double,double> ambT_batT_SOCval_tuple = [&] () -> std::tuple<double,double,double> {
+                std::string line;
+                std::getline(fin, line);
+                
+                // Tokenize the line.
+                std::stringstream ss;
+                ss << trim(line);
+                std::vector<std::string> tokens;
+                std::string temp_str;
+                while(getline(ss, temp_str, ','))
+                {
+                    tokens.push_back(trim(temp_str));
+                }
+                            
+                // Check that we have the right number of tokens.
+                if( tokens.size() != 7 )
+                {
+                    std::cout << "Error. Not the right number of tokens! [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                    exit(1);
+                }
+
+                std::string SOC_vs_P2_str;
+                std::string ambientT_str;
+                std::string batteryT_str;
+                std::string SOC_str;
+                double ambT;
+                double batT;
+                double SOCval;
+
+                int collected_tokens_count = 0;
+                int k = -1;
+                k++; if( k < tokens.size() ) { SOC_vs_P2_str = tokens.at(k).c_str(); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { ambientT_str = tokens.at(k).c_str(); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { batteryT_str = tokens.at(k).c_str(); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { SOC_str = tokens.at(k).c_str(); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { ambT = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { batT = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+                k++; if( k < tokens.size() ) { SOCval = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+                
+                if( collected_tokens_count != 7 )
+                {
+                    std::cout << "Error. Incorrect number of tokens collected. [temperature_aware_profiles_data_store::load_from_file]" << std::endl;
+                    exit(1);
+                }
+                
+                return std::make_tuple( ambT, batT, SOCval );
+            }();
+            const double ambT = std::get<0>(ambT_batT_SOCval_tuple);
+            const double batT = std::get<1>(ambT_batT_SOCval_tuple);
+            const double SOCval = std::get<2>(ambT_batT_SOCval_tuple);
+            
+            // Then, make a tuple as the key.
+            std::tuple<double,double,double> key = std::make_tuple(ambT, batT, SOCval);
+            
+            // Read in the SOC_vs_P2 object.
+            SOC_vs_P2 new_socvsp2obj;
+            new_socvsp2obj.load_from_file( fin );
+            
+            // Save the SOC_vs_P2 into the map.
+            this->ambT_batT_SOC_tuple_to_power_profile_map[ key ] = new_socvsp2obj;
+        }
     }
     
     void output_to_cache_file( const std::string filename ) const
     {
-        // TODO - UNDER CONSTRUCTION
-        std::cout << "UNDER CONSTRUCTION" << std::endl;
-        exit(1);
-        
         std::ofstream opfile;
         opfile.open(filename);
         this->write_to_file( opfile );
@@ -638,9 +868,11 @@ struct temperature_aware_profiles_data_store
     
     void load_from_cache_file( const std::string filename )
     {
-        // TODO - UNDER CONSTRUCTION
-        std::cout << "UNDER CONSTRUCTION" << std::endl;
-        exit(1);
+        std::ifstream ifile;
+        ifile.open(filename);
+        this->load_from_file( ifile );
+        ifile.close();
+        return;
     }
 };
 

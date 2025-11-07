@@ -6,12 +6,15 @@
 #include <vector>
 #include <string>
 #include <iostream>       // Stream to consol (may be needed for files too???)
+#include <sstream>
 #include <cmath>        // floor, abs
 #include <random>
 
 #include <vector>
 #include <string>
 #include <iomanip>
+
+
 
 struct pair_hash
 {
@@ -89,6 +92,8 @@ struct line_segment
         return this->x_LB < rhs.x_LB;
     }
 
+    line_segment() : x_LB(0.0), x_UB(0.0), a(0.0), b(0.0) {}
+
     line_segment(const double x_LB, const double x_UB, const double a, const double b)
         : x_LB(x_LB), x_UB(x_UB), a(a), b(b) {}
     
@@ -110,6 +115,88 @@ struct line_segment
     {
         fout << "line_segment,x_LB,x_UB,a,b," << std::setprecision(16) << this->x_LB << "," << this->x_UB << "," << this->a << "," << this->b << std::endl;
     }
+    
+    void load_from_file( std::istream& fin )
+    {
+        // --- helper function ---
+        auto trim = [&] ( const std::string& s ) -> std::string {
+            size_t first = s.find_first_not_of(" \t\n\r\f\v");
+            if (first == std::string::npos) {
+                return "";
+            }
+            size_t last = s.find_last_not_of(" \t\n\r\f\v");
+            return s.substr(first, last - first + 1);
+        };
+            
+        std::string line;
+        std::getline(fin, line);
+        
+        // Tokenize the line.
+        std::stringstream ss;
+        ss << trim(line);
+        std::vector<std::string> tokens;
+        std::string temp_str;
+        while(getline(ss, temp_str, ','))
+        {
+            tokens.push_back(trim(temp_str));
+        }
+                    
+        // Check that we have the right number of tokens.
+        if( tokens.size() != 9 )
+        {
+            std::cout << "Error. Not the right number of tokens! [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+
+        std::string line_segment_str;
+        std::string x_LB_str;
+        std::string x_UB_str;
+        std::string a_str;
+        std::string b_str;
+
+        int collected_tokens_count = 0;
+        int k = -1;
+        k++; if( k < tokens.size() ) { line_segment_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { x_LB_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { x_UB_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { a_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { b_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { this->x_LB = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { this->x_UB = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { this->a = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { this->b = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+        
+        if( collected_tokens_count != 9 )
+        {
+            std::cout << "Error. Incorrect number of tokens collected. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( line_segment_str != "line_segment" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( x_LB_str != "x_LB" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( x_UB_str != "x_UB" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( a_str != "a" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( b_str != "b" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [line_segment::load_from_file]" << std::endl;
+            exit(1);
+        }
+    }
 };
 std::ostream& operator<<(std::ostream& out, const line_segment& x);
 
@@ -121,8 +208,8 @@ std::ostream& operator<<(std::ostream& out, const line_segment& x);
 
 struct SOC_vs_P2
 {
-    const std::vector<line_segment> curve;
-    const double zero_slope_threshold;
+    std::vector<line_segment> curve;
+    double zero_slope_threshold;
 
     SOC_vs_P2() : curve(std::vector<line_segment>()), zero_slope_threshold(0.0) {}
     SOC_vs_P2(const std::vector<line_segment>& curve,
@@ -158,6 +245,88 @@ struct SOC_vs_P2
         for( const line_segment& ls : this->curve )
         {
             ls.write_to_file( fout );
+        }
+    }
+    
+    void load_from_file( std::istream& fin )
+    {
+        // --- helper function ---
+        auto trim = [&] ( const std::string& s ) -> std::string {
+            size_t first = s.find_first_not_of(" \t\n\r\f\v");
+            if (first == std::string::npos) {
+                return "";
+            }
+            size_t last = s.find_last_not_of(" \t\n\r\f\v");
+            return s.substr(first, last - first + 1);
+        };
+        
+        // ***************************
+        // *** Load the first line ***
+        // ***************************
+        
+        std::string line;
+        std::getline(fin, line);
+        
+        // Tokenize the line.
+        std::stringstream ss;
+        ss << trim(line);
+        std::vector<std::string> tokens;
+        std::string temp_str;
+        while(getline(ss, temp_str, ','))
+        {
+            tokens.push_back(trim(temp_str));
+        }
+                    
+        // Check that we have the right number of tokens.
+        if( tokens.size() != 5 )
+        {
+            std::cout << "Error. Not the right number of tokens! [SOC_vs_P2::load_from_file]" << std::endl;
+            exit(1);
+        }
+
+        std::string SOC_vs_P2_str;
+        std::string n_line_segments_str;
+        std::string zero_slope_threshold_str;
+        int n_line_segments;
+
+        int collected_tokens_count = 0;
+        int k = -1;
+        k++; if( k < tokens.size() ) { SOC_vs_P2_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { n_line_segments_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { zero_slope_threshold_str = tokens.at(k).c_str(); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { n_line_segments = std::atoi(tokens.at(k).c_str()); collected_tokens_count++; }
+        k++; if( k < tokens.size() ) { this->zero_slope_threshold = std::stod(tokens.at(k).c_str()); collected_tokens_count++; }
+        
+        if( collected_tokens_count != 5 )
+        {
+            std::cout << "Error. Incorrect number of tokens collected. [SOC_vs_P2::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( SOC_vs_P2_str != "SOC_vs_P2" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [SOC_vs_P2::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( n_line_segments_str != "n_line_segments" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [SOC_vs_P2::load_from_file]" << std::endl;
+            exit(1);
+        }
+        if( zero_slope_threshold_str != "zero_slope_threshold" )
+        {
+            std::cout << "Error. Tokens are wrong in input file. [SOC_vs_P2::load_from_file]" << std::endl;
+            exit(1);
+        }
+        
+        // ************************************************
+        // *** Loop over each line segment and load it. ***
+        // ************************************************
+        
+        for( int i = 0; i < n_line_segments; i++ )
+        {
+            line_segment ls;
+            ls.load_from_file( fin );
+            this->curve.push_back(ls);
         }
     }
 };
