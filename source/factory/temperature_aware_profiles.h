@@ -645,6 +645,22 @@ struct temperature_aware_profiles_data_store
         }
     }
     
+    
+    
+    
+    
+    
+    //*****
+    //*****
+    //*****
+    //**********
+    //**********
+    //**********
+    //***************
+    //***************
+    //***************
+    
+    
     void load_from_file( std::istream& fin )
     {
         // --- helper function ---
@@ -711,7 +727,6 @@ struct temperature_aware_profiles_data_store
         const int n_ambient_temperature_values       = std::get<0>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
         const int n_start_battery_temperature_values = std::get<1>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
         const int n_start_soc_values                 = std::get<2>( nAmbTempVals__nStBatTempVals__nStSOCVals__tuple );
-        
         
         
         // ****************************************
@@ -787,6 +802,7 @@ struct temperature_aware_profiles_data_store
         }(); 
         
         
+        
         // ***************************
         // Load each SOC_vs_P2 object.
         // ***************************
@@ -856,6 +872,16 @@ struct temperature_aware_profiles_data_store
             this->ambT_batT_SOC_tuple_to_power_profile_map[ key ] = new_socvsp2obj;
         }
     }
+    
+    //***************
+    //***************
+    //***************
+    //**********
+    //**********
+    //**********
+    //*****
+    //*****
+    //*****
     
     void output_to_cache_file( const std::string filename ) const
     {

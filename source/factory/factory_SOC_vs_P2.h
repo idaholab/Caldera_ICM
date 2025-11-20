@@ -91,6 +91,7 @@ struct raw_ta_data_store
     double max_start_SOC;
     double vary_start_SOC_step;
     bool holds_data;
+    std::string path_to_ta_directory;
     
     // The data for each EV_type
     std::map< std::string, each_EV_type_raw_tgrad_model_data > each_EV_type_ta_data;
@@ -106,7 +107,8 @@ struct raw_ta_data_store
         min_start_SOC(0.0),
         max_start_SOC(0.0),
         vary_start_SOC_step(0.0),
-        holds_data(false)
+        holds_data(false),
+        path_to_ta_directory("")
     {}
     
     static void load_ta_data( raw_ta_data_store& alltadata,

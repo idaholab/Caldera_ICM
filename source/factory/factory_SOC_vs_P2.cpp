@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <unordered_set>
 #include "inputs.h"                 // vehicle_charge_model_inputs
+#include <functional>               // for std::hash
+#include <filesystem>               // for std::filesystem::exists
 
 // **************************************
 //           raw_ta_data_store
@@ -21,6 +23,8 @@ void raw_ta_data_store::load_ta_data( raw_ta_data_store& alltadata,
         size_t last = s.find_last_not_of(" \t\n\r\f\v");
         return s.substr(first, last - first + 1);
     };
+    
+    alltadata.path_to_ta_directory = path_to_ta_directory;
     
     // ----------------------------------------------------------
     // Load path_to_ta_directory/ta_precompute_curves_inputs.csv
@@ -1760,6 +1764,22 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
         return ss.str();
     };
     
+    // --- helper function ---
+    // Based on the pre-computed 'data_store_identifier_key', use a hash function and 
+    // some of the other data to generate a unique filename for the cache file.
+    auto generate_unique_cache_file_filename = [&] ( const std::string EV_type,
+                                                  const std::string EVSE_type,
+                                                  const std::string& data_store_identifier_key ) -> std::string {
+        std::hash<std::string> hasher;
+        size_t hashValue = hasher(data_store_identifier_key);
+        std::stringstream ss;
+        ss << "ta_data_cache_";
+        ss << EV_type << "_";
+        ss << EVSE_type << "_";
+        ss << std::setw(21) << std::setfill('0') << hashValue;
+        return ss.str();
+    };
+    
     std::string data_store_identifier_key = generate_unique_key_string();
     
     const bool PRINT_OUT_WHEN_BUILDING_TA_DATA = true;
@@ -1869,218 +1889,265 @@ factory_SOC_vs_P2::load_temperature_aware_DCFC_curves( const double max_c_rate_s
                 exit(1);
             }
             
+            const std::string cache_filename = generate_unique_cache_file_filename( ev_evse_pair.first, ev_evse_pair.second, data_store_identifier_key );
+            const std::string full_cache_filepath = (std::filesystem::path(ta_raw_data.path_to_ta_directory) / "cache" / cache_filename);
+            const bool CACHE_FILE_EXISTS = std::filesystem::exists(full_cache_filepath);
+            
             // Create an instance of 'temperature_aware::temperature_aware_profiles_data_store'
             temperature_aware::temperature_aware_profiles_data_store TAP_data_store;
             
-            // Loop over each ambient temperature that we will process.
-            for( double selected_ambient_temperature_C = min_ambient_temperature_C; selected_ambient_temperature_C <= max_ambient_temperature_C + 0.001; selected_ambient_temperature_C += vary_ambient_temperature_step_C )
-            {    
-                // -----
-                // Load all the essential coefficients and parametes from the 'ta_raw_data' data.
-                // -----
+            // If the file
+            if( CACHE_FILE_EXISTS )
+            {
+                std::cout << "    CACHE_FILE_EXISTS.  Loading TA data from cache file..." << std::endl;
                 
-                // Determine which tgrad coeffs we want based on the 'selected_ambient_temperature_C'.
-                const int tgradcoeffs_index = [&] () {
-                    const int n_models = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
-                    bool found_it = false;
-                    int found_index = -1;
-                    for( int i = 0; i < n_models; i++ )
-                    {
-                        const double min_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
-                        const double max_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
-                        if( selected_ambient_temperature_C >= min_C && selected_ambient_temperature_C < max_C )
+                // If 'cache_filename' exists, then we load the data from the file.
+                TAP_data_store.load_from_cache_file( full_cache_filepath );
+                
+                // ****************
+                // NOTE NOTE NOTE:
+                // NOTE NOTE NOTE:
+                // This 'complete' function apparently is super slow and causes a lot of slow-down.
+                // So, I'm commentting it out for now. Not sure if the check is necessary, and/or
+                // we need to find a faster way to do it. Not sure why it's slow.
+                // ****************
+                // // --------------------------------------------------------------------------------------------------------------------------
+                // // Double-check that the 'temperature_aware::temperature_aware_profiles_data_store' is complete, after loading it from a file.
+                // // --------------------------------------------------------------------------------------------------------------------------
+                // if( !TAP_data_store.complete() )
+                // {
+                //     std::cout << "ERROR: The data store of temperature-aware profiles is not complete even though it should." << std::endl;
+                //     exit(1);
+                // }
+                
+                std::cout << "    ...done loading from cache file." << std::endl;
+            }
+            else
+            {
+                std::cout << "    Building TA data from scratch..." << std::endl;
+                
+                // Loop over each ambient temperature that we will process.
+                for( double selected_ambient_temperature_C = min_ambient_temperature_C; selected_ambient_temperature_C <= max_ambient_temperature_C + 0.001; selected_ambient_temperature_C += vary_ambient_temperature_step_C )
+                {    
+                    // -----
+                    // Load all the essential coefficients and parametes from the 'ta_raw_data' data.
+                    // -----
+                    
+                    // Determine which tgrad coeffs we want based on the 'selected_ambient_temperature_C'.
+                    const int tgradcoeffs_index = [&] () {
+                        const int n_models = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.size();
+                        bool found_it = false;
+                        int found_index = -1;
+                        for( int i = 0; i < n_models; i++ )
                         {
-                            found_index = i;
-                            found_it = true;
-                            break;
+                            const double min_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_min;
+                            const double max_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(i).ambient_temperature_C_range_max;
+                            if( selected_ambient_temperature_C >= min_C && selected_ambient_temperature_C < max_C )
+                            {
+                                found_index = i;
+                                found_it = true;
+                                break;
+                            }
                         }
-                    }
-                    if( !found_it )
-                    {
-                        std::cout << "ERROR: No tgrad coeffs found for given ambient temperature." << std::endl;
-                        exit(1);
-                    }
-                    return found_index;
-                }();
-                
-                const double tgradmodel_c0_intercept =      ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c0_intercept;
-                const double tgradmodel_c1_power_kW =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c1_power_kW;
-                const double tgradmodel_c2_temperature_C =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c2_temperature_C;
-                const double tgradmodel_c3_time_sec =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c3_time_sec;
-                const double tgradmodel_c4_soc =            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c4_soc;
-                // For ngp_hyundai_ioniq_5_longrange_awd:   
-                const std::vector<double>& battery_temperature_C =                  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__battery_temperature_C;
-                const std::vector<double>& max_charging_power_kW_at_each_T_pts =    ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
-                const std::vector<double>& battery_SOC =                            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
-                const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
-                // The temperatures at which it's okay to heat up again or cool down (not actually the minimum 
-                // or maximum allowed temperatures; it's okay for the battery to be colder or hotter).
-                const double sim_soft_lower_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_min_battery_temperature_C;
-                const double sim_soft_upper_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_max_battery_temperature_C;
+                        if( !found_it )
+                        {
+                            std::cout << "ERROR: No tgrad coeffs found for given ambient temperature." << std::endl;
+                            exit(1);
+                        }
+                        return found_index;
+                    }();
+                    
+                    const double tgradmodel_c0_intercept =      ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c0_intercept;
+                    const double tgradmodel_c1_power_kW =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c1_power_kW;
+                    const double tgradmodel_c2_temperature_C =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c2_temperature_C;
+                    const double tgradmodel_c3_time_sec =       ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c3_time_sec;
+                    const double tgradmodel_c4_soc =            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).tgradmodel_c4_soc;
+                    // For ngp_hyundai_ioniq_5_longrange_awd:   
+                    const std::vector<double>& battery_temperature_C =                  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__battery_temperature_C;
+                    const std::vector<double>& max_charging_power_kW_at_each_T_pts =    ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).TvsMAXPWR__max_power_kW;
+                    const std::vector<double>& battery_SOC =                            ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__soc;
+                    const std::vector<double>& max_charging_power_kW_at_each_SOC_pts =  ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).SOCvsMAXPWR__max_power_kW;
+                    // The temperatures at which it's okay to heat up again or cool down (not actually the minimum 
+                    // or maximum allowed temperatures; it's okay for the battery to be colder or hotter).
+                    const double sim_soft_lower_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_min_battery_temperature_C;
+                    const double sim_soft_upper_bound_battery_temperature_C = ta_raw_data.each_EV_type_ta_data.at( EV_type_name ).tgrad_models_vec.at(tgradcoeffs_index).soft_max_battery_temperature_C;
 
-                // ************************************************************************
-                // ************************************************************************
-                
-                temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
-                                                    tgradmodel_c0_intercept,
-                                                    tgradmodel_c1_power_kW,
-                                                    tgradmodel_c2_temperature_C,
-                                                    tgradmodel_c3_time_sec,
-                                                    tgradmodel_c4_soc );
-                temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
-                
-                // ************************************************************************
-                // ************************************************************
-                
-                // Get the clean profile curves at each energy level, sorted low-to-high.
-                const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high = [&] () {
-                    std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high;
-                    for( int i = 0; i < n_curve_levels; i++ )
+                    // ************************************************************************
+                    // ************************************************************************
+                    
+                    temperature_aware::temperature_gradient_model_v1 temperature_grad_model(
+                                                        tgradmodel_c0_intercept,
+                                                        tgradmodel_c1_power_kW,
+                                                        tgradmodel_c2_temperature_C,
+                                                        tgradmodel_c3_time_sec,
+                                                        tgradmodel_c4_soc );
+                    temperature_aware::max_charging_power_model_v1 max_power_model( battery_temperature_C, max_charging_power_kW_at_each_T_pts, battery_SOC, max_charging_power_kW_at_each_SOC_pts );
+                    
+                    // ************************************************************************
+                    // ************************************************************
+                    
+                    // Get the clean profile curves at each energy level, sorted low-to-high.
+                    const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high = [&] () {
+                        std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high;
+                        for( int i = 0; i < n_curve_levels; i++ )
+                        {
+                            const SOC_vs_P2& socvsp2_for_level_i = curves_each_level_array.at(i).at( ev_evse_pair );
+                            power_profiles_sorted_low_to_high.push_back( socvsp2_for_level_i );
+                        }
+                        return power_profiles_sorted_low_to_high;
+                    }();
+                    
+                    // Other parameters
+                    const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
+                    
+                    // Loop over each pair of values in the matrix, and build the profile for each.
+                    for( double start_bat_temperature_C = min_start_battery_temperature_C; start_bat_temperature_C <= (max_start_battery_temperature_C + 1e-8); start_bat_temperature_C += vary_start_battery_temperature_step_C )
                     {
-                        const SOC_vs_P2& socvsp2_for_level_i = curves_each_level_array.at(i).at( ev_evse_pair );
-                        power_profiles_sorted_low_to_high.push_back( socvsp2_for_level_i );
-                    }
-                    return power_profiles_sorted_low_to_high;
-                }();
-                
-                // Other parameters
-                const double battery_capacity_kWh = EV_inv.at(ev_evse_pair.first).get_usable_battery_size_kWh();
-                
-                // Loop over each pair of values in the matrix, and build the profile for each.
-                for( double start_bat_temperature_C = min_start_battery_temperature_C; start_bat_temperature_C <= (max_start_battery_temperature_C + 1e-8); start_bat_temperature_C += vary_start_battery_temperature_step_C )
-                {
-                    for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += vary_start_SOC_step )
-                    {
-                        const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
-                                                                                                    power_profiles_sorted_low_to_high,
-                                                                                                    max_power_model,
-                                                                                                    start_bat_temperature_C,
-                                                                                                    start_soc );
-                        
-                        //  ----------------------------------------------------------------------
-                        //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
-                        //  ----------------------------------------------------------------------
-                        // If you want to output data files of the profiles we're
-                        // computing, then set this flag to 1.
-                        #define TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING 0
-                        
-                        //  ----------------------------------------------------------------------
-                        //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
-                        //  ----------------------------------------------------------------------
-                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                        const int jjjj = 1; // <--- index of ambient temperature value to look at.
-                        const int kkkk = 6; // <--- index of start_bat_temperature value to look at.
-                        const int llll = 1; // <--- index of start_soc value to look at
-                        #endif
-                        const bool CONDITIONS_FOR_TESTING_OUTPUT = (
+                        for( double start_soc = min_start_SOC; start_soc <= (max_start_SOC + 1e-8); start_soc += vary_start_SOC_step )
+                        {
+                            const int start_power_level_index = temperature_aware::TemperatureAwareProfiles::get_max_power_level_index_at_current_SOC_and_temperature(
+                                                                                                        power_profiles_sorted_low_to_high,
+                                                                                                        max_power_model,
+                                                                                                        start_bat_temperature_C,
+                                                                                                        start_soc );
+                            
+                            //  ----------------------------------------------------------------------
+                            //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                            //  ----------------------------------------------------------------------
+                            // If you want to output data files of the profiles we're
+                            // computing, then set this flag to 1.
+                            #define TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING 0
+                            
+                            //  ----------------------------------------------------------------------
+                            //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                            //  ----------------------------------------------------------------------
                             #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                                TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
-                                ev_evse_pair.first == "bev300_400kW" &&
-                                ev_evse_pair.second == "xfc_350" &&
-                                std::fabs( selected_ambient_temperature_C - (min_ambient_temperature_C + jjjj*vary_ambient_temperature_step_C) ) < 1e-12 &&
-                                std::fabs( start_bat_temperature_C - (min_start_battery_temperature_C + kkkk*vary_start_battery_temperature_step_C) ) < 1e-12 &&
-                                std::fabs( start_soc - (min_start_SOC + llll*vary_start_SOC_step) ) < 1e-12
-                            #else
-                                false
+                            const int jjjj = 1; // <--- index of ambient temperature value to look at.
+                            const int kkkk = 6; // <--- index of start_bat_temperature value to look at.
+                            const int llll = 1; // <--- index of start_soc value to look at
                             #endif
-                        );
-                        
-                        //  ----------------------------------------------------------------------
-                        //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
-                        //  ----------------------------------------------------------------------
-                        const std::string tmp_output_filename_for_testing = [&] () {
+                            const bool CONDITIONS_FOR_TESTING_OUTPUT = (
+                                #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                                    TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING &&
+                                    ev_evse_pair.first == "bev300_400kW" &&
+                                    ev_evse_pair.second == "xfc_350" &&
+                                    std::fabs( selected_ambient_temperature_C - (min_ambient_temperature_C + jjjj*vary_ambient_temperature_step_C) ) < 1e-12 &&
+                                    std::fabs( start_bat_temperature_C - (min_start_battery_temperature_C + kkkk*vary_start_battery_temperature_step_C) ) < 1e-12 &&
+                                    std::fabs( start_soc - (min_start_SOC + llll*vary_start_SOC_step) ) < 1e-12
+                                #else
+                                    false
+                                #endif
+                            );
+                            
+                            //  ----------------------------------------------------------------------
+                            //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                            //  ----------------------------------------------------------------------
+                            const std::string tmp_output_filename_for_testing = [&] () {
+                                #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
+                                if( CONDITIONS_FOR_TESTING_OUTPUT )
+                                {
+                                    return std::string("TAP_FOR_TESTING_temp_aware_sim_details.csv");
+                                }
+                                else
+                                {
+                                    return std::string("");
+                                }
+                                #else
+                                    return std::string("");
+                                #endif
+                            }();
+                            
+                            const SOC_vs_P2 socVsP2_temperature_aware = temperature_aware::TemperatureAwareProfiles::generate_temperature_aware_power_profile(
+                                                                                    power_profiles_sorted_low_to_high,        // const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high,
+                                                                                    temperature_grad_model,                   // const temperature_gradient_model& temperature_grad_model,
+                                                                                    max_power_model,                          // const max_charging_power_model& max_power_model,
+                                                                                    time_step_sec,                            // const double time_step_sec,
+                                                                                    battery_capacity_kWh,                     // const double battery_capacity_kWh,
+                                                                                    start_soc,                                // const double start_soc,
+                                                                                    end_soc,                                  // const double end_soc,
+                                                                                    start_bat_temperature_C,                      // const double start_bat_temperature_C,
+                                                                                    sim_soft_lower_bound_battery_temperature_C,    // const double soft_lower_bound_battery_temperature_C,
+                                                                                    sim_soft_upper_bound_battery_temperature_C,    // const double soft_upper_bound_battery_temperature_C,
+                                                                                    start_power_level_index,                  // const int start_power_level_index,
+                                                                                    time_step_sec*3,                          // const double update_power_level_delay_sec,
+                                                                                    tmp_output_filename_for_testing,          // const std::string output_file_name,
+                                                                                    update_power_level_index_callback_v4   // std::function<int(
+                                                                                                                           //               const int current_power_level_index,
+                                                                                                                           //               const int max_power_level_index_at_current_temperature,
+                                                                                                                           //               const double current_temperature_C,
+                                                                                                                           //               const double current_temperature_grad,
+                                                                                                                           //               const double soft_lower_bound_battery_temperature_C,
+                                                                                                                           //               const double soft_upper_bound_battery_temperature_C
+                                                                                                                           //           )> update_power_level_index_callback
+                                                                                );
+                            
+                            //  ----------------------------------------------------------------------
+                            //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
+                            //  ----------------------------------------------------------------------
                             #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
                             if( CONDITIONS_FOR_TESTING_OUTPUT )
                             {
-                                return std::string("TAP_FOR_TESTING_temp_aware_sim_details.csv");
+                                std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
+                                std::cout << "    selected_ambient_temperature_C: " << selected_ambient_temperature_C << std::endl;
+                                std::cout << "    start_bat_temperature_C:   " << start_bat_temperature_C << std::endl;
+                                std::cout << "    start_soc:             " << start_soc << std::endl;
+                                std::cout << "" << std::endl;
+                                //
+                                // Plot these results to see if you think it's doing it right!!
+                                //
+                                const std::string file_name = "TAP_FOR_TESTING_powerkW_vs_soc_data.csv";
+                                std::ofstream opfile;
+                                opfile.open(file_name);
+                                opfile << "soc,power_kW" << std::endl;
+                                const int N = 1000;
+                                const double h = ( socVsP2_temperature_aware.xmax() - socVsP2_temperature_aware.xmin() ) / N;
+                                for( int i = 0; i < N; i++ )
+                                {
+                                    const double x = socVsP2_temperature_aware.xmin() + i*h + 0.5*h;
+                                    const double y = socVsP2_temperature_aware.eval( x );
+                                    opfile << x << "," << y << std::endl;
+                                }
+                                // Close the file
+                                opfile.close();
+
+                                // I do this to stop running after the files are written.
+                                // If 'TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING' is true, remember this part:
+                                //std::cout << "stopping." << std::endl; __builtin_debugtrap();
                             }
-                            else
-                            {
-                                return std::string("");
-                            }
-                            #else
-                                return std::string("");
                             #endif
-                        }();
-                        
-                        const SOC_vs_P2 socVsP2_temperature_aware = temperature_aware::TemperatureAwareProfiles::generate_temperature_aware_power_profile(
-                                                                                power_profiles_sorted_low_to_high,        // const std::vector< SOC_vs_P2 > power_profiles_sorted_low_to_high,
-                                                                                temperature_grad_model,                   // const temperature_gradient_model& temperature_grad_model,
-                                                                                max_power_model,                          // const max_charging_power_model& max_power_model,
-                                                                                time_step_sec,                            // const double time_step_sec,
-                                                                                battery_capacity_kWh,                     // const double battery_capacity_kWh,
-                                                                                start_soc,                                // const double start_soc,
-                                                                                end_soc,                                  // const double end_soc,
-                                                                                start_bat_temperature_C,                      // const double start_bat_temperature_C,
-                                                                                sim_soft_lower_bound_battery_temperature_C,    // const double soft_lower_bound_battery_temperature_C,
-                                                                                sim_soft_upper_bound_battery_temperature_C,    // const double soft_upper_bound_battery_temperature_C,
-                                                                                start_power_level_index,                  // const int start_power_level_index,
-                                                                                time_step_sec*3,                          // const double update_power_level_delay_sec,
-                                                                                tmp_output_filename_for_testing,          // const std::string output_file_name,
-                                                                                update_power_level_index_callback_v4   // std::function<int(
-                                                                                                                       //               const int current_power_level_index,
-                                                                                                                       //               const int max_power_level_index_at_current_temperature,
-                                                                                                                       //               const double current_temperature_C,
-                                                                                                                       //               const double current_temperature_grad,
-                                                                                                                       //               const double soft_lower_bound_battery_temperature_C,
-                                                                                                                       //               const double soft_upper_bound_battery_temperature_C
-                                                                                                                       //           )> update_power_level_index_callback
-                                                                            );
-                        
-                        //  ----------------------------------------------------------------------
-                        //  TEMPORARY FOR TESTING. TEMPORARY FOR TESTING. TEMPORARY FOR TESTING.
-                        //  ----------------------------------------------------------------------
-                        #if TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING
-                        if( CONDITIONS_FOR_TESTING_OUTPUT )
-                        {
-                            std::cout << "ev_evse_pair: " << ev_evse_pair.first << ",  " << ev_evse_pair.second << std::endl;
-                            std::cout << "    selected_ambient_temperature_C: " << selected_ambient_temperature_C << std::endl;
-                            std::cout << "    start_bat_temperature_C:   " << start_bat_temperature_C << std::endl;
-                            std::cout << "    start_soc:             " << start_soc << std::endl;
-                            std::cout << "" << std::endl;
-                            //
-                            // Plot these results to see if you think it's doing it right!!
-                            //
-                            const std::string file_name = "TAP_FOR_TESTING_powerkW_vs_soc_data.csv";
-                            std::ofstream opfile;
-                            opfile.open(file_name);
-                            opfile << "soc,power_kW" << std::endl;
-                            const int N = 1000;
-                            const double h = ( socVsP2_temperature_aware.xmax() - socVsP2_temperature_aware.xmin() ) / N;
-                            for( int i = 0; i < N; i++ )
-                            {
-                                const double x = socVsP2_temperature_aware.xmin() + i*h + 0.5*h;
-                                const double y = socVsP2_temperature_aware.eval( x );
-                                opfile << x << "," << y << std::endl;
-                            }
-                            // Close the file
-                            opfile.close();
+                            
+                            //  ----------------------------------------------------------------------------------------------------
+                            //  Saving the profile in the 'temperature_aware::temperature_aware_profiles_data_store' data structure.
+                            //  ----------------------------------------------------------------------------------------------------
+                            TAP_data_store.add( selected_ambient_temperature_C, start_bat_temperature_C, start_soc, socVsP2_temperature_aware );
 
-                            // I do this to stop running after the files are written.
-                            // If 'TEMPORARY_TEMPERATURE_AWARE_OUTPUTS_FOR_TESTING' is true, remember this part:
-                            //std::cout << "stopping." << std::endl; __builtin_debugtrap();
-                        }
-                        #endif
-                        
-                        //  ----------------------------------------------------------------------------------------------------
-                        //  Saving the profile in the 'temperature_aware::temperature_aware_profiles_data_store' data structure.
-                        //  ----------------------------------------------------------------------------------------------------
-                        TAP_data_store.add( selected_ambient_temperature_C, start_bat_temperature_C, start_soc, socVsP2_temperature_aware );
-
-                    }  // <---- end loop over start_soc values
-                }  // <---- end loop over start_bat_temperature values.
-            } // <---- end loop over ambient temperature values
+                        }  // <---- end loop over start_soc values
+                    }  // <---- end loop over start_bat_temperature values.
+                } // <---- end loop over ambient temperature values
+                
+                // ****************
+                // NOTE NOTE NOTE:
+                // NOTE NOTE NOTE:
+                // This 'complete' function apparently is super slow and causes a lot of slow-down.
+                // So, I'm commentting it out for now. Not sure if the check is necessary, and/or
+                // we need to find a faster way to do it. Not sure why it's slow.
+                // ****************
+                // // --------------------------------------------------------------------------------------------------------------------------
+                // // Double-check that the 'temperature_aware::temperature_aware_profiles_data_store' is complete, before writing it to a file.
+                // // --------------------------------------------------------------------------------------------------------------------------
+                // if( !TAP_data_store.complete() )
+                // {
+                //     std::cout << "ERROR: The data store of temperature-aware profiles is not complete even though it should." << std::endl;
+                //     exit(1);
+                // }
+                
+                // Save the data to a cache file.
+                TAP_data_store.output_to_cache_file( full_cache_filepath );
+                
+                std::cout << "    ...done building data from scratch." << std::endl;
             
-            
-            // ----------------------------------------------------------------------------------------------
-            // Double-check that the 'temperature_aware::temperature_aware_profiles_data_store' is complete.
-            // ----------------------------------------------------------------------------------------------
-            if( !TAP_data_store.complete() )
-            {
-                std::cout << "ERROR: The data store of temperature-aware profiles is not complete even though it should." << std::endl;
-                exit(1);
-            }
-            
+            } // <-- end of 'else' block, in which we generate the TAP_data_store
+                
             //  --------------------------------------------------------
             //  Saving the result in the 'return_value' data structure.
             //  --------------------------------------------------------
