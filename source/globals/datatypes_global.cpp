@@ -471,6 +471,7 @@ charge_event_data::charge_event_data( int charge_event_id_,
                                       int SE_group_id_,
                                       SupplyEquipmentId SE_id_,
                                       vehicle_id_type vehicle_id_,
+                                      int CE_class_id_,   // <---------------- This constructor includes the CE_class_id.
                                       EV_type vehicle_type,
                                       double arrival_unix_time_,
                                       double departure_unix_time_,
@@ -478,11 +479,12 @@ charge_event_data::charge_event_data( int charge_event_id_,
                                       double departure_SOC_, 
                                       stop_charging_criteria stop_charge_,
                                       control_strategy_enums control_enums_ )
-{ 
+{
     this->charge_event_id = charge_event_id_;
     this->SE_group_id = SE_group_id_;
     this->SE_id = SE_id_;
     this->vehicle_id = vehicle_id_;
+    this->CE_class_id = CE_class_id_;
     this->vehicle_type = vehicle_type;
     this->arrival_unix_time = arrival_unix_time_;
     this->departure_unix_time = departure_unix_time_;
@@ -492,6 +494,31 @@ charge_event_data::charge_event_data( int charge_event_id_,
     this->stop_charge = stop_charge_;
     this->control_enums = control_enums_;
 }
+
+charge_event_data::charge_event_data( int charge_event_id_,
+                                      int SE_group_id_,
+                                      SupplyEquipmentId SE_id_,
+                                      vehicle_id_type vehicle_id_,
+                                      EV_type vehicle_type,
+                                      double arrival_unix_time_,
+                                      double departure_unix_time_,
+                                      double arrival_SOC_,
+                                      double departure_SOC_, 
+                                      stop_charging_criteria stop_charge_,
+                                      control_strategy_enums control_enums_ )
+    : charge_event_data( charge_event_id_,
+                         SE_group_id_,
+                         SE_id_,
+                         vehicle_id_,
+                         -1,            // <---------------- The CE_class_id set to default value in this constructor.
+                         vehicle_type,
+                         arrival_unix_time_,
+                         departure_unix_time_,
+                         arrival_SOC_,
+                         departure_SOC_,
+                         stop_charge_,
+                         control_enums_ )
+{}
 
 
 SE_group_charge_event_data::SE_group_charge_event_data(int SE_group_id_, std::vector<charge_event_data> charge_events_)

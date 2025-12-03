@@ -480,6 +480,7 @@ struct charge_event_data
     int SE_group_id;
     SupplyEquipmentId SE_id;
     vehicle_id_type vehicle_id;
+    int CE_class_id;
     EV_type vehicle_type;
     double arrival_unix_time;    // in seconds
     double departure_unix_time;  // in seconds
@@ -495,12 +496,26 @@ struct charge_event_data
             SE_group_id(0),
             SE_id(0),
             vehicle_id(0),
+            CE_class_id(-1),
             vehicle_type(""),
             arrival_unix_time(0.0),
             departure_unix_time(0.0),
             arrival_SOC(0.0),
             departure_SOC(0.0),
             arrival_battery_temperature_C(DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C) {};
+    
+    charge_event_data( int charge_event_id_,
+                       int SE_group_id_,
+                       SupplyEquipmentId SE_id_,
+                       vehicle_id_type vehicle_id_,
+                       int CE_class_id_,   // <---------------- This constructor includes the CE_class_id.
+                       EV_type vehicle_type,
+                       double arrival_unix_time_,
+                       double departure_unix_time_,
+                       double arrival_SOC_,
+                       double departure_SOC_, 
+                       stop_charging_criteria stop_charge_,
+                       control_strategy_enums control_enums_ );
     
     charge_event_data( int charge_event_id_,
                        int SE_group_id_,
