@@ -15,7 +15,7 @@ PYBIND11_MODULE(Caldera_ICM_Aux, m)
     
     py::class_<CP_interface>(m, "CP_interface")
         .def(py::init<const std::string&>())
-        .def(py::init<const std::string&, bool>())
+        .def(py::init<const std::string&, std::map< std::pair<EV_type, EVSE_type>, std::vector<charge_profile_validation_data> >& >())
         .def("get_size_of_CP_library_MB", &CP_interface::get_size_of_CP_library_MB)
         .def("get_CP_validation_data", &CP_interface::get_CP_validation_data)
         .def("get_charge_event_P3kW_limits", &CP_interface::get_charge_event_P3kW_limits)
@@ -28,11 +28,16 @@ PYBIND11_MODULE(Caldera_ICM_Aux, m)
     
     py::class_<CP_interface_v2>(m, "CP_interface_v2")
         .def(py::init<const std::string&>())
-        .def(py::init<const std::string&, double, double, double, EV_ramping_map, EV_EVSE_ramping_map >())
+        .def(py::init<const std::string&, double, double, double >())
+        .def(py::init<const std::string&, double, double, double, std::vector<double> >())
+        .def("create_charge_profile_from_model", &CP_interface_v2::create_charge_profile_from_model)
         .def("get_P3kW_charge_profile", &CP_interface_v2::get_P3kW_charge_profile)
-        .def("get_timestep_of_prev_call_sec", &CP_interface_v2::get_timestep_of_prev_call_sec)
         .def("get_all_charge_profile_data", &CP_interface_v2::get_all_charge_profile_data)
-        .def("create_charge_profile_from_model", &CP_interface_v2::create_charge_profile_from_model);
+        .def("get_timestep_of_prev_call_sec", &CP_interface_v2::get_timestep_of_prev_call_sec)
+        // Specify the power level with these:
+        .def("get_P3kW_charge_profile_with_power_level", &CP_interface_v2::get_P3kW_charge_profile_with_power_level)
+        .def("get_all_charge_profile_data_with_power_level", &CP_interface_v2::get_all_charge_profile_data_with_power_level)
+        .def("create_charge_profile_from_model_with_power_level", &CP_interface_v2::create_charge_profile_from_model_with_power_level);
 
     py::class_<get_baseLD_forecast>(m, "get_baseLD_forecast")
         .def(py::init<>())

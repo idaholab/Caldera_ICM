@@ -2,10 +2,10 @@
 
 #include "helper.h"
 
-#include <cmath>		// abs(), exp(), log(), atan(), cos()
-#include <algorithm>	// sort()
-#include <sstream> 	  	// used to parse lines
-#include <ctime>		// time
+#include <cmath>        // abs(), exp(), log(), atan(), cos()
+#include <algorithm>    // sort()
+#include <sstream>           // used to parse lines
+#include <ctime>        // time
 #include <vector>
 #include <string>
 
@@ -147,11 +147,40 @@ lin_reg_slope_yinter  linear_regression::weighted(const std::vector<xy_point>& p
 
 
 
-std::ostream& operator<<(std::ostream& out, line_segment& z)
+//##########################################################
+//                      line_segment
+//##########################################################
+
+
+std::ostream& operator<<(std::ostream& out, const line_segment& z)
 {
-	out << z.x_LB << "," << z.a*z.x_LB + z.b << std::endl;
-	out << z.x_UB << "," << z.a*z.x_UB + z.b << std::endl;
-	return out;
+    out << "LineSeg:LB:" << z.x_LB << "," << z.y_LB();
+    out <<        ";UB:" << z.x_UB << "," << z.y_UB();
+    return out;
+}
+
+
+//##########################################################
+//                      SOC_vs_P2
+//##########################################################
+
+SOC_vs_P2::SOC_vs_P2(const std::vector<line_segment>& curve,
+                     const double& zero_slope_threshold)
+    : curve{ curve }, 
+    zero_slope_threshold{ zero_slope_threshold }
+{
+}
+
+
+std::ostream& operator<<(std::ostream& out, const SOC_vs_P2& x)
+{
+    out << "SOC_vs_P2: [zero_slope_threshold:" << x.zero_slope_threshold << ",n_curves:" << x.curve.size() << ",curve:";
+    for( const auto& lineseg : x.curve )
+    {
+        out << "{" << lineseg << "}";
+    }
+    out << "]";
+    return out;
 }
 
 //#############################################################################
@@ -182,31 +211,31 @@ poly_function_of_x::poly_function_of_x(double x_tolerance_, bool take_abs_of_x_,
 
 double poly_function_of_x::get_val(double x)
 {
-	if(take_abs_of_x)
-		x = std::abs(x);
+    if(this->take_abs_of_x)
+        x = std::abs(x);
 
     //--------------------
     
     bool x_out_of_bounds = false;
     
-    if(index == 0 && x < x_LB)
+    if(this->index == 0 && x < this->x_LB)
     {
-        x = x_LB;
+        x = this->x_LB;
         x_out_of_bounds = true;
     }
-    else if(index == segments.size()-1 && x > x_UB)
+    else if(this->index == this->segments.size()-1 && x > this->x_UB)
     {
-        x = x_UB;
+        x = this->x_UB;
         x_out_of_bounds = true;
     }
-    else if(x < x_LB || x_UB < x)
+    else if(x < this->x_LB || this->x_UB < x)
     {
         bool index_set = false;
-        for(unsigned int i = 0; i < segments.size(); i++)
+        for(unsigned int i = 0; i < this->segments.size(); i++)
         {
-            if(segments[i].x_LB - x_tolerance <= x && x <= segments[i].x_UB + x_tolerance)
+            if(this->segments[i].x_LB - this->x_tolerance <= x && x <= this->segments[i].x_UB + this->x_tolerance)
             {
-                index = i;
+                this->index = i;
                 index_set = true;
                 break;
             }
@@ -216,53 +245,53 @@ double poly_function_of_x::get_val(double x)
         {
             x_out_of_bounds = true;
             
-        	if(x <= segments[0].x_LB)
+            if(x <= this->segments[0].x_LB)
             {
-        		index = 0;
-                x = segments[index].x_LB;
+                this->index = 0;
+                x = this->segments[index].x_LB;
             }
-        	else
+            else
             {
-        		index = (int)segments.size() - 1;
-                x = segments[index].x_UB;
+                this->index = (int)this->segments.size() - 1;
+                x = this->segments[index].x_UB;
             }
         }
         
-        x_LB = segments[index].x_LB;
-        x_UB = segments[index].x_UB;
-        a = segments[index].a;
-        b = segments[index].b;
-        c = segments[index].c;
-        d = segments[index].d;
-        e = segments[index].e;
-        degree = segments[index].degree;
+        this->x_LB = this->segments[index].x_LB;
+        this->x_UB = this->segments[index].x_UB;
+        this->a = this->segments[index].a;
+        this->b = this->segments[index].b;
+        this->c = this->segments[index].c;
+        this->d = this->segments[index].d;
+        this->e = this->segments[index].e;
+        this->degree = this->segments[index].degree;
     }
     
     //-------------------------------------------
     
-    if(x_out_of_bounds && if_x_is_out_of_bounds_print_warning_message)
+    if(x_out_of_bounds && this->if_x_is_out_of_bounds_print_warning_message)
     {
-        std::string msg = "poly_function_of_x::get_val,  name:" + warning_msg_poly_function_name + "  msg:x_val out of range.  x_val:" + std::to_string(x);
+        std::string msg = "poly_function_of_x::get_val,  name:" + this->warning_msg_poly_function_name + "  msg:x_val out of range.  x_val:" + std::to_string(x);
         std::cout << msg << std::endl;
     }
     
     //-------------------------------------------    
     
-    if(degree == first)
-        return a*x + b;
-    else if(degree == second)
-        return a*x*x + b*x + c;
+    if(this->degree == poly_degree::first)
+        return this->a*x + this->b;
+    else if(this->degree == poly_degree::second)
+        return this->a*x*x + this->b*x + this->c;
     else
     {
         double x_2 = x*x;
         double x_3 = x*x_2;
         
-        if(degree == third)
-            return a*x_3 + b*x_2 + c*x + d;
-        else if(degree == fourth)
+        if(this->degree == poly_degree::third)
+            return this->a*x_3 + this->b*x_2 + this->c*x + d;
+        else if(this->degree == poly_degree::fourth)
         {
             double x_4 = x*x_3;
-            return a*x_4 + b*x_3 + c*x_2 + d*x + e;
+            return this->a*x_4 + this->b*x_3 + this->c*x_2 + this->d*x + e;
         }
     }
     
@@ -295,7 +324,7 @@ std::vector<std::string> split(const std::string& line, char delim)
 
 void rand_val::init_rand()
 {
-	srand(time(NULL));
+    srand(time(NULL));
 }
 
 double rand_val::rand_range(double min, double max)
@@ -306,9 +335,9 @@ double rand_val::rand_range(double min, double max)
         init_rand();
     }
     
-	return min + rand_zero_to_one() * (max-min);
+    return min + rand_zero_to_one() * (max-min);
 }
-	
+    
 double rand_val::rand_zero_to_one()
 {
     if(!rand_is_initialized)
@@ -317,7 +346,7 @@ double rand_val::rand_zero_to_one()
         init_rand();
     }
     
-	return (double)(rand() % RAND_MAX) / (double)RAND_MAX;
+    return (double)(rand() % RAND_MAX) / (double)RAND_MAX;
 }
 
 bool rand_val::rand_is_initialized = false;
@@ -327,19 +356,27 @@ bool rand_val::rand_is_initialized = false;
 //                               Low Pass Filter
 //#############################################################################
 
+LPF_kernel::LPF_kernel() 
+    : max_window_size{ 1 },
+    raw_data{ std::vector<double>(this->max_window_size, 1.0) },
+    cur_raw_data_index{ 0 }, 
+    window_type{ LPF_window_enum::Rectangular }, 
+    window_size{ 1 }, 
+    window{ std::vector<double>(1, 1.0) },
+    window_area{ 1.0 }
+{
+
+}
+
 
 LPF_kernel::LPF_kernel(int max_window_size, double initial_raw_data_value)
-{
-    this->cur_raw_data_index = 0;
-    
-    for(int i=0; i<max_window_size; i++)
-    {
-        this->raw_data.push_back(initial_raw_data_value);
-    }
-    
+    : cur_raw_data_index{ 0 },
+    max_window_size{ max_window_size }, 
+    raw_data{std::vector<double>(max_window_size, initial_raw_data_value)}
+{    
     LPF_parameters LPF_params{};
     LPF_params.window_size = 1;
-    LPF_params.window_type = Rectangular;
+    LPF_params.window_type = LPF_window_enum::Rectangular;
     update_LPF(LPF_params);
 }
 
@@ -355,21 +392,21 @@ void LPF_kernel::update_LPF(LPF_parameters& LPF_params)
     if(this->window_size > this->raw_data.size())
         std::cout << "ERROR.  Low pass filter window size can not be greater than raw data size." << std::endl;
     
-    if(this->window_type == Rectangular && this->window_size < 1)
+    if(this->window_type == LPF_window_enum::Rectangular && this->window_size < 1)
     {
         this->window_size = 1;
         std::cout << "ERROR.  For a Rectangular Filter window size can not be less than 1." << std::endl;
     }
     
-    if(this->window_size < 2 && (this->window_type == Hanning || this->window_type == Blackman))
+    if(this->window_size < 2 && (this->window_type == LPF_window_enum::Hanning || this->window_type == LPF_window_enum::Blackman))
     {    
         this->window_size = 2;
         std::cout << "ERROR.  For a Hanning and Blackman Filter window size can not be less than 2." << std::endl;
     }
     
-	//----------------------
+    //----------------------
     
-    if(this->window_type == Rectangular)
+    if(this->window_type == LPF_window_enum::Rectangular)
     {
         this->window.resize(this->window_size, 1.0);
         this->window_area = this->window_size;
@@ -408,9 +445,9 @@ void LPF_kernel::update_LPF(LPF_parameters& LPF_params)
         {
             if(n==0 || n==N_minus_1)
                 window_val = 0;
-            else if(this->window_type == Hanning)
+            else if(this->window_type == LPF_window_enum::Hanning)
                 window_val = 0.5*(1 - std::cos(2*pi*n/N_minus_1));
-            else if(this->window_type == Blackman)
+            else if(this->window_type == LPF_window_enum::Blackman)
                 window_val = a0 - a1*std::cos(2*pi*n/N_minus_1) + a2*std::cos(4*pi*n/N_minus_1);
             
             this->window_area += window_val;
@@ -562,10 +599,10 @@ double get_value_from_normal_distribution::get_value()
     double random_val;
     while(true)
     {
-        //#pragma omp critical
-        //{
+        #pragma omp critical
+        {
             random_val = this->dis(this->gen);
-        //}
+        }
         if(std::abs(random_val) <= this->stdev_bounds)
             return this->stdev*random_val + this->mean;
     }
@@ -594,8 +631,13 @@ get_real_value_from_uniform_distribution::get_real_value_from_uniform_distributi
 
 
 double get_real_value_from_uniform_distribution::get_value()
-{    
-    double random_val = this->dis(this->gen);
+{   
+    
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -623,7 +665,12 @@ get_int_value_from_uniform_distribution::get_int_value_from_uniform_distribution
 
 int get_int_value_from_uniform_distribution::get_value()
 {    
-    int random_val = this->dis(this->gen);
+    int random_val;
+    
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return random_val;
 }
 
@@ -654,7 +701,11 @@ get_bernoulli_success::get_bernoulli_success(int seed, double p)
 
 bool get_bernoulli_success::is_success()
 {   
-    double random_val = this->dis(this->gen);
+    double random_val;
+    #pragma omp critical
+    {
+        random_val = this->dis(this->gen);
+    }
     return (random_val <= this->p_val);
 }
 
@@ -676,16 +727,16 @@ std::ostream& operator<<(std::ostream& out, power_struct& x)
 std::ostream& operator<<(std::ostream& out, P_vs_time_profile& x)
 {
     std::vector<double> unix_time = x.get_unix_times();
-	std::vector<double> soc = x.get_soc();
-	std::vector<double> dcP = x.get_dcP_kW(); 
-	std::vector<double> acP = x.get_acP_kW();
-	std::vector<double> acQ = x.get_acQ_kVAR();
-	std::vector<double> dcP_loss = x.get_dcP_kW_bat_losses();
-	std::vector<double> approx_time = x.get_aprox_charge_time_hrs();
-	std::vector<double> min_time = x.get_min_time_to_charge_hrs(); 
+    std::vector<double> soc = x.get_soc();
+    std::vector<double> dcP = x.get_dcP_kW(); 
+    std::vector<double> acP = x.get_acP_kW();
+    std::vector<double> acQ = x.get_acQ_kVAR();
+    std::vector<double> dcP_loss = x.get_dcP_kW_bat_losses();
+    std::vector<double> approx_time = x.get_aprox_charge_time_hrs();
+    std::vector<double> min_time = x.get_min_time_to_charge_hrs(); 
 
     for (unsigned int i = 0; i < soc.size(); i++)
-    	out << unix_time[i] << "," << soc[i] << "," << acP[i] << "," << dcP[i] << "," << acQ[i] << "," << dcP_loss[i] << "," << approx_time[i] << "," << min_time[i] << std::endl;
+        out << unix_time[i] << "," << soc[i] << "," << acP[i] << "," << dcP[i] << "," << acQ[i] << "," << dcP_loss[i] << "," << approx_time[i] << "," << min_time[i] << std::endl;
     
     return out;
 }
@@ -697,55 +748,55 @@ std::ostream& operator<<(std::ostream& out, P_vs_time_profile& x)
 
 LPF_kernel::LPF_kernel(int window_size, LPF_window window_type)
 {
-	// Blackman Window Constants
-	double alpha, a0, a1, a2;
-	alpha = 0.16;
-	a0 = (1-alpha)/2;
-	a1 = 0.5;
-	a2 = alpha/2;
-	
-	//----------------------
+    // Blackman Window Constants
+    double alpha, a0, a1, a2;
+    alpha = 0.16;
+    a0 = (1-alpha)/2;
+    a1 = 0.5;
+    a2 = alpha/2;
+    
+    //----------------------
 
-	double pi, window_val;
-	int N_minus_1;
-		
-	pi = 4*std::atan(1);
-	N_minus_1 = window_size - 1;
+    double pi, window_val;
+    int N_minus_1;
+        
+    pi = 4*std::atan(1);
+    N_minus_1 = window_size - 1;
 
-	cur_data_index = 0;
-	window_area = 0;
-	
-	for(int n=1; n<window_size-1; n++) // When n=0 or n=N-1 the Hanning and Blackman Filter values are 0.
-	{
-		if(window_type == Hanning)
-			window_val = 0.5*(1 - std::cos(2*pi*n/N_minus_1));
-		else if(window_type == Blackman)
-			window_val = a0 - a1*std::cos(2*pi*n/N_minus_1) + a2*std::cos(4*pi*n/N_minus_1);
-		
-		window_area += window_val;
-		window.push_back(window_val);
-		data.push_back(0);
-	}
+    cur_data_index = 0;
+    window_area = 0;
+    
+    for(int n=1; n<window_size-1; n++) // When n=0 or n=N-1 the Hanning and Blackman Filter values are 0.
+    {
+        if(window_type == Hanning)
+            window_val = 0.5*(1 - std::cos(2*pi*n/N_minus_1));
+        else if(window_type == Blackman)
+            window_val = a0 - a1*std::cos(2*pi*n/N_minus_1) + a2*std::cos(4*pi*n/N_minus_1);
+        
+        window_area += window_val;
+        window.push_back(window_val);
+        data.push_back(0);
+    }
 }
 
 
 double LPF_kernel::get_filtered_value(double next_input_value)
 {
-	int window_size, data_index;
-	double next_output_value = 0;
-	window_size = window.size();
-	
-	cur_data_index = (cur_data_index == window_size-1) ? 0 : cur_data_index+1;
-	data[cur_data_index] = next_input_value;
-	
-	data_index = cur_data_index;
-	for(int i=0; i<window_size; i++)
-	{
-		next_output_value += window[i]*data[data_index];
-		data_index = (data_index == window_size-1) ? 0 : data_index+1;
-	}
-	
-	return next_output_value/window_area;
+    int window_size, data_index;
+    double next_output_value = 0;
+    window_size = window.size();
+    
+    cur_data_index = (cur_data_index == window_size-1) ? 0 : cur_data_index+1;
+    data[cur_data_index] = next_input_value;
+    
+    data_index = cur_data_index;
+    for(int i=0; i<window_size; i++)
+    {
+        next_output_value += window[i]*data[data_index];
+        data_index = (data_index == window_size-1) ? 0 : data_index+1;
+    }
+    
+    return next_output_value/window_area;
 }
 
 
@@ -755,26 +806,26 @@ double LPF_kernel::get_filtered_value(double next_input_value)
 
 void log_warnings_and_errors::init_log_streams()
 {
-	log_streams_have_been_initialized = true;
-	
-	warnings_log << "info, message" << std::endl;
-	errors_log << "info, message" << std::endl;
+    log_streams_have_been_initialized = true;
+    
+    warnings_log << "info, message" << std::endl;
+    errors_log << "info, message" << std::endl;
 }
 
 std::ofstream& log_warnings_and_errors::get_warnings_ofstream() 
 {
-	if(!log_streams_have_been_initialized)
-		init_log_streams();
-		
-	return warnings_log;
+    if(!log_streams_have_been_initialized)
+        init_log_streams();
+        
+    return warnings_log;
 }
 
 std::ofstream& log_warnings_and_errors::get_errors_ofstream()
 {
-	if(!log_streams_have_been_initialized)
-		init_log_streams();
-		
-	return errors_log;
+    if(!log_streams_have_been_initialized)
+        init_log_streams();
+        
+    return errors_log;
 }
 
 std::ofstream log_warnings_and_errors::warnings_log("zzz_Warnings.csv");
@@ -787,23 +838,23 @@ bool log_warnings_and_errors::log_streams_have_been_initialized = false;
 
 pev_enum  enum_conversion::get_pev_enum(const std::string pev_str, std::string invalid_enum_str)
 {
-	std::string tmp_str = "";
-	
-	// make comparison case-insensitive and ignore whitespace
-	for (int i = 0; i < pev_str.length(); i++)
-		if (!std::isspace(pev_str[i]))
-			tmp_str += pev_str[i];
+    std::string tmp_str = "";
+    
+    // make comparison case-insensitive and ignore whitespace
+    for (int i = 0; i < pev_str.length(); i++)
+        if (!std::isspace(pev_str[i]))
+            tmp_str += pev_str[i];
 
-	if 		(tmp_str == "pev_52pkW_22kWh_2c_132A_LMO_LV") return pev_52pkW_22kWh_2c_132A_LMO_LV;
-	else if (tmp_str == "pev_68pkW_54kWh_1c_176A_NMC_LV") return pev_68pkW_54kWh_1c_176A_NMC_LV;
-	else if (tmp_str == "pev_203pkW_54kWh_3c_390A_NMC_LV") return pev_203pkW_54kWh_3c_390A_NMC_LV;
-	else if (tmp_str == "pev_368pkW_98kWh_3c_360A_NMC_HV") return pev_368pkW_98kWh_3c_360A_NMC_HV;
-	else if (tmp_str == "pev_431pkW_115kWh_3c_399A_NMC_HV") return pev_431pkW_115kWh_3c_399A_NMC_HV;
-	else if (tmp_str == "pev_214pkW_38kWh_5c_200A_LTO_HV") return pev_214pkW_38kWh_5c_200A_LTO_HV;
-	else if (tmp_str == "pev_188pkW_150kWh_1c_385A_NMC_LV") return pev_188pkW_150kWh_1c_385A_NMC_LV;
-	else if (tmp_str == "pev_363pkW_150kWh_2c_385A_NMC_HV") return pev_363pkW_150kWh_2c_385A_NMC_HV;
-	else
-	{ 
+    if         (tmp_str == "pev_52pkW_22kWh_2c_132A_LMO_LV") return pev_52pkW_22kWh_2c_132A_LMO_LV;
+    else if (tmp_str == "pev_68pkW_54kWh_1c_176A_NMC_LV") return pev_68pkW_54kWh_1c_176A_NMC_LV;
+    else if (tmp_str == "pev_203pkW_54kWh_3c_390A_NMC_LV") return pev_203pkW_54kWh_3c_390A_NMC_LV;
+    else if (tmp_str == "pev_368pkW_98kWh_3c_360A_NMC_HV") return pev_368pkW_98kWh_3c_360A_NMC_HV;
+    else if (tmp_str == "pev_431pkW_115kWh_3c_399A_NMC_HV") return pev_431pkW_115kWh_3c_399A_NMC_HV;
+    else if (tmp_str == "pev_214pkW_38kWh_5c_200A_LTO_HV") return pev_214pkW_38kWh_5c_200A_LTO_HV;
+    else if (tmp_str == "pev_188pkW_150kWh_1c_385A_NMC_LV") return pev_188pkW_150kWh_1c_385A_NMC_LV;
+    else if (tmp_str == "pev_363pkW_150kWh_2c_385A_NMC_HV") return pev_363pkW_150kWh_2c_385A_NMC_HV;
+    else
+    { 
         std::string msg = "enum_conversion::get_pev_enum, " + invalid_enum_str + " value:" + tmp_str;
         std::ofstream& errors_ofstream = log_warnings_and_errors::get_errors_ofstream();
         errors_ofstream << msg << std::endl;
@@ -826,20 +877,20 @@ bool enum_conversion::pev_is_HV(pev_enum pev_type)
 
 dcfc_enum  enum_conversion::get_dcfc_enum(const std::string dcfc_str, std::string invalid_enum_str)
 {
-	std::string tmp_str = "";
-	
-	// make comparison case-insensitive and ignore whitespace
-	for (int i = 0; i < dcfc_str.length(); i++)
-		if (!std::isspace(dcfc_str[i]))
-			tmp_str += dcfc_str[i];
+    std::string tmp_str = "";
+    
+    // make comparison case-insensitive and ignore whitespace
+    for (int i = 0; i < dcfc_str.length(); i++)
+        if (!std::isspace(dcfc_str[i]))
+            tmp_str += dcfc_str[i];
 
-	if     (tmp_str == "dcfc_50kW_125A_LV_ABB_Terra53CJ") return dcfc_50kW_125A_LV_ABB_Terra53CJ;
-	else if(tmp_str == "dcfc_320kW_500A_HV_ABB_TerraHP_SAE") return dcfc_320kW_500A_HV_ABB_TerraHP_SAE;
-	else if(tmp_str == "dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo") return dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo;
-	else if(tmp_str == "dcfc_200kW_300A_HV") return dcfc_200kW_300A_HV;
-	else if(tmp_str == "dcfc_500kW_600A_HV") return dcfc_500kW_600A_HV;
-	else
-	{ 
+    if     (tmp_str == "dcfc_50kW_125A_LV_ABB_Terra53CJ") return dcfc_50kW_125A_LV_ABB_Terra53CJ;
+    else if(tmp_str == "dcfc_320kW_500A_HV_ABB_TerraHP_SAE") return dcfc_320kW_500A_HV_ABB_TerraHP_SAE;
+    else if(tmp_str == "dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo") return dcfc_100kW_200A_LV_ABB_TerraHP_Chatemo;
+    else if(tmp_str == "dcfc_200kW_300A_HV") return dcfc_200kW_300A_HV;
+    else if(tmp_str == "dcfc_500kW_600A_HV") return dcfc_500kW_600A_HV;
+    else
+    { 
         std::string msg = "enum_conversion::get_dcfc_enum, " + invalid_enum_str + " value:" + tmp_str;
         std::ofstream& errors_ofstream = log_warnings_and_errors::get_errors_ofstream();
         errors_ofstream << msg << std::endl;
@@ -862,16 +913,16 @@ bool enum_conversion::dcfc_is_HV(dcfc_enum dcfc_type)
 
 site_bat_enum  enum_conversion::get_site_bat_enum(const std::string site_bat_str, std::string invalid_enum_str)
 {
-	std::string tmp_str = "";
-	
-	// make comparison case-insensitive and ignore whitespace
-	for (int i = 0; i < site_bat_str.length(); i++)
-		if (!std::isspace(site_bat_str[i]))
-			tmp_str += site_bat_str[i];
+    std::string tmp_str = "";
+    
+    // make comparison case-insensitive and ignore whitespace
+    for (int i = 0; i < site_bat_str.length(); i++)
+        if (!std::isspace(site_bat_str[i]))
+            tmp_str += site_bat_str[i];
 
-	if(tmp_str == "site_bat_100kWh_350kW_LMO") return site_bat_100kWh_350kW_LMO;	
-	else
-	{ 
+    if(tmp_str == "site_bat_100kWh_350kW_LMO") return site_bat_100kWh_350kW_LMO;    
+    else
+    { 
         std::string msg = "enum_conversion::get_site_bat_enum, " + invalid_enum_str + " value:" + tmp_str;
         std::ofstream& errors_ofstream = log_warnings_and_errors::get_errors_ofstream();
         errors_ofstream << msg << std::endl;
@@ -1161,10 +1212,10 @@ std::vector<std::string> split(const std::string& line, char delim)
 
 double get_real_time()
 {
-	timeval curr_time;
-	gettimeofday(&curr_time, NULL);
-	
-	return curr_time.tv_sec + curr_time.tv_usec*1e-6;
+    timeval curr_time;
+    gettimeofday(&curr_time, NULL);
+    
+    return curr_time.tv_sec + curr_time.tv_usec*1e-6;
 }
 
 */

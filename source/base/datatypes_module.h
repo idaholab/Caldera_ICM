@@ -23,7 +23,7 @@ struct ac_power_metrics
     ac_power_metrics() {};
     ac_power_metrics(double time_step_duration_hrs_, double P1_kW_, double P2_kW_, double P3_kW_, double Q3_kVAR_);
     void add_to_self(const ac_power_metrics& rhs);
-	static std::string get_file_header();
+    static std::string get_file_header();
 };
 std::ostream& operator<<(std::ostream& out, ac_power_metrics& x);
 
@@ -54,8 +54,9 @@ struct CE_status
 
 struct SE_status
 {
-    SE_configuration SE_config;
     double now_unix_time;
+
+    SE_configuration SE_config;
     SE_charging_status SE_charging_status_val;
     
     bool pev_is_connected_to_SE;
@@ -63,6 +64,22 @@ struct SE_status
     std::vector<CE_status> completed_charges;
     
     SE_status() {};
+    SE_status(
+        const double now_unix_time,
+        const SE_configuration& SE_config,
+        const SE_charging_status& SE_charging_status_val,
+        const bool pev_is_connected_to_SE
+    )
+        :
+        now_unix_time{ now_unix_time }, 
+        SE_config{ SE_config }, 
+        SE_charging_status_val{ SE_charging_status_val },
+        pev_is_connected_to_SE{ pev_is_connected_to_SE },
+        current_charge{ CE_status{} }, 
+        completed_charges{ std::vector<CE_status>{} }
+    {
+
+    }
 };
 
 

@@ -8,13 +8,24 @@ __pycache__/
 *.editorconfig
 
 # Distribution / packaging
-build/
 *.vs*
+
+build
+build_debug
+build_dev
+build_xcode
+
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
 CMakeSettings.json
+Makefile
+makefile
+cmake_install.cmake
+CTestTestfile.cmake
 
 # MacOS stuff
 .DS_Store
 
 # Executables that get created when we run make install
 run_models
-

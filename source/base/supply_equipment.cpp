@@ -4,25 +4,17 @@
 #include "factory_supply_equipment_model.h"     // factory_supply_equipment_model
 
 
-supply_equipment::supply_equipment( const SE_configuration& SE_config_,
-                                    const supply_equipment_control& SE_control_,
-                                    const supply_equipment_load& SE_Load_ )
+supply_equipment::supply_equipment( const SE_configuration& SE_config,
+                                    const supply_equipment_control& SE_control,
+                                    const supply_equipment_load& SE_Load )
+    : SE_config{ SE_config }, 
+    SE_control{ SE_control },
+    SE_Load{ SE_Load }
 {
-    this->SE_config = SE_config_;
-    this->SE_control = SE_control_;
-    this->SE_Load = SE_Load_;
-}
-
-
-void supply_equipment::set_pointers_in_SE_Load( factory_EV_charge_model* PEV_charge_factory,
-                                                factory_ac_to_dc_converter* ac_to_dc_converter_factory,
-                                                pev_charge_profile_library* charge_profile_library )
-{
-    this->SE_Load.set_pointers(PEV_charge_factory, ac_to_dc_converter_factory, charge_profile_library);
 }
    
 
-bool supply_equipment::is_SE_with_id( const SE_id_type SE_id )
+bool supply_equipment::is_SE_with_id( const SupplyEquipmentId SE_id )
 {
     return (this->SE_config.SE_id == SE_id);
 }
@@ -208,4 +200,7 @@ void supply_equipment::ES500_set_energy_setpoints( const double e3_setpoint_kWh 
     this->SE_control.ES500_set_energy_setpoints(e3_setpoint_kWh);
 }
 
-    
+void supply_equipment::ES400_set_power_setpoints(const double p3_kW)
+{
+    this->SE_control.ES400_set_power_setpoints(p3_kW);
+}
