@@ -19,6 +19,7 @@ PYBIND11_MODULE(Caldera_ICM, m)
     
     py::class_<interface_to_SE_groups>(m, "interface_to_SE_groups")
         .def(py::init<const std::string&, const interface_to_SE_groups_inputs&>())
+        .def(py::init<const EV_inventory&, const EVSE_inventory&, const interface_to_SE_groups_inputs&>())
         //.def("initialize", &interface_to_SE_groups::initialize)
         //.def("initialize_infrastructure", &interface_to_SE_groups::initialize_infrastructure)
         //.def("initialize_baseLD_forecaster", &interface_to_SE_groups::initialize_baseLD_forecaster)

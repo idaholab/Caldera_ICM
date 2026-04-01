@@ -19,14 +19,11 @@
 #include "factory_ac_to_dc_converter.h"
 #include "factory_supply_equipment_model.h"
 
-#include "load_EV_EVSE_inventory.h"
-
 class interface_to_SE_groups
 {
 private:
 
-    const load_EV_EVSE_inventory loader;
-    const EV_EVSE_inventory& inventory;
+    const EV_EVSE_inventory inventory;
 
     std::vector<supply_equipment_group> SE_group_objs;
     std::map<int, supply_equipment_group*> SE_group_Id_to_ptr;
@@ -49,10 +46,17 @@ private:
     
     const factory_EV_charge_model load_factory_EV_charge_model(const interface_to_SE_groups_inputs& inputs);
 
+    void initialize(const interface_to_SE_groups_inputs& inputs);
+
 public:
+
     interface_to_SE_groups( const std::string& input_path,
                             const interface_to_SE_groups_inputs& inputs );
-
+    
+    interface_to_SE_groups( const EV_inventory& EV_inv,
+                            const EVSE_inventory& EVSE_inv,
+                            const interface_to_SE_groups_inputs& inputs );
+        
     pev_charge_profile_library load_charge_profile_library(const interface_to_SE_groups_inputs& inputs);
     
     void stop_active_charge_events(std::vector<SupplyEquipmentId> SE_ids);
