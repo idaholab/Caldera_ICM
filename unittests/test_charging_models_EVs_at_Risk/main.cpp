@@ -59,6 +59,7 @@ int main()
 	vehicle_id_type vehicle_id = 1;
 	double arrival_unix_time = 1*3600;
 	double departure_unix_time = 4*3600;
+	double charge_start_unix_time = arrival_unix_time;
 	double arrival_SOC = 0;
 	double departure_SOC = 100;
 	stop_charging_criteria stop_charge = scc;
@@ -72,7 +73,7 @@ int main()
 		EVSE_type supply_equipment_type = elem.se_type;
 		EV_type vehicle_type = elem.ev_type;
 		
-		charge_event_data event(charge_event_id, SE_group_id, SE_id, vehicle_id, vehicle_type, arrival_unix_time, departure_unix_time, arrival_SOC, departure_SOC, scc, cs);
+		charge_event_data event(charge_event_id, SE_group_id, SE_id, vehicle_id, vehicle_type, arrival_unix_time, departure_unix_time, charge_start_unix_time, arrival_SOC, departure_SOC, scc, cs);
 		
 		vehicle_charge_model* model = charge_model_factory.alloc_get_EV_charge_model(event, supply_equipment_type, 1000000);
 		model->set_target_P2_kW(10000000);

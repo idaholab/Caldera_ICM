@@ -43,12 +43,13 @@ int main()
 	EV_type vehicle_type = "bev250_350kW";
 	double arrival_unix_time = 1*3600;
 	double departure_unix_time = 4*3600;
+	double charge_start_unix_time = arrival_unix_time;
 	double arrival_SOC = 0;
 	double departure_SOC = 100;
 	stop_charging_criteria stop_charge = scc;
 	control_strategy_enums control_enums = cs;
 
-	charge_event_data event(charge_event_id, SE_group_id, SE_id, vehicle_id, vehicle_type, arrival_unix_time, departure_unix_time, arrival_SOC, departure_SOC, scc, cs);
+	charge_event_data event(charge_event_id, SE_group_id, SE_id, vehicle_id, vehicle_type, arrival_unix_time, departure_unix_time, charge_start_unix_time, arrival_SOC, departure_SOC, scc, cs);
 
 	vehicle_charge_model* DCFC_model = charge_model_factory.alloc_get_EV_charge_model(event, "dcfc_50", 1000000);
 

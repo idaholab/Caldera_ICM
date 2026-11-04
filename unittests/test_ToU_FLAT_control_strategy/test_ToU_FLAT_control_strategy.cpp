@@ -285,13 +285,14 @@ std::vector<charge_event_data> get_charge_events(const std::string& CE_file_path
             std::string PEV_type = tokens[3];
             double arrival_unix_time = std::stod(tokens[4])*3600;
             double departure_unix_time = std::stod(tokens[6])*3600;
+            double charge_start_unix_time = arrival_unix_time;
             double arrival_SOC = std::stod(tokens[8]) * 100;
             double departure_SOC = std::stod(tokens[9]) * 100;
 
             //if (std::max(arrival_unix_time, 24*3600.0) < std::min(departure_unix_time, 48*3600.0))
             {
                 data.emplace_back(charge_event_id, SE_group_id, SE_id, PEV_id, PEV_type, arrival_unix_time,
-                                  departure_unix_time, arrival_SOC, departure_SOC, scc, control_enums);
+                                  departure_unix_time, charge_start_unix_time, arrival_SOC, departure_SOC, scc, control_enums);
             }
         }
         else{

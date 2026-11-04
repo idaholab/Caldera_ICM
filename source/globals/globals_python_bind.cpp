@@ -97,7 +97,7 @@ PYBIND11_MODULE(Caldera_globals, m)
 
     py::class_<charge_event_data>(m, "charge_event_data")
         .def(py::init<>())
-        .def(py::init<int, int, SupplyEquipmentId, vehicle_id_type, EV_type, double, double, double, double, stop_charging_criteria, control_strategy_enums>())
+        .def(py::init<int, int, SupplyEquipmentId, vehicle_id_type, EV_type, double, double, double, double, double, stop_charging_criteria, control_strategy_enums>())
         .def_readwrite("charge_event_id", &charge_event_data::charge_event_id)
         .def_readwrite("SE_group_id", &charge_event_data::SE_group_id)
         .def_readwrite("SE_id", &charge_event_data::SE_id)
@@ -105,6 +105,7 @@ PYBIND11_MODULE(Caldera_globals, m)
         .def_readwrite("vehicle_type", &charge_event_data::vehicle_type)
         .def_readwrite("arrival_unix_time", &charge_event_data::arrival_unix_time)
         .def_readwrite("departure_unix_time", &charge_event_data::departure_unix_time)
+        .def_readwrite("charge_start_unix_time", &charge_event_data::charge_start_unix_time)
         .def_readwrite("arrival_SOC", &charge_event_data::arrival_SOC)
         .def_readwrite("departure_SOC", &charge_event_data::departure_SOC)
         .def_readwrite("stop_charge", &charge_event_data::stop_charge)
@@ -113,7 +114,7 @@ PYBIND11_MODULE(Caldera_globals, m)
         .def(py::pickle(
             [](const charge_event_data& obj)
             {  // __getstate__
-                return py::make_tuple(obj.charge_event_id, obj.SE_group_id, obj.SE_id, obj.vehicle_id, obj.vehicle_type, obj.arrival_unix_time, obj.departure_unix_time, obj.arrival_SOC, obj.departure_SOC, obj.stop_charge, obj.control_enums);
+                return py::make_tuple(obj.charge_event_id, obj.SE_group_id, obj.SE_id, obj.vehicle_id, obj.vehicle_type, obj.arrival_unix_time, obj.departure_unix_time, obj.charge_start_unix_time, obj.arrival_SOC, obj.departure_SOC, obj.stop_charge, obj.control_enums);
             },
             [](py::tuple t)
             {  // __setstate__
@@ -125,10 +126,11 @@ PYBIND11_MODULE(Caldera_globals, m)
                 obj.vehicle_type = t[4].cast<EV_type>();
                 obj.arrival_unix_time = t[5].cast<double>();
                 obj.departure_unix_time = t[6].cast<double>();
-                obj.arrival_SOC = t[7].cast<double>();
-                obj.departure_SOC = t[8].cast<double>();
-                obj.stop_charge = t[9].cast<stop_charging_criteria>();
-                obj.control_enums = t[10].cast<control_strategy_enums>();
+                obj.charge_start_unix_time = t[7].cast<double>();
+                obj.arrival_SOC = t[8].cast<double>();
+                obj.departure_SOC = t[9].cast<double>();
+                obj.stop_charge = t[10].cast<stop_charging_criteria>();
+                obj.control_enums = t[11].cast<control_strategy_enums>();
                 return obj;
             }
     ));

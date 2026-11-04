@@ -79,11 +79,12 @@ void factory_charge_profile_library::create_charge_fragments_vector( const EV_EV
 
     stop_charging_criteria stop_charge;
 
-    // (charge_event_id, station_id, SE_id, vehicle_id, vehicle_enum, arrival_unix_time, departure_unix_time, arrival_SOC, departure_SOC, stop_charging_criteria, CE_control_strategy_parameters)
+    // (charge_event_id, station_id, SE_id, vehicle_id, vehicle_enum, arrival_unix_time, departure_unix_time, charge_start_unix_time, arrival_SOC, departure_SOC, stop_charging_criteria, CE_control_strategy_parameters)
     const double arrival_unix_time = 20*time_step_sec;
     const double departure_unix_time =  1000*3600;
+    const double charge_start_unix_time = arrival_unix_time;
     
-    charge_event_data charge_event(charge_event_Id, 1, 1, 1, pev_SE.ev_type, arrival_unix_time, departure_unix_time, 0, 100, stop_charge, control_enums);
+    charge_event_data charge_event(charge_event_Id, 1, 1, 1, pev_SE.ev_type, arrival_unix_time, departure_unix_time, charge_start_unix_time, 0, 100, stop_charge, control_enums);
     SE_obj.add_charge_event(charge_event);
     
     //------------------------
@@ -492,11 +493,12 @@ void factory_charge_profile_library_v2::create_charge_profile( const EV_EVSE_inv
 
     stop_charging_criteria stop_charge;
 
-    // (charge_event_id, station_id, SE_id, vehicle_id, vehicle_enum, arrival_unix_time, departure_unix_time, arrival_SOC, departure_SOC, stop_charging_criteria, CE_control_strategy_parameters)
+    // (charge_event_id, station_id, SE_id, vehicle_id, vehicle_enum, arrival_unix_time, departure_unix_time, charge_start_unix_time, arrival_SOC, departure_SOC, stop_charging_criteria, CE_control_strategy_parameters)
     double arrival_unix_time = 5*max_time_step_sec;
     double departure_unix_time =  arrival_unix_time + 1000*3600;
-    
-    charge_event_data charge_event(1, 1, 1, 1, pev_SE.ev_type, arrival_unix_time, departure_unix_time, start_soc, end_soc, stop_charge, control_enums);
+    double charge_start_unix_time = arrival_unix_time;
+
+    charge_event_data charge_event(1, 1, 1, 1, pev_SE.ev_type, arrival_unix_time, departure_unix_time, charge_start_unix_time, start_soc, end_soc, stop_charge, control_enums);
     SE_obj.add_charge_event(charge_event);
     
     //------------------------
