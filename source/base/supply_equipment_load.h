@@ -60,6 +60,7 @@ private:
     //----------------------------
     
     void get_CE_forecast_on_interval(double setpoint_P3kW, double nowSOC, double endSOC, double now_unix_time, double end_unix_time, pev_charge_profile_result& return_val);
+    void add_completed_charge_to_SE_stat();
 
 public:
     supply_equipment_load(

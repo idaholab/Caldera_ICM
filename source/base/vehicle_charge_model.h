@@ -20,6 +20,7 @@ private:
     
     double arrival_unix_time;
     double depart_unix_time;
+    double charge_start_unix_time;
     double arrival_soc;
     double requested_depart_soc;
     

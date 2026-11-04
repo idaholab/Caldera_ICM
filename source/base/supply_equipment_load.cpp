@@ -5,6 +5,7 @@
 #include <cmath>
 #include <algorithm>                // sort
 #include <sstream>
+#include <stdexcept>
 
 #include "factory_EV_charge_model.h"
 #include "factory_ac_to_dc_converter.h"
@@ -30,7 +31,30 @@ void charge_event_handler::add_charge_event( const charge_event_data& CE )
 {
     // Make a copy so we can edit it a little bit if needed before saving it.
     charge_event_data mutable_CE = CE;
-    
+
+    //------------------------------------
+    //  Validate charge_start_unix_time
+    //------------------------------------
+    // charge_start_unix_time is the earliest time charging may begin. It defaults to arrival_unix_time
+    // when unset or earlier than arrival. It may only differ from arrival when no ES or external control
+    // strategy is used, since those compute their own charge start.
+    if(mutable_CE.charge_start_unix_time < mutable_CE.arrival_unix_time)
+        mutable_CE.charge_start_unix_time = mutable_CE.arrival_unix_time;
+
+    const bool ES_or_ext_control_is_active = (mutable_CE.control_enums.ES_control_strategy != L2_control_strategies_enum::NA || mutable_CE.control_enums.ext_control_strategy != "NA");
+
+    if(ES_or_ext_control_is_active && mutable_CE.charge_start_unix_time != mutable_CE.arrival_unix_time)
+    {
+        throw std::runtime_error("Error: charge_start_unix_time must equal arrival_unix_time when an ES or external control strategy is used.  charge_event_id: " + std::to_string(mutable_CE.charge_event_id));
+    }
+
+    if(mutable_CE.charge_start_unix_time >= mutable_CE.departure_unix_time)
+    {
+        throw std::runtime_error("Error: charge_start_unix_time must be before departure_unix_time.  charge_event_id: " + std::to_string(mutable_CE.charge_event_id));
+    }
+
+    //------------------------------------
+
     double max_allowed_overlap_time_sec = this->CE_queuing_inputs.max_allowed_overlap_time_sec;
     queuing_mode_enum queuing_mode = this->CE_queuing_inputs.queuing_mode;
     
@@ -74,6 +98,10 @@ void charge_event_handler::add_charge_event( const charge_event_data& CE )
                 mutable_CE.arrival_unix_time += 0.001;
             }
         }
+
+        // Keep charge_start_unix_time >= arrival_unix_time (and equal to it when it was equal) after the arrival shift.
+        if(mutable_CE.charge_start_unix_time < mutable_CE.arrival_unix_time)
+            mutable_CE.charge_start_unix_time = mutable_CE.arrival_unix_time;
     }
 
     this->charge_events.insert(mutable_CE);
@@ -324,9 +352,14 @@ void supply_equipment_load::get_CE_forecast_on_interval(double setpoint_P3kW, do
     
     double departure_SOC = this->SE_stat.current_charge.departure_SOC;
     double departure_unix_time = this->SE_stat.current_charge.departure_unix_time;
-    
+    double charge_start_unix_time = this->SE_stat.current_charge.charge_start_unix_time;
+
+    // Charging cannot begin before charge_start_unix_time, so the forecast starts there.
+    if(now_unix_time < charge_start_unix_time)
+        now_unix_time = charge_start_unix_time;
+
     //======================
-    
+
     pev_charge_profile_result target_soc_val, depart_time_val;
     bool return_val_is_zero = false;
     
@@ -524,6 +557,16 @@ SE_status supply_equipment_load::get_SE_status()
 }
 
 
+void supply_equipment_load::add_completed_charge_to_SE_stat()
+{
+    // NOTE: This is commented out because all completed charge events are held in memory for the entirety of the simulation.
+    // This is a potential memory bottleneck for very large simulations. Completed charge info is not currently used anywhere
+    // (get_completed_CE is not exposed to python). While this is commented out, get_completed_CE will always return empty.
+    //CE_status x = this->SE_stat.current_charge;
+    //this->SE_stat.completed_charges.push_back(x);
+}
+
+
 std::vector<completed_CE> supply_equipment_load::get_completed_CE()
 {
     std::vector<completed_CE> return_val;
@@ -617,9 +660,10 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
                 this->SE_stat.current_charge.charge_event_id = charge_event.charge_event_id;
                 this->SE_stat.current_charge.vehicle_id = charge_event.vehicle_id;
                 this->SE_stat.current_charge.vehicle_type = charge_event.vehicle_type;
-                this->SE_stat.current_charge.stop_charge = charge_event.stop_charge;                
+                this->SE_stat.current_charge.stop_charge = charge_event.stop_charge; 
                 this->SE_stat.current_charge.arrival_unix_time = charge_event.arrival_unix_time;
                 this->SE_stat.current_charge.departure_unix_time = charge_event.departure_unix_time;
+                this->SE_stat.current_charge.charge_start_unix_time = charge_event.charge_start_unix_time;
                 this->SE_stat.current_charge.arrival_SOC = charge_event.arrival_SOC;
                 this->SE_stat.current_charge.departure_SOC = charge_event.departure_SOC;
                 
@@ -748,9 +792,8 @@ bool supply_equipment_load::get_next(double prev_unix_time, double now_unix_time
             delete this->ev_charge_model;
             this->ev_charge_model = NULL;
             
-            CE_status x = this->SE_stat.current_charge;
-            this->SE_stat.completed_charges.push_back(x);
-            
+            this->add_completed_charge_to_SE_stat();
+
             this->SE_stat.pev_is_connected_to_SE = false;
             this->SE_stat.current_charge.now_charge_energy_E3kWh = 0;
         }
@@ -799,9 +842,8 @@ void supply_equipment_load::stop_active_CE()
         delete this->ev_charge_model;
         this->ev_charge_model = NULL;
         
-        CE_status x = this->SE_stat.current_charge;
-        this->SE_stat.completed_charges.push_back(x);
-        
+        this->add_completed_charge_to_SE_stat();
+
         this->SE_stat.pev_is_connected_to_SE = false;
         this->SE_stat.current_charge.now_charge_energy_E3kWh = 0;
     }

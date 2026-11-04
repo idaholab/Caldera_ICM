@@ -13,6 +13,7 @@ vehicle_charge_model::vehicle_charge_model(const vehicle_charge_model_inputs& in
     EV{ inputs.EV },
     arrival_unix_time{ inputs.CE.arrival_unix_time },
     depart_unix_time{ inputs.CE.departure_unix_time },
+    charge_start_unix_time{ std::max(inputs.CE.arrival_unix_time, inputs.CE.charge_start_unix_time) },
     arrival_soc{ inputs.CE.arrival_SOC },
     requested_depart_soc{ inputs.CE.departure_SOC },
     decision_metric{ inputs.CE.stop_charge.decision_metric },
@@ -80,7 +81,10 @@ void vehicle_charge_model::get_next( const double prev_unix_time,
                                      bool& charge_has_completed,
                                      battery_state& bat_state )
 {
-    if(this->arrival_unix_time <= now_unix_time)
+    // The EV is plugged in (occupying the SE) from arrival_unix_time, but charging only starts at charge_start_unix_time.
+    // charge_start_unix_time is validated in charge_event_handler::add_charge_event: arrival <= charge_start < departure,
+    // and it must equal arrival when an ES or external control strategy is used.
+    if(this->charge_start_unix_time <= now_unix_time)
     {
         if(this->charge_needs_met_ || this->soc_of_full_battery <= this->prev_soc_t1)
         {

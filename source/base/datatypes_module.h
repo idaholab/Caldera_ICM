@@ -39,6 +39,7 @@ struct CE_status
     stop_charging_criteria stop_charge;
     double arrival_unix_time; 
     double departure_unix_time;
+    double charge_start_unix_time;
     double arrival_SOC;
     double departure_SOC;
     double now_unix_time;

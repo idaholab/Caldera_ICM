@@ -436,14 +436,14 @@ std::string stop_charging_criteria::get_file_header()
 
 std::ostream& operator<<(std::ostream& out, const charge_event_data& x)
 {
-    out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
+    out << x.charge_event_id << "," << x.SE_group_id << "," << x.SE_id << "," << x.vehicle_id << "," << x.vehicle_type << "," << x.arrival_unix_time << "," << x.departure_unix_time << "," << x.charge_start_unix_time << "," << x.arrival_SOC << "," << x.departure_SOC << "," << x.stop_charge;
     return out;
 }
 
 
 std::string charge_event_data::get_file_header()
 {
-    return "charge_event_id,SE_group_id,SE_id,vehicle_id,vehicle_type,arrival_unix_time,departure_unix_time,arrival_SOC,departure_SOC," + stop_charging_criteria::get_file_header();
+    return "charge_event_id,SE_group_id,SE_id,vehicle_id,vehicle_type,arrival_unix_time,departure_unix_time,charge_start_unix_time,arrival_SOC,departure_SOC," + stop_charging_criteria::get_file_header();
 }
 
     
@@ -474,6 +474,7 @@ charge_event_data::charge_event_data( int charge_event_id_,
                                       EV_type vehicle_type,
                                       double arrival_unix_time_,
                                       double departure_unix_time_,
+                                      double charge_start_unix_time_,
                                       double arrival_SOC_,
                                       double departure_SOC_, 
                                       stop_charging_criteria stop_charge_,
@@ -486,6 +487,7 @@ charge_event_data::charge_event_data( int charge_event_id_,
     this->vehicle_type = vehicle_type;
     this->arrival_unix_time = arrival_unix_time_;
     this->departure_unix_time = departure_unix_time_;
+    this->charge_start_unix_time = charge_start_unix_time_;
     this->arrival_SOC = arrival_SOC_;
     this->departure_SOC = departure_SOC_;
     this->arrival_battery_temperature_C = DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C;

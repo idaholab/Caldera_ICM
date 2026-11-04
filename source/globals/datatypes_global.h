@@ -481,13 +481,27 @@ struct charge_event_data
     SupplyEquipmentId SE_id;
     vehicle_id_type vehicle_id;
     EV_type vehicle_type;
-    double arrival_unix_time;    // in seconds
-    double departure_unix_time;  // in seconds
-    double arrival_SOC;          // in percent (for 50%, this will be 50.0)
-    double departure_SOC;        // in percent (for 50%, this will be 50.0)
+    double arrival_unix_time;       // in seconds
+    double departure_unix_time;     // in seconds
+    double charge_start_unix_time;  // in seconds
+    double arrival_SOC;             // in percent (for 50%, this will be 50.0)
+    double departure_SOC;           // in percent (for 50%, this will be 50.0)
     double arrival_battery_temperature_C; // To be used in temperature-aware profiles.
     stop_charging_criteria stop_charge;
     
+    //TODO: Add minimum_SOC.
+    //This will be minimum SOC the EV needs to charge to before any control happens.
+
+    //TODO: Add Report_SOC_at_unix_time
+    //We'll want to be able to insert timestamps for CE's to report SOC level.
+    //This has some useful applications where we can report statuses for simulating charging failures
+    //This could be a single unix_time value or a vector of unix_time values 
+
+    //TODO: Report_unix_time_at_SOC
+    //We'll want to be able to insert SOCs for CE's to report time.
+    //This has some useful applications where we can report statuses for simulating charging failures
+    //This could be a single SOC value or a vector of SOC values
+
     control_strategy_enums control_enums;
 
     charge_event_data() :
@@ -498,6 +512,7 @@ struct charge_event_data
             vehicle_type(""),
             arrival_unix_time(0.0),
             departure_unix_time(0.0),
+            charge_start_unix_time(0.0),
             arrival_SOC(0.0),
             departure_SOC(0.0),
             arrival_battery_temperature_C(DEFAULT_ARRIVAL_BATTERY_TEMPERATURE_C) {};
@@ -509,6 +524,7 @@ struct charge_event_data
                        EV_type vehicle_type,
                        double arrival_unix_time_,
                        double departure_unix_time_,
+                       double charge_start_unix_time_,
                        double arrival_SOC_,
                        double departure_SOC_, 
                        stop_charging_criteria stop_charge_,
