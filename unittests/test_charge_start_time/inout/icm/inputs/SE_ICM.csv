@@ -1,0 +1,4 @@
+SE_id,SE_type,lon,lat,node_id,SE_group,location_type
+1,L2_17280,-77.3922,37.522,home1,250,home
+2,L2_17280,-77.3922,37.522,home2,250,home
+3,L2_17280,-77.3922,37.522,home3,250,home
